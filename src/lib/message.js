@@ -1,6 +1,6 @@
 
 
-import { generateWAMessageFromContent, proto } from 'ourin'
+import { generateWAMessageFromContent, proto } from 'ourin-baileys'
 import fs from 'fs'
 import path from 'path'
 import { fetchBuffer, getMimeType } from './utils.js'

@@ -1,8 +1,9 @@
 import express from 'express'
-import fetch from 'node-fetch'
 let app = global.app = express()
 
-function connect(PORT) {
+function connect(connOrPort, maybePort) {
+	// Dipanggil sebagai connect(conn, PORT) dari main.js --server
+	const PORT = typeof connOrPort === 'number' ? connOrPort : (maybePort || process.env.PORT || 3000)
 	
 	app.get('/', (req, res) => res.send('Hello World!'))
 	
@@ -25,17 +26,8 @@ function connect(PORT) {
 	})
 	
 	app.listen(PORT, () => {
-		keepAlive()
 		console.log('App listened on port', PORT)
 	})
-}
-
-function keepAlive() {
-	let url = `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`
-	if (/(\/\/|\.)undefined\./.test(url)) return
-	setInterval(() => {
-		fetch(url).catch(console.log)
-	}, 30 * 1000)
 }
 
 function formatDate(n, locale = 'id') {

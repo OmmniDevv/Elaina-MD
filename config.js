@@ -57,17 +57,17 @@ global.ppulsa = '08xxxxxxxxx' //Nomor SimCard Yang Kamu Pake
 global.psaweria = '-' //Link Saweriamu Kalo Nggada Ketik - aja
 
 /*============== NOMOR ==============*/
-global.nomorbot = '6285869074622' //Nomor Bot
-global.nomorown = '6285187605007' //Nomor Owner
+global.nomorbot = '6285187605007' //Nomor Bot
+global.nomorown = '6285869074622' //Nomor Owner
 global.namebot = 'Elaina BOT' //Nama Bot
 global.nameown = 'ZansLord' // Nama Owner
 // ↓ TAMBAHKAN INI ↓
 global.usePairingCode = true             // Aktifkan pairing code
-global.pairingNumber = '6285869074622'   // Nomor WA bot kamu (kosongkan untuk input manual)
+global.pairingNumber = '6285187605007'   // Nomor WA bot kamu (kosongkan untuk input manual)
 
 /*============== STAFF ==============*/
 global.owner = [
-  ['6285187605007', '❦ Zans Lord? 🎐', true] //Ganti jd nomormu sama Namamu
+  ['6285869074622', '❦ Zans Lord? 🎐', true] //Ganti jd nomormu sama Namamu
   // [number, nama, dia owner?]
 ] // Put your number here
 global.mods = [] // Want some help?

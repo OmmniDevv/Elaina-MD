@@ -25,7 +25,8 @@ import { makeWASocket, protoType, serialize } from './lib/simple.js'
 import { Low } from 'lowdb'
 import { JSONFile } from 'lowdb/node'
 import pino from 'pino'
-import { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } from 'ourin-baileys'
+import { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore } from 'ourin-baileys'
+import qrcode from 'qrcode-terminal'
 import './lib/errorLogger.js'
 
 const { CONNECTING } = ws
@@ -84,11 +85,7 @@ let saveCreds = _saveCreds
 const usePairingCode = global.usePairingCode === true
 const pairingNumber = (global.pairingNumber || '').replace(/[^0-9]/g, '')
 
-const { version, isLatest } = await fetchLatestBaileysVersion()
-console.log(`\x1b[36m[VERSION]\x1b[0m WA v${version.join('.')} — isLatest: ${isLatest}`)
-
 const connectionOptions = {
-  version,
   auth: {
     creds: state.creds,
     keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' }))
@@ -99,7 +96,14 @@ const connectionOptions = {
   markOnlineOnConnect: false,
   generateHighQualityLinkPreview: false,
   getMessage: async (key) => {
-    return { conversation: 'hello' }
+    try {
+      const jid = global.conn?.decodeJid?.(key.remoteJid) || key.remoteJid
+      const chat = global.conn?.chats?.[jid]
+      const msg = chat?.messages?.[key.id]
+      return msg?.message ? msg.message : undefined
+    } catch {
+      return undefined
+    }
   }
 }
 
@@ -117,10 +121,10 @@ if (usePairingCode && !conn.authState.creds.registered && !existsSync(pairingFla
     phone = await new Promise(resolve => rl.question('\x1b[36m📱 Masukkan nomor WA (contoh: 6281234567890): \x1b[0m', ans => { rl.close(); resolve(ans.replace(/[^0-9]/g, '')) }))
   }
   
-  // Buat flag file SEBELUM request
+  // Buat flag file SEBELUM request (di folder auth aktif, bukan hardcode)
   try {
     const { writeFileSync, mkdirSync } = await import('fs')
-    mkdirSync('./elaina_session', { recursive: true })
+    mkdirSync(global.authFile, { recursive: true })
     writeFileSync(pairingFlagFile, phone)
   } catch {}
   
@@ -216,7 +220,11 @@ function _tag(label, color = '\x1b[36m') {
 }
 
 async function connectionUpdate(update) {
-  const { connection, lastDisconnect, isNewLogin } = update
+  const { connection, lastDisconnect, isNewLogin, qr } = update
+  if (qr && !usePairingCode) {
+    console.log(`${_tag('QR', '\x1b[36m')} \x1b[36mScan QR ini untuk login:\x1b[0m`)
+    try { qrcode.generate(qr, { small: true }) } catch {}
+  }
   if (isNewLogin) conn.isInit = true
   const code = lastDisconnect?.error?.output?.statusCode || lastDisconnect?.error?.output?.payload?.statusCode
   const errMsg = lastDisconnect?.error?.message || ''
@@ -242,7 +250,7 @@ async function connectionUpdate(update) {
     const botName = global.namebot || PROJECT_NAME
     console.log(`${_tag('CONN', '\x1b[32m')} \x1b[32mConnected\x1b[0m — berjalan sebagai \x1b[1m${botName}\x1b[0m`)
     try {
-      const flagFile = './elaina_session/.pairing_requested'
+      const flagFile = `./${global.authFile}/.pairing_requested`
       if (existsSync(flagFile)) unlinkSync(flagFile)
     } catch {}
     global.timestamp.connect = new Date
