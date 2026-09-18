@@ -62,7 +62,7 @@ global.nomorown = '6285869074622' //Nomor Owner
 global.namebot = 'Elaina BOT' //Nama Bot
 global.nameown = 'ZansLord' // Nama Owner
 // ↓ TAMBAHKAN INI ↓
-global.usePairingCode = true             // Aktifkan pairing code
+global.usePairingCode = false            // false = QR (scan), true = pairing code
 global.pairingNumber = '6285187605007'   // Nomor WA bot kamu (kosongkan untuk input manual)
 
 /*============== STAFF ==============*/

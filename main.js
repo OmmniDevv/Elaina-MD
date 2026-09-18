@@ -222,7 +222,9 @@ function _tag(label, color = '\x1b[36m') {
 async function connectionUpdate(update) {
   const { connection, lastDisconnect, isNewLogin, qr } = update
   if (qr && !usePairingCode) {
-    console.log(`${_tag('QR', '\x1b[36m')} \x1b[36mScan QR ini untuk login:\x1b[0m`)
+    global.qrString = qr
+    global.qrTime = Date.now()
+    console.log(`${_tag('QR', '\x1b[36m')} \x1b[36mScan QR ini untuk login (juga tersedia di http://127.0.0.1:${PORT}/qr):\x1b[0m`)
     try { qrcode.generate(qr, { small: true }) } catch {}
   }
   if (isNewLogin) conn.isInit = true

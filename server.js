@@ -25,6 +25,26 @@ function connect(connOrPort, maybePort) {
 		res.json({ result: array })
 	})
 	
+	app.get('/qr', async (req, res) => {
+		const qr = global.qrString
+		if (!qr) return res.status(404).send('QR belum tersedia. Tunggu bot request QR.')
+		if (global.conn?.user?.id) return res.send('✅ Sudah login: ' + global.conn.user.id)
+		try {
+			const png = await import('qrcode').then(m => m.default.toBuffer(qr, { width: 480, margin: 2 }))
+			res.type('png').send(png)
+		} catch (e) {
+			res.status(500).send('Gagal render QR: ' + e.message)
+		}
+	})
+
+	app.get('/status', (req, res) => res.json({
+		connected: !!(global.conn?.user?.id),
+		user: global.conn?.user?.id || null,
+		qr_available: !!global.qrString,
+		qr_age_sec: global.qrTime ? Math.round((Date.now() - global.qrTime) / 1000) : null,
+		plugins: Object.keys(global.plugins || {}).length,
+	}))
+
 	app.listen(PORT, () => {
 		console.log('App listened on port', PORT)
 	})
