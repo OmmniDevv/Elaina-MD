@@ -1,48 +1,17 @@
-// © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
-import fetch from 'node-fetch'
+// © Elaina-MD — Twitter/X via unified downloader (btch -> ytdlp)
+import { twitter } from '../../lib/scraper/downloader.js'
 
-let handler = async (m, { conn, text }) => {
-	if (!text) throw 'Input URL'
-	let res = await twitterDl(text)
-	await m.reply('_In progress, please wait..._')
-	for (let x = 0; x < res.media.length; x++) {
-		let caption = x === 0 ? res.caption.replace(/https:\/\/t.co\/[a-zA-Z0-9]+/gi, '').trim() : ''
-		conn.sendFile(m.chat, res.media[x].url, '', caption, m)
-	}
+let handler = async (m, { conn, text, usedPrefix, command }) => {
+  if (!text) throw `🌸 *Senpai~* kasih aku link Twitter/X-nya!\n\n> Contoh: \`${usedPrefix}${command} https://twitter.com/x/status/xxx\``
+  if (!/twitter\.com|x\.com|t\.co/i.test(text)) throw '❌ Eh~ bukan link Twitter/X ini, senpai!'
+  conn.sendMessage(m.chat, { react: { text: '🕐', key: m.key } })
+  const res = await twitter(text)
+  if (!res) throw '😿 Maaf senpai... gagal mengambil tweet-nya. Coba lagi nanti~'
+  await conn.sendMessage(m.chat, { video: { url: res.url }, caption: '✨ *ini dia senpai~*' }, { quoted: m })
+  conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
-handler.help = ['twitter']
+handler.help = ['twitter <url>', 'tw <url>', 'twdl <url>', 'xdl <url>']
 handler.tags = ['downloader']
-handler.alias = ['twt', 'twtdl', 'twitter', 'twitterdl']
-handler.command = /^((twt|twitter)(dl)?)$/i
-
+handler.command = /^(twitter|tw|twdl|xdl|twitterdl)$/i
+handler.limit = true
 export default handler
-
-async function twitterDl(url) {
-	let id = /twitter\.com\/[^/]+\/status\/(\d+)/.exec(url)[1]
-	if (!id) throw 'Invalid URL'
-	let res = await fetch(`https://tweetpik.com/api/tweets/${id}`)
-	if (res.status !== 200) throw res.statusText
-	let json = await res.json()
-	if (json.media) {
-		let media = []
-		for (let i of json.media) {
-			if (/video|animated_gif/.test(i.type)) {
-				let vid = await (await fetch(`https://tweetpik.com/api/tweets/${id}/video`)).json()
-				vid = vid.variants.pop()
-				media.push({
-					url: vid.url,
-					type: i.type
-				})
-			} else {
-				media.push({
-					url: i.url,
-					type: i.type
-				})
-			}
-		}
-		return {
-			caption: json.text,
-			media 
-		}
-	} else throw 'No media found'
-}
