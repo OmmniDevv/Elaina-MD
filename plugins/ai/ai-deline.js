@@ -4,13 +4,14 @@
 // (401/403/502) — plugin ini coba fallback berurutan gpt→copilot→deepseek
 // dan kasih pesan jelas kalau semuanya lagi down.
 import fetch from 'node-fetch'
+import { elainaSay, elainaReact } from '../../lib/elainaVoice.js'
 
 const DELINE = 'https://api.deline.web.id'
 
 let handler = async (m, { conn, text, command }) => {
-    if (!text) throw `Masukkan pertanyaan!\n\nContoh: .ai apa itu javascript`
+    if (!text) throw elainaSay('noargs', 'Masukkan pertanyaan!\nContoh: .ai apa itu javascript')
 
-    conn.sendMessage(m.chat, { react: { text: '🤔', key: m.key } })
+    conn.sendMessage(m.chat, { react: { text: elainaReact('mikir'), key: m.key } })
 
     const model = command.toLowerCase()
     // Urutan endpoint: mulai dari yang diminta, sisanya sebagai fallback
@@ -24,7 +25,7 @@ let handler = async (m, { conn, text, command }) => {
             const res = await fetch(`${Deline}${endpoint}?text=${encodeURIComponent(text)}`, { timeout: 30000 })
             const json = await res.json().catch(() => null)
             if (json?.status && json.result) {
-                conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
+                conn.sendMessage(m.chat, { react: { text: elainaReact('sukses'), key: m.key } })
                 return await m.reply(json.result)
             }
             lastErr = json?.message || json?.error || `HTTP ${res.status}`
@@ -33,8 +34,8 @@ let handler = async (m, { conn, text, command }) => {
         }
     }
 
-    conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
-    throw `❌ Semua endpoint AI Deline sedang gangguan (${lastErr}). Coba lagi nanti, atau pakai AI lain.`
+    conn.sendMessage(m.chat, { react: { text: elainaReact('gagal'), key: m.key } })
+    throw elainaSay('gagal', `Semua endpoint AI Deline sedang gangguan (${lastErr}). Coba lagi nanti, atau pakai AI lain ya~`)
 }
 
 handler.help = ['ai <pertanyaan>', 'aigpt <pertanyaan>', 'aicopilot <pertanyaan>', 'aideepseek <pertanyaan>']
