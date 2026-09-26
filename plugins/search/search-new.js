@@ -33,23 +33,9 @@ export { handlerAppleMusic }
 // ponytail: neoxr pixiv-search dibuang. public-api.pixiv.net butuh auth token sketch/danbooru blocked dari box ini. Handler dihapus; tambah lagi kalau nemu sumber hidup.
 
 // ─── TikTok Search ───────────────────────────────────────────
-import { tiktokSearchVideo } from '../../lib/scraper/tiktoksearch.js'
-
-let handlerTTSearch = async (m, { conn, text }) => {
-    if (!text) throw `🎵 *ᴛɪᴋᴛᴏᴋ sᴇᴀʀᴄʜ*\n\n> Contoh: \`${m.prefix}ttsearch anime\``
-    conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
-    const videos = await tiktokSearchVideo(text).catch(() => null)
-    if (!videos?.length) throw `❌ Tidak ditemukan video untuk: ${text}`
-    let txt = `🎵 *ᴛɪᴋᴛᴏᴋ sᴇᴀʀᴄʜ*\n\n> Query: *${text}*\n\n`
-    videos.slice(0, 5).forEach((v, i) => {
-        txt += `*${i + 1}.* ${v.title || '-'}\n   👤 ${v.author?.nickname || '-'}\n   👀 ${v.stats?.plays || 0} views\n   🔗 ${v.link}\n\n`
-    })
-    conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
-    await m.reply(txt.trim())
-}
-handlerTTSearch.help = ['ttsearch <query>']
-handlerTTSearch.tags = ['search']
-handlerTTSearch.command = /^(ttsearch|tiktoksearch|searchtiktok)$/i
-export { handlerTTSearch }
+// MATI (2026-09-26): azbry.com 500, tikwm kena Cloudflare, tobyg74 Search() error.
+// Gaada sumber TikTok search gratis no-key yang hidup saat ini.
+// Handler dihapus; tambah lagi kalau nemu sumber hidup.
+// (lib/scraper/tiktoksearch.js dibiarkan sebagai referensi kalau API azbry hidup lagi)
 
 export default handlerAppleMusic

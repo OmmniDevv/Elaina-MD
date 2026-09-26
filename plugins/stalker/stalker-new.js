@@ -19,7 +19,7 @@ let handlerRoblox = async (m, { conn, text }) => {
         const searchRes = await axios.get(`https://users.roblox.com/v1/users/search?keyword=${encodeURIComponent(text)}&limit=10`, {
             timeout: 15000, headers: { 'user-agent': 'Mozilla/5.0' }
         })
-        data = r.data?.data
+        data = searchRes.data?.data
     } catch { data = null }
     if (!data?.length) throw `❌ Tidak ditemukan player: ${text}`
     const players = data.slice(0, 10)
