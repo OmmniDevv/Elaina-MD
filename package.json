@@ -62,6 +62,7 @@
         "gtts": "^0.2.1",
         "insta-fetcher": "^1.4.0",
         "jimp": "^1.6.1",
+        "jsbarcode": "^3.12.3",
         "jsdom": "^26.1.0",
         "lodash": "^4.17.21",
         "lowdb": "^7.0.1",
@@ -85,6 +86,7 @@
         "tesseract.js": "^7.0.0",
         "url-regex-safe": "^3.0.0",
         "wa-sticker-formatter": "^4.4.4",
+        "xmldom": "^0.6.0",
         "yargs": "^17.7.2",
         "youtube-dl-exec": "^3.1.15",
         "yt-search": "^2.13.1"

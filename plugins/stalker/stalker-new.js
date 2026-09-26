@@ -35,4 +35,4 @@ handlerRoblox.tags = ['stalker']
 handlerRoblox.command = /^(robloxplayer|robloxsearch|searchroblox)$/i
 export { handlerRoblox }
 
-export default handlerPinterestStalk
+export default handlerRoblox
