@@ -94,7 +94,7 @@ global.elaina_persona = {
   sticker_author: 'OmmniDevv'
 }
 // ↓ TAMBAHKAN INI ↓
-global.usePairingCode = false            // false = QR (scan), true = pairing code
+global.usePairingCode = true             // false = QR (scan), true = pairing code
 global.pairingNumber = '6285187605007'   // Nomor WA bot kamu (kosongkan untuk input manual)
 
 /*============== STAFF ==============*/
