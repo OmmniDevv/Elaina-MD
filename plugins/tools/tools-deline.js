@@ -1,20 +1,27 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
 // Deline API Tools — search, translate, TTP sticker (tested 2026-09-26)
+// Catatan response asli (diverifikasi):
+//   /search/youtube → result[] { title, channel, duration, imageUrl, link }
+//   /search/pinterest → data[] { image, caption, fullname, source }
+//   /tools/translate → param `target`, hasil di data.hasil_terjemahan
 import fetch from 'node-fetch'
 
 const DELINE = 'https://api.deline.web.id'
 
-// YouTube Search via Deline
+// ─── YouTube Search via Deline ─────────────────────────────
 let handlerYtSearch = async (m, { conn, text }) => {
     if (!text) throw 'Masukkan query pencarian!'
     conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
     try {
-        const res = await fetch(`${DILINE}/search/youtube?q=${encodeURIComponent(text)}`, { timeout: 20000 })
+        const res = await fetch(`${Deline}/search/youtube?q=${encodeURIComponent(text)}`, { timeout: 20000 })
         const json = await res.json()
         if (!json.status || !json.result?.length) throw 'Tidak ditemukan'
         let txt = `🔍 *YOUTUBE SEARCH*\n\n> Query: *${text}*\n\n`
         json.result.slice(0, 5).forEach((v, i) => {
-            txt += `*${i + 1}. ${v.title}*\n   ⏱️ ${v.duration || '-'}\n   📺 ${v.channel || '-'}\n   👀 ${v.views || '-'}\n   🔗 ${v.url}\n\n`
+            txt += `*${i + 1}. ${v.title}*\n`
+            txt += `   ⏱️ ${v.duration || '-'}\n`
+            if (v.channel) txt += `   📺 ${v.channel}\n`
+            txt += `   🔗 ${v.link || v.url}\n\n`
         })
         conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
         await m.reply(txt.trim())
@@ -28,20 +35,22 @@ handlerYtSearch.tags = ['search']
 handlerYtSearch.command = /^(ytsearch|yts|searchyt)$/i
 export { handlerYtSearch }
 
-// Pinterest Search via Deline
+// ─── Pinterest Search via Deline ───────────────────────────
 let handlerPinSearch = async (m, { conn, text }) => {
     if (!text) throw 'Masukkan query pencarian!'
     conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
     try {
-        const res = await fetch(`${DILINE}/search/pinterest?q=${encodeURIComponent(text)}`, { timeout: 20000 })
+        const res = await fetch(`${Deline}/search/pinterest?q=${encodeURIComponent(text)}`, { timeout: 20000 })
         const json = await res.json()
-        if (!json.status || !json.result?.length) throw 'Tidak ditemukan'
-        const item = json.result[0]
+        const list = json.data || json.result
+        if (!json.status || !list?.length) throw 'Tidak ditemukan'
+        const item = list[0]
         conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
         if (item.image) {
-            await conn.sendMessage(m.chat, { image: { url: item.image }, caption: `📌 *Pinterest*\n\n${item.title || ''}\n${item.description || ''}` }, { quoted: m })
+            const cap = `📌 *Pinterest*\n\n${item.caption || text}${item.fullname ? `\n👤 ${item.fullname}` : ''}`
+            await conn.sendMessage(m.chat, { image: { url: item.image }, caption: cap }, { quoted: m })
         } else {
-            await m.reply(`📌 *Pinterest*\n\n${item.title || ''}\n🔗 ${item.url}`)
+            await m.reply(`📌 *Pinterest*\n\n${item.caption || text}\n🔗 ${item.source || ''}`)
         }
     } catch (e) {
         conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
@@ -53,17 +62,18 @@ handlerPinSearch.tags = ['search']
 handlerPinSearch.command = /^(pinterestsearch|pinsearch|caripin)$/i
 export { handlerPinSearch }
 
-// Translate via Deline
+// ─── Translate via Deline (param: target) ──────────────────
 let handlerTranslate = async (m, { conn, text, args }) => {
     if (!text) throw 'Masukkan teks untuk diterjemahkan!'
-    const to = args[0] || 'id'
+    const target = args[0] || 'id'
     conn.sendMessage(m.chat, { react: { text: '🌐', key: m.key } })
     try {
-        const res = await fetch(`${DILINE}/tools/translate?text=${encodeURIComponent(text)}&to=${to}`, { timeout: 15000 })
+        const res = await fetch(`${Deline}/tools/translate?text=${encodeURIComponent(text)}&target=${target}`, { timeout: 15000 })
         const json = await res.json()
-        if (!json.status || !json.result) throw 'Gagal translate'
+        const hasil = json.data?.hasil_terjemahan || json.result?.text
+        if (!json.status || !hasil) throw json.error || 'Gagal translate'
         conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
-        await m.reply(`🌐 *Translate*\n\n${json.result.text}`)
+        await m.reply(`🌐 *Translate* (${json.data?.terdeteksi_bahasa || '?'} → ${target})\n\n${hasil}`)
     } catch (e) {
         conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
         throw `❌ ${e.message}`
@@ -74,12 +84,12 @@ handlerTranslate.tags = ['tools']
 handlerTranslate.command = /^(translate|tr|terjemahkan)$/i
 export { handlerTranslate }
 
-// TTP Sticker via Deline
+// ─── TTP Sticker via Deline ────────────────────────────────
 let handlerTtp = async (m, { conn, text }) => {
     if (!text) throw 'Masukkan teks!'
     conn.sendMessage(m.chat, { react: { text: '🎨', key: m.key } })
     try {
-        const url = `${DILINE}/maker/ttp?text=${encodeURIComponent(text)}`
+        const url = `${Deline}/maker/ttp?text=${encodeURIComponent(text)}`
         await conn.sendImageAsSticker(m.chat, url, m, { packname: global.stickpack || 'Elaina-MD', author: global.stickauth || 'OmmniDevv' })
         conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
     } catch (e) {
