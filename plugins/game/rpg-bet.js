@@ -81,7 +81,7 @@ Kamu *${status}*, kamu ${status == 'Menang' ? `Mendapatkan *+${count * 2}*` : st
 
 handler.help = ['judi [jumlah]']
 handler.tags = ['rpg']
-handler.disabled = true
+
 handler.command = /^(judi|bet)$/i
 
 export default handler
