@@ -8,27 +8,22 @@ async function getWaifuIm(tag) {
   return json.items?.[0]?.url
 }
 
-async function getWaifuPics(type) {
-  const res = await fetch(`https://api.waifu.pics/sfw/${type}`)
-  const json = await res.json()
-  return json.url
-}
-
+// waifu.pics mati (dites 2026-09-26: 000 timeout) → semua via waifu.im
 let handler = async (m, { conn, command }) => {
   let url
   switch (command.toLowerCase()) {
-    case 'neko':    url = await getWaifuPics('neko'); break
+    case 'neko':    url = await getWaifuIm('neko'); break
     case 'waifu':   url = await getWaifuIm('waifu'); break
     case 'maid':    url = await getWaifuIm('maid'); break
-    case 'shinobu': url = await getWaifuPics('shinobu'); break
-    case 'hug':     url = await getWaifuPics('hug'); break
-    case 'pat':     url = await getWaifuPics('pat'); break
-    case 'kiss':    url = await getWaifuPics('kiss'); break
-    case 'slap':    url = await getWaifuPics('slap'); break
-    case 'cry':     url = await getWaifuPics('cry'); break
-    case 'dance':   url = await getWaifuPics('dance'); break
-    case 'smug':    url = await getWaifuPics('smug'); break
-    case 'blush':   url = await getWaifuPics('blush'); break
+    case 'shinobu': url = await getWaifuIm('shinobu'); break
+    case 'hug':     url = await getWaifuIm('hug'); break
+    case 'pat':     url = await getWaifuIm('pat'); break
+    case 'kiss':    url = await getWaifuIm('kiss'); break
+    case 'slap':    url = await getWaifuIm('slap'); break
+    case 'cry':     url = await getWaifuIm('cry'); break
+    case 'dance':   url = await getWaifuIm('dance'); break
+    case 'smug':    url = await getWaifuIm('smug'); break
+    case 'blush':   url = await getWaifuIm('blush'); break
     default:        url = await getWaifuIm('waifu'); break
   }
 
