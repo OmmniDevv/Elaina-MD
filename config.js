@@ -80,7 +80,7 @@ global.APIs = {
   amel: 'https://melcanz.com',
   violetics: 'https://violetics.pw',
   velixs: 'https://api.velixs.com',
-  neoxr: 'https://api.neoxr.eu',
+  // neoxr dibuang — semua plugin pindah ke sumber no-key
   // API Gratis (No Key Required):
   siputzx: 'https://api.siputzx.my.id',
   vreden: 'https://api.vreden.my.id',
@@ -109,8 +109,7 @@ global.APIKeys = {
   // Covenant (GPT-4o) - Daftar: https://covenant.sbs
   covenant: 'ISI_APIKEY_COVENANT_DISINI',
 
-  // NeoXR API - Daftar: https://api.neoxr.eu
-  neoxr: 'ISI_APIKEY_NEOXR_DISINI',
+  // neoxr key dihapus — tidak dipakai lagi
 
   // RajaOngkir (Cek Ongkir) - https://rajaongkir.com/dokumentasi/starter
   rajaongkir: 'ISI_APIKEY_RAJAONGKIR_DISINI',

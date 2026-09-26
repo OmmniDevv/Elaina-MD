@@ -66,7 +66,7 @@ export const removebgHandler = async (m, { conn, usedPrefix, command }) => {
     }).then(r => ({ data: r.arrayBuffer().then(ab => Buffer.from(ab)) }))
   })
   const result = Buffer.from(res.data)
-  await conn.sendMessage(m.chat, { image: result, caption: '✅ *Background dihapus!*' }, { quoted: m })
+  await conn.sendMessage(m.chat, { image: { url: result }, caption: '✅ *Background dihapus!*' }, { quoted: m })
   conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
 removebgHandler.help = ['removebg (reply gambar)']

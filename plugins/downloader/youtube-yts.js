@@ -1,31 +1,20 @@
-// © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
-import fetch from 'node-fetch'
+// © Elaina-MD — YouTube search via delirius (no API key), bukan scrape HTML
+import { ytSearch } from '../../lib/scraper/downloader.js'
 
 let handler = async (m, { text, usedPrefix, command }) => {
   if (!text) throw `Contoh: ${usedPrefix}${command} Naruto Opening`
 
-  const res = await fetch(`https://www.youtube.com/results?search_query=${encodeURIComponent(text)}`, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-  })
-  const html = await res.text()
+  const results = await ytSearch(text, 8)
+  if (!results.length) throw 'Tidak ada hasil ditemukan'
 
-  const videoIds = [...html.matchAll(/"videoId":"([a-zA-Z0-9_-]{11})"/g)]
-    .map(m => m[1])
-    .filter((v, i, a) => a.indexOf(v) === i)
-    .slice(0, 5)
+  const list = results.slice(0, 8).map((v, i) =>
+    `${i + 1}. *${v.title}*\n   ⏱️ ${v.duration || '?'} • 📺 ${v.author || '?'} • 👁️ ${v.views ?? '?'}\n   🔗 ${v.url}`
+  ).join('\n\n')
 
-  if (!videoIds.length) throw 'Tidak ada hasil ditemukan'
-
-  const results = videoIds.map((id, i) => {
-    const titleMatch = html.match(new RegExp(`"videoId":"${id}"[^}]*?"text":"([^"]+)"`, 's'))
-    const title = titleMatch ? titleMatch[1] : `Video ${i + 1}`
-    return `${i + 1}. *${title}*\nhttps://youtu.be/${id}`
-  })
-
-  m.reply(`*${htki} SEARCH ${htka}*\n\n${results.join('\n\n')}`)
+  m.reply(`*${htki} SEARCH ${htka}*\n\n${list}\n\n> ✨ untuk download: \`${usedPrefix}yta ${results[0].url}\``)
 }
 
-handler.help = ['yts <query>']
+handler.help = ['yts <query>', 'ytsearch <query>']
 handler.tags = ['downloader']
 handler.command = /^yts(earch)?$/i
 export default handler

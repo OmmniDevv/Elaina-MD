@@ -1,18 +1,28 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
 import axios from 'axios'
+import fs from 'fs'
+import path from 'path'
 
-// ─── Fuck My Life ────────────────────────────────────────────
+// ─── Fuck My Life / Candaan ──────────────────────────────────
 let handlerFml = async (m, { conn }) => {
     conn.sendMessage(m.chat, { react: { text: '🕕', key: m.key } })
-    const neoxrKey = global.APIKeys?.neoxr || ''
-    const res = await axios.get(`https://api.neoxr.eu/api/fml?apikey=${neoxrKey}`, { timeout: 15000 }).catch(() => null)
-    if (!res?.data?.status || !res?.data?.data?.text) throw '❌ Gagal mengambil FML story'
-    await m.reply(res.data.data.text)
+    // ponytail: meme-api joke primary, candaan-api Indo fallback. Upgrade when butuh sumber ke-3.
+    let txt = null
+    try {
+      const jk = await axios.get('https://official-joke-api.appspot.com/random_joke', { timeout: 8000 })
+      if (jk?.data?.setup && jk?.data?.punchline) txt = `${jk.data.setup}\n\n> ${jk.data.punchline}`
+    } catch {}
+    if (!txt) {
+      const res = await axios.get('https://candaan-api.vercel.app/api/text/random', { timeout: 15000 }).catch(() => null)
+      if (!res?.data?.data) throw '❌ Gagal mengambil candaan'
+      txt = res.data.data
+    }
+    await m.reply(`😂 *CANDAAN RECEH*\n\n${txt}`)
     conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
-handlerFml.help = ['fuckmylife', 'fml']
+handlerFml.help = ['fuckmylife', 'fml', 'candaan']
 handlerFml.tags = ['fun']
-handlerFml.command = /^(fuckmylife|fml)$/i
+handlerFml.command = /^(fuckmylife|fml|candaan)$/i
 export { handlerFml }
 
 // ─── Jodoh ───────────────────────────────────────────────────

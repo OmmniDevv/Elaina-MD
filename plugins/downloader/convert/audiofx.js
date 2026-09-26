@@ -56,7 +56,7 @@ let handler = async (m, { conn, command, usedPrefix }) => {
     await execAsync(`ffmpeg -y -i "${inputPath}" -af "${fx.filter}" -vn "${outputPath}"`)
     if (!fs.existsSync(outputPath)) throw '❌ Gagal memproses audio'
     const audioBuf = fs.readFileSync(outputPath)
-    await conn.sendMessage(m.chat, { audio: audioBuf, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
+    await conn.sendMessage(m.chat, { audio: { url: audioBuf }, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
     conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
   } finally {
     [inputPath, outputPath].forEach(f => { try { fs.unlinkSync(f) } catch {} })

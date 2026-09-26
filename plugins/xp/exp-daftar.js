@@ -91,7 +91,7 @@ let handler = async function (m, { text, usedPrefix, command }) {
     try { thumb = readFileSync('./assets/images/elaina-daftar.jpg') } catch { }
 
     if (thumb) {
-        await conn.sendMessage(m.chat, { image: thumb, caption: cap }, { quoted: m })
+        await conn.sendMessage(m.chat, { image: { url: thumb }, caption: cap }, { quoted: m })
     } else {
         await conn.sendMessage(m.chat, { text: cap }, { quoted: m })
     }

@@ -2,29 +2,7 @@
 import axios from 'axios'
 
 // ─── Discord Stalk ────────────────────────────────────────────
-let handlerDiscordStalk = async (m, { conn, args }) => {
-    const userId = args?.[0]?.trim()
-    if (!userId) throw `🎮 *ᴅɪsᴄᴏʀᴅ sᴛᴀʟᴋ*\n\n> Masukkan Discord User ID\n\n\`Contoh: ${m.prefix}discordstalk 297574907510784000\``
-    if (!/^\d+$/.test(userId)) throw '❌ User ID harus berupa angka!'
-    conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
-    const neoxrKey = global.APIKeys?.neoxr || ''
-    const res = await axios.get(`https://api.neoxr.eu/api/dcstalk?id=${userId}&apikey=${neoxrKey}`, { timeout: 30000 }).catch(() => null)
-    if (!res?.data?.status || !res?.data?.data) throw `❌ User ID *${userId}* tidak ditemukan`
-    const d = res.data.data
-    const caption = `🎮 *ᴅɪsᴄᴏʀᴅ sᴛᴀʟᴋ*\n\n` +
-        `👤 *Username:* ${d.username || '-'}\n` +
-        `📛 *Display Name:* ${d.global_name || '-'}\n` +
-        `🔢 *Discriminator:* #${d.discriminator || '0'}\n` +
-        `🆔 *User ID:* ${d.id}\n\n` +
-        `> _Discord User Lookup_`
-    conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
-    if (d.avatar_url) await conn.sendMessage(m.chat, { image: { url: d.avatar_url }, caption }, { quoted: m })
-    else await m.reply(caption)
-}
-handlerDiscordStalk.help = ['discordstalk <userid>']
-handlerDiscordStalk.tags = ['stalker']
-handlerDiscordStalk.command = /^(discordstalk|dcstalk|stalkdc)$/i
-export { handlerDiscordStalk }
+// ponytail: neoxr dcstalk dibuang. Discord tak punya API publik no-key (butuh bot token). Handler dihapus; tambah lagi kalau nemu sumber hidup.
 
 // ─── Pinterest Stalk ──────────────────────────────────────────
 let handlerPinterestStalk = async (m, { conn, args }) => {
@@ -53,11 +31,17 @@ export { handlerPinterestStalk }
 let handlerRoblox = async (m, { conn, text }) => {
     if (!text) throw `🎮 *ʀᴏʙʟᴏx sᴇᴀʀᴄʜ*\n\n\`${m.prefix}robloxplayer linkmon\``
     conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
-    const neoxrKey = global.APIKeys?.neoxr || ''
-    const res = await axios.get(`https://api.neoxr.eu/api/roblox-search?q=${encodeURIComponent(text)}&apikey=${neoxrKey}`, { timeout: 30000 }).catch(() => null)
-    if (!res?.data?.status || !res?.data?.data?.length) throw `❌ Tidak ditemukan player: ${text}`
-    const players = res.data.data.slice(0, 10)
-    let txt = `🎮 *ʀᴏʙʟᴏx ᴘʟᴀʏᴇʀ sᴇᴀʀᴄʜ*\n\n> Query: \`${text}\`\n> Ditemukan: *${players.length}* player\n\n`
+    // ponytail: neoxr roblox-search dibuang → users.roblox.com public search (no-key). Upgrade when butuh badge/avatar detail.
+    let data
+    try {
+        const r = await axios.get(`https://users.roblox.com/v1/users/search?q=${encodeURIComponent(text)}&limit=10`, {
+            timeout: 15000, headers: { 'user-agent': 'Mozilla/5.0' }
+        })
+        data = r.data?.data
+    } catch { data = null }
+    if (!data?.length) throw `❌ Tidak ditemukan player: ${text}`
+    const players = data.slice(0, 10)
+    let txt = `🎮 *ʀᴏʙᴏx ᴘᴀʏʀ sᴇᴀʀᴄʜ*\n\n> Query: \`${text}\`\n> Ditemukan: *${players.length}* player\n\n`
     players.forEach((p, i) => {
         txt += `*${i + 1}.* ${p.displayName}\n   🆔 \`${p.id}\` | 👤 \`${p.name}\`${p.hasVerifiedBadge ? ' ✅' : ''}\n\n`
     })
@@ -69,4 +53,4 @@ handlerRoblox.tags = ['stalker']
 handlerRoblox.command = /^(robloxplayer|robloxsearch|searchroblox)$/i
 export { handlerRoblox }
 
-export default handlerDiscordStalk
+export default handlerPinterestStalk

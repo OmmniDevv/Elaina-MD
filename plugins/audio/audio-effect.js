@@ -28,7 +28,7 @@ exec(`ffmpeg -i ${media} ${set} ${filename}`, async (err, stderr, stdout) => {
 await unlinkSync(media)
 if (err) throw `_*Error!*_`
 let buff = await readFileSync(filename)
-await conn.sendMessage(m.chat, { audio: buff, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
+await conn.sendMessage(m.chat, { audio: { url: buff }, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
 unlinkSync(filename)
 })
 } else throw `*[❗ɴᴏᴛᴇ ] Reply audio atau vn kamu yang akan dimodifikasi, menggunakan perintah ${usedPrefix + command}*`

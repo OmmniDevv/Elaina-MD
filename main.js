@@ -175,6 +175,33 @@ try {
 
 // Pairing code akan di-request di connectionUpdate saat status 'open' pertama kali
 
+// ── Helper global untuk plugin (dulu hilang setelah refactor lib/) ──
+import axios from 'axios'
+global.getBuffer = async (url, options) => {
+  try {
+    const res = await axios({ method: 'get', url, headers: { DNT: 1, 'Upgrade-Insecure-Request': 1 }, ...options, responseType: 'arraybuffer' })
+    return res.data
+  } catch (e) { console.log(`getBuffer Error: ${e}`) }
+}
+global.fetchJson = async (url, options = {}) => {
+  const res = await axios.get(url, { responseType: 'json', ...options })
+  return res.data
+}
+global.fetchText = async (url, options = {}) => {
+  const res = await axios.get(url, { responseType: 'text', ...options })
+  return res.data
+}
+global.makeid = (len = 8) => {
+  const a = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+'
+  let s = ''
+  for (let i = 0; i < len; i++) s += a.charAt(Math.floor(Math.random() * a.length))
+  return s
+}
+global.runtime = ms => {
+  let sec = Math.floor(ms / 1000); let min = Math.floor(sec / 60); let hr = Math.floor(min / 60)
+  return `${hr}h ${min % 60}m ${sec % 60}s`
+}
+
 if (!opts['test']) {
   setInterval(async () => {
     if (global.db.data) await global.db.write().catch(console.error)

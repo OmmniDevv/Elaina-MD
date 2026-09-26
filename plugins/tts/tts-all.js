@@ -6,18 +6,7 @@ import axios from 'axios'
 import fs from 'fs'
 import path from 'path'
 
-// Helper: TTS via Groq (free) or fallback to gtts
-async function ttsGroq(text, voice = 'aura-asteria-en') {
-  const key = global.APIKeys?.groq
-  if (!key) return null
-  try {
-    const res = await axios.post('https://api.groq.com/openai/v1/audio/speech', {
-      model: 'playai-tts', input: text, voice
-    }, { headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' }, responseType: 'arraybuffer', timeout: 30000 })
-    return Buffer.from(res.data)
-  } catch { return null }
-}
-
+// ponytail: ttsGroq dibuang (butuh API key). gtts = no-key, aman VPS/Pterodactyl. Upgrade when nemu TTS no-key berkualitas > gtts.
 async function ttsGtts(text, lang = 'id') {
   const { default: gtts } = await import('gtts')
   const tmpDir = path.join(process.cwd(), 'tmp')
@@ -38,7 +27,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
   conn.sendMessage(m.chat, { react: { text: '🕕', key: m.key } })
   let buf = await ttsGtts(text, 'id')
   if (!buf) throw '❌ Gagal generate TTS'
-  await conn.sendMessage(m.chat, { audio: buf, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
+  await conn.sendMessage(m.chat, { audio: { url: buf }, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
   conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
 handler.help = ['tts <teks>']
@@ -56,7 +45,7 @@ export const ttsEminemHandler = async (m, { conn, text, usedPrefix, command }) =
   const voiceUrl = res?.data?.result?.find(v => v.eminem)?.eminem
   if (!voiceUrl) throw '❌ Gagal generate TTS Eminem'
   const audio = await axios.get(voiceUrl, { responseType: 'arraybuffer', timeout: 30000 })
-  await conn.sendMessage(m.chat, { audio: Buffer.from(audio.data), mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
+  await conn.sendMessage(m.chat, { audio: { url: Buffer.from(audio.data) }, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
   conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
 ttsEminemHandler.help = ['ttseminem <teks>']
@@ -73,7 +62,7 @@ export const ttsGokuHandler = async (m, { conn, text, usedPrefix, command }) => 
   const voiceUrl = res?.data?.result?.find(v => v.goku)?.goku
   if (!voiceUrl) throw '❌ Gagal generate TTS Goku'
   const audio = await axios.get(voiceUrl, { responseType: 'arraybuffer', timeout: 30000 })
-  await conn.sendMessage(m.chat, { audio: Buffer.from(audio.data), mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
+  await conn.sendMessage(m.chat, { audio: { url: Buffer.from(audio.data) }, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
   conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
 ttsGokuHandler.help = ['ttsgoku <teks>']
@@ -90,7 +79,7 @@ export const ttsMickeyHandler = async (m, { conn, text, usedPrefix, command }) =
   const voiceUrl = res?.data?.result?.find(v => v.mickey_mouse)?.mickey_mouse
   if (!voiceUrl) throw '❌ Gagal generate TTS Mickey'
   const audio = await axios.get(voiceUrl, { responseType: 'arraybuffer', timeout: 30000 })
-  await conn.sendMessage(m.chat, { audio: Buffer.from(audio.data), mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
+  await conn.sendMessage(m.chat, { audio: { url: Buffer.from(audio.data) }, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
   conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
 ttsMickeyHandler.help = ['ttsmickey <teks>']
@@ -105,7 +94,7 @@ export const ttsElonHandler = async (m, { conn, text, usedPrefix, command }) => 
   const voiceUrl = res?.data?.result?.find(v => v.elon_musk)?.elon_musk
   if (!voiceUrl) throw '❌ Gagal generate TTS Elon Musk'
   const audio = await axios.get(voiceUrl, { responseType: 'arraybuffer', timeout: 30000 })
-  await conn.sendMessage(m.chat, { audio: Buffer.from(audio.data), mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
+  await conn.sendMessage(m.chat, { audio: { url: Buffer.from(audio.data) }, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
   conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
 ttsElonHandler.help = ['ttselon <teks>']
@@ -120,7 +109,7 @@ export const ttsNahidaHandler = async (m, { conn, text, usedPrefix, command }) =
   const voiceUrl = res?.data?.result?.find(v => v.nahida)?.nahida
   if (!voiceUrl) throw '❌ Gagal generate TTS Nahida'
   const audio = await axios.get(voiceUrl, { responseType: 'arraybuffer', timeout: 30000 })
-  await conn.sendMessage(m.chat, { audio: Buffer.from(audio.data), mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
+  await conn.sendMessage(m.chat, { audio: { url: Buffer.from(audio.data) }, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
   conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
 ttsNahidaHandler.help = ['ttsnahida <teks>']

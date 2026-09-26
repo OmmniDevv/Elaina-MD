@@ -1,11 +1,11 @@
 {
   "users": {
     "6285187605007@s.whatsapp.net": {
-      "exp": 43,
+      "exp": 217,
       "limit": 10,
       "lastclaim": 0,
       "registered": false,
-      "name": "+62 851-8760-5007",
+      "name": "Gyoo Blup",
       "pasangan": "",
       "age": -1,
       "regTime": -1,
@@ -198,7 +198,7 @@
     }
   },
   "chats": {
-    "6285187605007@s.whatsapp.net": {
+    "6285869074622@s.whatsapp.net": {
       "isBanned": false,
       "welcome": true,
       "detect": false,
@@ -225,5 +225,60 @@
       "restartDB": 0
     }
   },
-  "stats": {}
+  "stats": {
+    "sticker/sticker-sticker.js": {
+      "total": 2,
+      "success": 2,
+      "last": 1790341314931,
+      "lastSuccess": 1790341314931
+    },
+    "main/menu.js": {
+      "total": 2,
+      "success": 2,
+      "last": 1790341323818,
+      "lastSuccess": 1790341323818
+    },
+    "main/allmenu.js": {
+      "total": 2,
+      "success": 2,
+      "last": 1790341329893,
+      "lastSuccess": 1790341329893
+    },
+    "sticker/sticker-attp.js": {
+      "total": 2,
+      "success": 2,
+      "last": 1790341345763,
+      "lastSuccess": 1790341345763
+    },
+    "sticker/sticker-brat.js": {
+      "total": 2,
+      "success": 2,
+      "last": 1790341368420,
+      "lastSuccess": 1790341368420
+    },
+    "random/random-asupan.js": {
+      "total": 2,
+      "success": 2,
+      "last": 1790341427643,
+      "lastSuccess": 1790341427643
+    },
+    "anime/anime-random.js": {
+      "total": 3,
+      "success": 3,
+      "last": 1790341472454,
+      "lastSuccess": 1790341472454
+    },
+    "rpg/rpg-game-slot.js": {
+      "total": 2,
+      "success": 2,
+      "last": 1790341513255,
+      "lastSuccess": 1790341513255
+    },
+    "downloader/youtube-play-v2.js": {
+      "total": 2,
+      "success": 0,
+      "last": 1790341544439,
+      "lastSuccess": 0
+    }
+  }
 }

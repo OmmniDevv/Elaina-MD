@@ -32,7 +32,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
   m.reply('🎨 Membuat gambar...')
   try {
     const buf = await makeJail(pp)
-    await conn.sendMessage(m.chat, { image: buf, caption: '*JAIL* 🔒' }, { quoted: m })
+    await conn.sendMessage(m.chat, { image: { url: buf }, caption: '*JAIL* 🔒' }, { quoted: m })
   } catch (e) {
     throw `Error: ${e.message || e}`
   }

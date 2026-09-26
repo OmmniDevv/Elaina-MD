@@ -2,19 +2,7 @@
 import axios from 'axios'
 
 // ─── Chord / Kunci Gitar ─────────────────────────────────────
-let handlerChord = async (m, { conn, text }) => {
-    if (!text) throw `🎸 *ᴄʜᴏʀᴅ sᴇᴀʀᴄʜ*\n\n> Contoh: \`${m.prefix}chord komang\``
-    conn.sendMessage(m.chat, { react: { text: '🕕', key: m.key } })
-    const neoxrKey = global.APIKeys?.neoxr || ''
-    const res = await axios.get(`https://api.neoxr.eu/api/chord?q=${encodeURIComponent(text)}&apikey=${neoxrKey}`, { timeout: 30000 }).catch(() => null)
-    if (!res?.data?.status || !res?.data?.data?.chord) throw `❌ Chord tidak ditemukan untuk: \`${text}\``
-    conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
-    await m.reply(res.data.data.chord)
-}
-handlerChord.help = ['chord <judul lagu>']
-handlerChord.tags = ['search']
-handlerChord.command = /^(chord2|chords2|kunci|kuncigitar)$/i
-export { handlerChord }
+// ponytail: neoxr chord dibuang. Gaada API no-key hidup (chordindonesia mati, mychords perlu scraper HTML). Handler dihapus; tambah lagi kalau nemu sumber hidup atau bikin scraper sendiri.
 
 // ─── Apple Music Search ──────────────────────────────────────
 let handlerAppleMusic = async (m, { conn, text }) => {
@@ -36,26 +24,7 @@ handlerAppleMusic.command = /^(applemusic|amusic)$/i
 export { handlerAppleMusic }
 
 // ─── Pixiv Search ────────────────────────────────────────────
-let handlerPixiv = async (m, { conn, text }) => {
-    if (!text) throw `🎨 *ᴘɪxɪᴠ sᴇᴀʀᴄʜ*\n\n> Contoh: \`${m.prefix}pixiv rem\``
-    conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
-    const neoxrKey = global.APIKeys?.neoxr || ''
-    const res = await axios.get(`https://api.neoxr.eu/api/pixiv-search?q=${encodeURIComponent(text)}&apikey=${neoxrKey}`, { timeout: 30000 }).catch(() => null)
-    if (!res?.data?.status || !res?.data?.data?.length) throw `❌ Tidak ditemukan hasil untuk: ${text}`
-    const results = res.data.data.slice(0, 8)
-    let caption = `🎨 *ᴘɪxɪᴠ sᴇᴀʀᴄʜ*\n📝 *Query:* ${text}\n📊 *Hasil:* ${results.length} artwork\n\n`
-    results.forEach((art, i) => {
-        const ai = art.aiType === 2 ? ' 🤖' : ''
-        const nsfw = art.xRestrict > 0 ? ' 🔞' : ''
-        caption += `*${i + 1}.* ${art.title}${ai}${nsfw}\n   👤 ${art.userName}\n   🔗 ${art.url}\n\n`
-    })
-    conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
-    await m.reply(caption.trim())
-}
-handlerPixiv.help = ['pixiv <query>']
-handlerPixiv.tags = ['search']
-handlerPixiv.command = /^(pixiv|pixivsearch|caripixiv)$/i
-export { handlerPixiv }
+// ponytail: neoxr pixiv-search dibuang. public-api.pixiv.net butuh auth token sketch/danbooru blocked dari box ini. Handler dihapus; tambah lagi kalau nemu sumber hidup.
 
 // ─── TikTok Search ───────────────────────────────────────────
 import { tiktokSearchVideo } from '../../lib/scraper/tiktoksearch.js'
@@ -77,4 +46,4 @@ handlerTTSearch.tags = ['search']
 handlerTTSearch.command = /^(ttsearch|tiktoksearch|searchtiktok)$/i
 export { handlerTTSearch }
 
-export default handlerChord
+export default handlerAppleMusic
