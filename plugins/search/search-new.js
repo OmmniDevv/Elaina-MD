@@ -5,18 +5,24 @@ import axios from 'axios'
 // ponytail: neoxr chord dibuang. Gaada API no-key hidup (chordindonesia mati, mychords perlu scraper HTML). Handler dihapus; tambah lagi kalau nemu sumber hidup atau bikin scraper sendiri.
 
 // ─── Apple Music Search ──────────────────────────────────────
+// FIX (2026-09-26): nexray.web.id mati → ganti ke iTunes Search API (gratis, no key, tested ✅)
 let handlerAppleMusic = async (m, { conn, text }) => {
     if (!text) throw `🍎 *ᴀᴘᴘʟᴇ ᴍᴜsɪᴄ*\n\n> Contoh: \`${m.prefix}applemusic Best Friend\``
     conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
-    const res = await axios.get(`https://api.nexray.web.id/search/applemusic?q=${encodeURIComponent(text)}`, { timeout: 20000 }).catch(() => null)
-    if (!res?.data?.result?.length) throw `❌ Tidak ditemukan hasil untuk: ${text}`
-    const tracks = res.data.result.slice(0, 5)
-    let txt = `🍎 *ᴀᴘᴘʟᴇ ᴍᴜsɪᴄ sᴇᴀʀᴄʜ*\n\n> Query: *${text}*\n\n`
-    tracks.forEach((t, i) => {
-        txt += `*${i + 1}.* \`\`\`${t.title}\`\`\`\n   ├ 📀 \`${t.subtitle || 'Unknown'}\`\n   └ 🔗 \`${t.link}\`\n\n`
-    })
-    conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
-    await m.reply(txt.trim())
+    try {
+        const res = await axios.get(`https://itunes.apple.com/search?term=${encodeURIComponent(text)}&media=music&limit=8`, { timeout: 20000 })
+        const tracks = res.data?.results
+        if (!tracks?.length) throw `❌ Tidak ditemukan hasil untuk: ${text}`
+        let txt = `🍎 *ᴀᴘᴘʟᴇ ᴍᴜsɪᴄ sᴇᴀʀᴄʜ*\n\n> Query: *${text}*\n\n`
+        tracks.forEach((t, i) => {
+            txt += `*${i + 1}.* \`\`\`${t.trackName}\`\`\`\n   ├ 📀 \`${t.artistName}\`\n   ├ 💿 \`${t.collectionName || 'Single'}\`\n   └ 🔗 \`${t.trackViewUrl}\`\n\n`
+        })
+        conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
+        await m.reply(txt.trim())
+    } catch (e) {
+        conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
+        throw `❌ Gagal mencari: ${e.message}`
+    }
 }
 handlerAppleMusic.help = ['applemusic <query>']
 handlerAppleMusic.tags = ['search']

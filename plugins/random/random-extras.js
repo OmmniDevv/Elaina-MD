@@ -4,56 +4,79 @@
  */
 import axios from 'axios'
 
-// ─── Cecan (random cewek cantik by region) ─────────────────
-async function sendCecan(m, conn, apiUrl, label) {
-  conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
-  const res = await axios.get(apiUrl, { timeout: 15000, responseType: 'arraybuffer' })
-  const ct = res.headers['content-type'] || ''
-  let imageBuffer
-  if (ct.includes('image/')) {
-    imageBuffer = Buffer.from(res.data)
-  } else {
-    // try parse as JSON
-    const json = JSON.parse(Buffer.from(res.data).toString())
-    const url = json?.result?.url || json?.url || json?.data?.url || (typeof json === 'string' ? json : null)
-    if (!url) throw `❌ Gagal ambil foto ${label}`
-    const imgRes = await axios.get(url, { responseType: 'arraybuffer', timeout: 15000 })
-    imageBuffer = Buffer.from(imgRes.data)
-  }
-  await conn.sendMessage(m.chat, { image: { url: imageBuffer }, caption: `📸 *${label}*` }, { quoted: m })
-  conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
-}
+// ─── Cecan — DISABLED (2026-09-26) ─────────────────────────
+// nexray.web.id mati total. Tidak ada API gratis no-key reliable
+// untuk random foto cewek real. TODO: tambah lagi kalau nemu sumber hidup.
 
-let handler = async (m, { conn }) => sendCecan(m, conn, 'https://api.nexray.web.id/random/cecan/indonesia', 'Cecan Indo')
-handler.help = ['cecanindo']
+// ─── Meme (meme-api.com — gratis, no key, tested ✅) ────────
+let handler = async (m, { conn }) => {
+    conn.sendMessage(m.chat, { react: { text: '😂', key: m.key } })
+    try {
+        const res = await axios.get('https://meme-api.com/gimme/memes', { timeout: 15000 })
+        const { url, title, subreddit, author } = res.data
+        if (!url) throw 'No meme found'
+        await conn.sendMessage(m.chat, {
+            image: { url },
+            caption: `😂 *${title}*\n\nr/${subreddit} by u/${author}`
+        }, { quoted: m })
+        conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
+    } catch (e) {
+        throw `❌ Gagal ambil meme: ${e.message}`
+    }
+}
+handler.help = ['meme']
 handler.tags = ['random']
-handler.command = /^cecanindo$/i
+handler.command = /^meme$/i
 export default handler
 
-export const cecanKoreaHandler = async (m, { conn }) => sendCecan(m, conn, 'https://api.nexray.web.id/random/cecan/korea', 'Cecan Korea')
-cecanKoreaHandler.help = ['cecankorea']
-cecanKoreaHandler.tags = ['random']
-cecanKoreaHandler.command = /^cecankorea$/i
+// ─── Cat (thecatapi.com — gratis, no key, tested ✅) ────────
+export const catHandler = async (m, { conn }) => {
+    conn.sendMessage(m.chat, { react: { text: '🐱', key: m.key } })
+    try {
+        const res = await axios.get('https://api.thecatapi.com/v1/images/search', { timeout: 15000 })
+        const url = res.data?.[0]?.url
+        if (!url) throw 'No cat found'
+        await conn.sendMessage(m.chat, { image: { url }, caption: '🐱 Nyaa~' }, { quoted: m })
+        conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
+    } catch (e) {
+        throw `❌ Gagal ambil kucing: ${e.message}`
+    }
+}
+catHandler.help = ['cat']
+catHandler.tags = ['random']
+catHandler.command = /^(cat|kucing)$/i
 
-export const cecanJepangHandler = async (m, { conn }) => sendCecan(m, conn, 'https://api.nexray.web.id/random/cecan/jepang', 'Cecan Jepang')
-cecanJepangHandler.help = ['cecanjepang']
-cecanJepangHandler.tags = ['random']
-cecanJepangHandler.command = /^cecanjepang$/i
+// ─── Dog (dog.ceo — gratis, no key, tested ✅) ──────────────
+export const dogHandler = async (m, { conn }) => {
+    conn.sendMessage(m.chat, { react: { text: '🐶', key: m.key } })
+    try {
+        const res = await axios.get('https://dog.ceo/api/breeds/image/random', { timeout: 15000 })
+        const url = res.data?.message
+        if (!url) throw 'No dog found'
+        await conn.sendMessage(m.chat, { image: { url }, caption: '🐶 Woof!' }, { quoted: m })
+        conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
+    } catch (e) {
+        throw `❌ Gagal ambil anjing: ${e.message}`
+    }
+}
+dogHandler.help = ['dog']
+dogHandler.tags = ['random']
+dogHandler.command = /^(dog|anjing)$/i
 
-export const cecanChinaHandler = async (m, { conn }) => sendCecan(m, conn, 'https://api.nexray.web.id/random/cecan/china', 'Cecan China')
-cecanChinaHandler.help = ['cecanchina']
-cecanChinaHandler.tags = ['random']
-cecanChinaHandler.command = /^cecanchina$/i
-
-export const cecanThaiHandler = async (m, { conn }) => sendCecan(m, conn, 'https://api.nexray.web.id/random/cecan/thai', 'Cecan Thailand')
-cecanThaiHandler.help = ['cecanthai']
-cecanThaiHandler.tags = ['random']
-cecanThaiHandler.command = /^cecanthai$/i
-
-export const cecanVietnamHandler = async (m, { conn }) => sendCecan(m, conn, 'https://api.nexray.web.id/random/cecan/vietnam', 'Cecan Vietnam')
-cecanVietnamHandler.help = ['cecanvietnam']
-cecanVietnamHandler.tags = ['random']
-cecanVietnamHandler.command = /^cecanvietnam$/i
+// ─── Advice (adviceslip.com — gratis, no key, tested ✅) ────
+export const adviceHandler = async (m, { conn }) => {
+    try {
+        const res = await axios.get('https://api.adviceslip.com/advice', { timeout: 15000 })
+        const advice = res.data?.slip?.advice
+        if (!advice) throw 'No advice'
+        await m.reply(`💡 *Random Advice:*\n\n"${advice}"`)
+    } catch (e) {
+        throw `❌ Gagal ambil advice: ${e.message}`
+    }
+}
+adviceHandler.help = ['advice']
+adviceHandler.tags = ['random']
+adviceHandler.command = /^advice$/i
 
 // ─── Meme (meme-api primary, candaan-api fallback) ─────────────
 export const memeHandler = async (m, { conn }) => {
