@@ -1,4 +1,6 @@
-let handler = async (m, { conn, text }) => {
+import { sendQuickMenu } from '../../lib/menuHelper.js'
+
+let handler = async (m, { conn, text, usedPrefix, command }) => {
   const userId = m.sender;
   const user = global.db.data.users[userId];
   const lastDate = user.lastdate || 0;
@@ -37,8 +39,17 @@ let handler = async (m, { conn, text }) => {
       conn.reply(m.chat, 'Pilihan karakter tidak valid. Berkencan dibatalkan.', m);
     }
   } else {
-    const characterList = getCharacterOptions().map((char, index) => `${index + 1}. ${char}`).join('\n');
-    conn.reply(m.chat, `Silakan pilih karakter dengan format .kencan [nomor karakter].\n\nList Karakter:\n${characterList}`, m);
+    const chars = getCharacterOptions();
+    const characterList = chars.map((char, index) => `${index + 1}. ${char}`).join('\n');
+    await sendQuickMenu(conn, m, {
+      title: '💑 Kencan',
+      text: `Pilih karakter untuk diajak kencan.\n\nList Karakter:\n${characterList}`,
+      footer: `Atau ketik: ${usedPrefix}${command} [nomor]`,
+      items: chars.slice(0, 10).map((char, index) => ({
+        label: `${index + 1}. ${char}`,
+        id: `${usedPrefix}${command} ${index + 1}`
+      }))
+    });
   }
 };
 

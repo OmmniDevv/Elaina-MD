@@ -1,12 +1,20 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
 // Makasih kode nya RTXZY
+import { sendQuickMenu } from '../../lib/menuHelper.js'
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
   const pilihan = ['atas', 'bawah']
   const input = (args[0] || '').toLowerCase()
   
   if (!pilihan.includes(input)) {
-    throw `🪙 *COIN FLIP*\n\nPilih *atas* atau *bawah*\nContoh: *${usedPrefix}${command} atas*`
+    return sendQuickMenu(conn, m, {
+      title: '🪙 Coin Flip',
+      text: `Pilih *atas* atau *bawah*, lalu putar koinnya.\n\nAtau ketik: *${usedPrefix}${command} atas*`,
+      items: [
+        { label: '⬆️ Atas', id: `${usedPrefix}${command} atas` },
+        { label: '⬇️ Bawah', id: `${usedPrefix}${command} bawah` }
+      ]
+    })
   }
 
   const hasil = pilihan[Math.floor(Math.random() * pilihan.length)]

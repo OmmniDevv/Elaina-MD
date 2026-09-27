@@ -1,7 +1,8 @@
 import fs from 'fs';
+import { sendQuickMenu } from '../../lib/menuHelper.js';
 const dbPath = './database.json'; // Path ke database file
 
-let handler = async (m, { conn, args }) => {
+let handler = async (m, { conn, args, usedPrefix, command }) => {
     let userId = m.sender;
     let user = global.db.data.users[userId];
 
@@ -12,9 +13,19 @@ let handler = async (m, { conn, args }) => {
     if (guilds.length === 0) return conn.reply(m.chat, 'Tidak ada guild yang tersedia untuk dihapus.', m);
 
     let guildList = guilds.map((guild, index) => `${index + 1}. ${guild.name}`).join('\n');
-    let responseText = `Pilih guild yang ingin dihapus dengan mengetik nomor guild:\n\n${guildList}`;
+    let responseText = `Pilih guild yang ingin dihapus:\n\n${guildList}`;
 
-    if (args.length < 1) return conn.reply(m.chat, responseText, m);
+    if (args.length < 1) {
+        return sendQuickMenu(conn, m, {
+            title: '🏰 Hapus Guild',
+            text: responseText,
+            footer: 'Hanya owner guild yang bisa menghapus.',
+            items: guilds.slice(0, 10).map((g, i) => ({
+                label: `${i + 1}. ${g.name}`,
+                id: `${usedPrefix}${command} ${i + 1}`
+            }))
+        });
+    }
 
     let guildIndex = parseInt(args[0]) - 1;
 

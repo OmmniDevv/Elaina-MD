@@ -1,4 +1,6 @@
-let handler = async (m, { conn, args }) => {
+import { sendQuickMenu } from '../../lib/menuHelper.js';
+
+let handler = async (m, { conn, args, usedPrefix, command }) => {
     let userId = m.sender;
     let user = global.db.data.users[userId];
     let upgradeType = args[0];
@@ -9,7 +11,23 @@ let handler = async (m, { conn, args }) => {
     let guild = global.db.data.guilds[guildId];
     if (!guild) return conn.reply(m.chat, 'Guild tidak ditemukan.', m);
 
-    if (!upgradeType) return conn.reply(m.chat, 'Pilih jenis upgrade yang ingin kamu lakukan (level, eliksir, harta, guardian, attack).', m);
+    const UPGRADES = [
+        { key: 'level',    label: '📈 Level',    cost: 5000000000 },
+        { key: 'eliksir',  label: '🧪 Eliksir',  cost: 1000000000 },
+        { key: 'harta',    label: '💰 Harta',    cost: 2000000000 },
+        { key: 'guardian', label: '🛡️ Guardian', cost: 3000000000 },
+        { key: 'attack',   label: '⚔️ Attack',   cost: 4000000000 }
+    ];
+
+    if (!upgradeType) {
+        return sendQuickMenu(conn, m, {
+            title: '🏰 Upgrade Guild',
+            text: `Pilih jenis upgrade untuk guild *${guild.name}*.\n\n` +
+                UPGRADES.map(u => `  ${u.label} — ${u.cost.toLocaleString('id')} money`).join('\n'),
+            footer: `Money kamu: ${(user.money || 0).toLocaleString('id')}`,
+            items: UPGRADES.map(u => ({ label: u.label, id: `${usedPrefix}${command} ${u.key}` }))
+        });
+    }
 
     switch (upgradeType.toLowerCase()) {
         case 'level':

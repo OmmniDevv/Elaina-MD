@@ -1,3 +1,5 @@
+import { sendQuickMenu } from '../../lib/menuHelper.js'
+
 let handler = async (m, { conn, usedPrefix, text, command }) => {
     let user = global.db.data.users[m.sender]
     let skill = {
@@ -26,10 +28,13 @@ let handler = async (m, { conn, usedPrefix, text, command }) => {
 
         // Context info untuk daftar skill
         const availableSkillsMessage = `乂 *C L A S S*\n\nPilih *Class* yang anda sukai atau sesuai dengan skill atau talent mu :\n\n${skillList}\n\n_How To Use_ :\n${usedPrefix + command} *nameskill*\n\n_Example_ :\n${usedPrefix + command} *wizard*`.trim();
-        await conn.reply(m.chat, availableSkillsMessage, m, {
-            contextInfo: {
-                
-            }
+        await sendQuickMenu(conn, m, {
+            title: '⚔️ Pilih Class',
+            text: availableSkillsMessage,
+            items: Object.keys(skill).slice(0, 10).map(s => ({
+                label: `${s} ${skill[s].stars}`,
+                id: `${usedPrefix}${command} ${s}`
+            }))
         });
         return;
     }
