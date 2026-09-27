@@ -13,8 +13,8 @@ let handler = async (m, { conn, usedPrefix, command }) => {
   try {
     let media = await q.download()
     let audio = await toAudio(media, 'mp3')
-    await conn.sendFile(m.chat, audio, 'audio.mp3', '', m, null, { mimetype: 'audio/mpeg' })
-    fs.unlinkSync(audio)
+    await conn.sendFile(m.chat, audio?.data || audio, 'audio.mp3', '', m, null, { mimetype: 'audio/mpeg' })
+    try { if (audio?.delete) audio.delete(); else fs.unlinkSync(audio) } catch {}
   } catch (e) {
     throw `Error: ${e.message || e}`
   }

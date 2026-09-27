@@ -45,7 +45,7 @@ export const ttsEminemHandler = async (m, { conn, text, usedPrefix, command }) =
   const voiceUrl = res?.data?.result?.find(v => v.eminem)?.eminem
   if (!voiceUrl) throw '❌ Gagal generate TTS Eminem'
   const audio = await axios.get(voiceUrl, { responseType: 'arraybuffer', timeout: 30000 })
-  await conn.sendMessage(m.chat, { audio: { url: Buffer.from(audio.data) }, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
+  await conn.sendMessage(m.chat, { audio: Buffer.from(audio.data), mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
   conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
 ttsEminemHandler.help = ['ttseminem <teks>']
@@ -62,7 +62,7 @@ export const ttsGokuHandler = async (m, { conn, text, usedPrefix, command }) => 
   const voiceUrl = res?.data?.result?.find(v => v.goku)?.goku
   if (!voiceUrl) throw '❌ Gagal generate TTS Goku'
   const audio = await axios.get(voiceUrl, { responseType: 'arraybuffer', timeout: 30000 })
-  await conn.sendMessage(m.chat, { audio: { url: Buffer.from(audio.data) }, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
+  await conn.sendMessage(m.chat, { audio: Buffer.from(audio.data), mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
   conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
 ttsGokuHandler.help = ['ttsgoku <teks>']
@@ -79,7 +79,7 @@ export const ttsMickeyHandler = async (m, { conn, text, usedPrefix, command }) =
   const voiceUrl = res?.data?.result?.find(v => v.mickey_mouse)?.mickey_mouse
   if (!voiceUrl) throw '❌ Gagal generate TTS Mickey'
   const audio = await axios.get(voiceUrl, { responseType: 'arraybuffer', timeout: 30000 })
-  await conn.sendMessage(m.chat, { audio: { url: Buffer.from(audio.data) }, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
+  await conn.sendMessage(m.chat, { audio: Buffer.from(audio.data), mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
   conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
 ttsMickeyHandler.help = ['ttsmickey <teks>']
@@ -94,7 +94,7 @@ export const ttsElonHandler = async (m, { conn, text, usedPrefix, command }) => 
   const voiceUrl = res?.data?.result?.find(v => v.elon_musk)?.elon_musk
   if (!voiceUrl) throw '❌ Gagal generate TTS Elon Musk'
   const audio = await axios.get(voiceUrl, { responseType: 'arraybuffer', timeout: 30000 })
-  await conn.sendMessage(m.chat, { audio: { url: Buffer.from(audio.data) }, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
+  await conn.sendMessage(m.chat, { audio: Buffer.from(audio.data), mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
   conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
 ttsElonHandler.help = ['ttselon <teks>']
@@ -109,7 +109,7 @@ export const ttsNahidaHandler = async (m, { conn, text, usedPrefix, command }) =
   const voiceUrl = res?.data?.result?.find(v => v.nahida)?.nahida
   if (!voiceUrl) throw '❌ Gagal generate TTS Nahida'
   const audio = await axios.get(voiceUrl, { responseType: 'arraybuffer', timeout: 30000 })
-  await conn.sendMessage(m.chat, { audio: { url: Buffer.from(audio.data) }, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
+  await conn.sendMessage(m.chat, { audio: Buffer.from(audio.data), mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
   conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
 ttsNahidaHandler.help = ['ttsnahida <teks>']
