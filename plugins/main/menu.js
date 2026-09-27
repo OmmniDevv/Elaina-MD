@@ -1,5 +1,10 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
+// Menu kartu + tombol kategori (dropdown) + tombol cepat.
+// Transport: MB.Button bawaan paket (relayMessage + node biz/interactive/native_flow).
+// TANPA externalAdReply — sudah tidak didukung WA dan bikin pesan gagal terkirim.
+// Fallback berlapis supaya menu tetap sampai walau klien tidak dukung native flow.
 import fetch from 'node-fetch'
+import { MB } from '@rexxhayanasi/elaina-baileys'
 
 const CATEGORY_EMOJIS = {
     owner: '👑', main: '🏠', downloader: '📥', sticker: '🖼️',
@@ -15,10 +20,12 @@ const CATEGORY_ORDER = [
     'islamic', 'quotes', 'random', 'audio', 'anime', 'canvas', 'nsfw'
 ]
 
+const NEWSLETTER_JID = '120363208449943317@newsletter'
+
 function clockString(ms) {
-    let h = Math.floor(ms / 3600000)
-    let m = Math.floor((ms % 3600000) / 60000)
-    let s = Math.floor((ms % 60000) / 1000)
+    const h = Math.floor(ms / 3600000)
+    const m = Math.floor((ms % 3600000) / 60000)
+    const s = Math.floor((ms % 60000) / 1000)
     return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':')
 }
 
@@ -40,7 +47,7 @@ function buildCommandMap() {
         for (const tag of tags) {
             if (!map[tag]) map[tag] = []
             for (const help of helps) {
-                if (help) map[tag].push(help)
+                if (help) map[tag].push({ name: help, owner: !!plugin.owner, premium: !!plugin.premium, limit: !!plugin.limit })
             }
         }
     }
@@ -57,6 +64,48 @@ function getSortedCats(cmdMap, isOwner) {
         .filter(cat => cmdMap[cat]?.length > 0 && !(cat === 'owner' && !isOwner) && !exclude.includes(cat))
 }
 
+// Thumbnail: pakai gambar bawaan Elaina (global.thumb), bukan file baru.
+async function loadThumb() {
+    try {
+        const { readFileSync } = await import('fs')
+        const sharp = (await import('sharp')).default
+        const raw = readFileSync(global.thumb)
+        return await sharp(raw).resize(300, 300, { fit: 'cover' }).jpeg({ quality: 85 }).toBuffer()
+    } catch {
+        return null
+    }
+}
+
+function orderQuoted(buffer, itemCount, title, token) {
+    return {
+        key: { fromMe: false, participant: '0@s.whatsapp.net', remoteJid: 'status@broadcast' },
+        message: {
+            orderMessage: {
+                orderId: '1337',
+                thumbnail: buffer || null,
+                itemCount,
+                status: 'INQUIRY',
+                surface: 'CATALOG',
+                message: `★ Terima kasih\n✦ Ada Error? Lapor owner`,
+                orderTitle: title,
+                sellerJid: `${global.nomorbot}@s.whatsapp.net`,
+                token,
+                totalAmount1000: 0,
+                totalCurrencyCode: 'IDR',
+                contextInfo: {
+                    isForwarded: true,
+                    forwardingScore: 9,
+                    forwardedNewsletterMessageInfo: {
+                        newsletterJid: NEWSLETTER_JID,
+                        newsletterName: global.namebot,
+                        serverMessageId: 127
+                    }
+                }
+            }
+        }
+    }
+}
+
 let handler = async (m, { conn, usedPrefix, isOwner, isPrems }) => {
     const user = global.db?.data?.users?.[m.sender] || {}
     const pushName = m.pushName || m.name || 'Kamu'
@@ -71,130 +120,181 @@ let handler = async (m, { conn, usedPrefix, isOwner, isPrems }) => {
     for (const cmds of Object.values(cmdMap)) totalCmds += cmds.length
     const sortedCats = getSortedCats(cmdMap, isOwner)
 
-    // Load thumbnails from local file
-    let thumbBuffer = null, thumbSmall = null, thumb2Buffer = null
-    try {
-        const { readFileSync } = await import('fs')
-        const sharp = (await import('sharp')).default
-        const raw1 = readFileSync(global.thumb)
-        const raw2 = readFileSync(global.thumb2)
-        thumbBuffer = raw1
-        thumb2Buffer = await sharp(raw2).resize(300, 300, { fit: 'cover' }).jpeg({ quality: 85 }).toBuffer()
-        thumbSmall = await sharp(raw1).resize(300, 300, { fit: 'cover' }).jpeg({ quality: 80 }).toBuffer()
-    } catch { }
+    const thumb = await loadThumb()
 
-    // Category rows untuk single_select dropdown (variant 15)
+    // Baris kategori → dropdown. Tap satu baris menjalankan .menucat <kategori>,
+    // dan plugin menucat menampilkan seluruh command di kategori itu.
     const catRows = sortedCats.map(cat => ({
-        title: `${CATEGORY_EMOJIS[cat] || '📁'} ${cat.toUpperCase()} MENU`,
+        header: '',
+        title: `${CATEGORY_EMOJIS[cat] || '📁'} ${cat.toUpperCase()}`,
         description: `${cmdMap[cat].length} commands`,
         id: `${usedPrefix}menucat ${cat}`
     }))
 
-    // Buttons (variant 15 style — tanpa call_permission_request)
-    const buttons = [
-        {
-            name: 'single_select',
-            buttonParamsJson: JSON.stringify({ has_multiple_buttons: true })
-        },
-        {
-            name: 'quick_reply',
-            buttonParamsJson: JSON.stringify({ display_text: '🌺 Lihat Semua Menu', id: `${usedPrefix}allmenu` })
-        },
-        {
-            name: 'single_select',
-            buttonParamsJson: JSON.stringify({
-                title: '📁 Pilih Kategori',
-                sections: [{ title: '📋 PILIH CATEGORY', rows: catRows }],
-                has_multiple_buttons: true
-            })
-        }
-    ]
+    const bodyText =
+`ʜᴀʟᴏ, ${pushName} 👋
+${greeting}! ꜱᴇʟᴀᴍᴀᴛ ᴅᴀᴛᴀɴɢ ᴅɪ *${global.namebot}* ✨
 
-    // ftroliQuoted — orderMessage
-    const ftroliQuoted = {
-        key: { fromMe: false, participant: '0@s.whatsapp.net', remoteJid: 'status@broadcast' },
-        message: {
-            orderMessage: {
-                orderId: '1337',
-                thumbnail: thumb2Buffer || thumbSmall || null,
-                itemCount: totalCmds,
-                status: 'INQUIRY',
-                surface: 'CATALOG',
-                message: `★ Terima kasih\n✦ Ada Error? Lapor owner`,
-                orderTitle: `📋 ${totalCmds} Commands`,
-                sellerJid: `${global.nomorbot}@s.whatsapp.net`,
-                token: 'elaina-menu',
-                totalAmount1000: 0,
-                totalCurrencyCode: 'IDR',
-                contextInfo: {
-                    isForwarded: true,
-                    forwardingScore: 9,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363208449943317@newsletter',
-                        newsletterName: global.namebot,
-                        serverMessageId: 127
-                    }
-                }
-            }
+┌─〔 🤖 \`ʙᴏᴛ ɪɴꜰᴏ\` 〕─⬣
+│ ✦ *ɴᴀᴍᴀ :* ${global.namebot}
+│ ✦ *ᴏᴡɴᴇʀ :* ${global.nameown}
+│ ✦ *ᴘʀᴇꜰɪx :* [ ${usedPrefix} ]
+│ ✦ *ᴜᴘᴛɪᴍᴇ :* ${uptime}
+│ ✦ *ᴛᴏᴛᴀʟ ᴄᴍᴅ :* ${totalCmds} commands
+╰─⬣
+
+┌─〔 👤 \`ᴜsᴇʀ ɪɴꜰᴏ\` 〕─⬣
+│ ✦ *ɴᴀᴍᴀ :* ${pushName}
+│ ✦ *ʀᴏʟᴇ :* ${role}
+│ ✦ *ʟᴇᴠᴇʟ :* ${user.level || 1}
+│ ✦ *ᴇxᴘ :* ${user.exp || 0}
+│ ✦ *ʟɪᴍɪᴛ :* ${user.limit || 0}
+│ ✦ *ᴡᴀᴋᴛᴜ :* ${timeStr} WIB
+╰─⬣
+
+ᴛᴇᴋᴀɴ *ᴘɪʟɪʜ ᴋᴀᴛᴇɢᴏʀɪ* ᴜɴᴛᴜᴋ ᴍᴇʟɪʜᴀᴛ ꜱᴇᴍᴜᴀ ᴍᴇɴᴜ
+ᴘᴇʀ ᴋᴀᴛᴇɢᴏʀɪ, ᴀᴛᴀᴜ ᴛᴇᴋᴀɴ ᴛᴏᴍʙᴏʟ ᴄᴇᴘᴀᴛ ᴅɪ ʙᴀᴡᴀʜ.`
+
+    const footerText = `✦ ${global.namebot}  •  ${global.wmcredit}`
+
+    const ctxInfo = {
+        mentionedJid: [m.sender],
+        forwardingScore: 999,
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+            newsletterJid: NEWSLETTER_JID,
+            newsletterName: global.namebot,
+            serverMessageId: 127
         }
     }
 
-    const footerText = `Hai *${pushName}* 👋
-Selamat datang di *${global.namebot}* ✨
+    const troli = orderQuoted(thumb, totalCmds, `📋 ${totalCmds} Commands`, 'elaina-menu')
 
-╭─〔 🤖 \`ʙᴏᴛ ɪɴꜰᴏ\` 〕─⬣
-│ ✦ *ɴᴀᴍᴀ : ${global.namebot}*
-│ ✦ *ᴘʀᴇꜰɪx : [ ${usedPrefix} ]*
-│ ✦ *ᴜᴘᴛɪᴍᴇ : ${uptime}*
-│ ✦ *ᴛᴏᴛᴀʟ ᴄᴍᴅ : ${totalCmds} commands*
-│ ✦ *ᴏᴡɴᴇʀ : ${global.nameown}*
-│ ✦ *${greeting}*
-╰─⬣
+    const githubUrl = 'https://github.com/OmmniDevv/Elaina-MD'
+    const ownerWa = `https://wa.me/${global.nomorbot}`
 
-╭─〔 👤 \`ᴜsᴇʀ ɪɴꜰᴏ\` 〕─⬣
-│ ✦ *ɴᴀᴍᴀ : ${pushName}*
-│ ✦ *ʀᴏʟᴇ : ${role}*
-│ ✦ *ʟᴇᴠᴇʟ : ${user.level || 1}*
-│ ✦ *ᴇxᴘ : ${user.exp || 0}*
-│ ✦ *ʟɪᴍɪᴛ : ${user.limit || 0}*
-│ ✦ *ᴡᴀᴋᴛᴜ : ${timeStr} WIB*
-╰─⬣
-
-Silahkan tekan tombol di bawah untuk memilih kategori
-_© ${global.namebot} | ${global.wmcredit}_`
-
+    // ── Lapis 1: kartu + tombol via builder paket ──
     try {
-        // variant 15: raw interactiveMessage via sendMessage (bukan generateWAMessageFromContent)
+        const b = new MB.Button(conn)
+        b.setTitle(global.namebot)
+        b.setSubtitle(`Owner: ${global.nameown}`)
+        b.setBody(bodyText)
+        b.setFooter(footerText)
+        if (thumb) b.setImage(thumb)
+        b.setContextInfo(ctxInfo)
+
+        // Dropdown kategori (single_select + rows)
+        b.addSelection('⌗ ᴅᴀꜰᴛᴀʀ ᴋᴀᴛᴇɢᴏʀɪ', { has_multiple_buttons: true })
+        b.makeSection('𓍢ִ໋ ᴘɪʟɪʜ ᴋᴀᴛᴇɢᴏʀɪ ʏᴀɴɢ ᴋᴀᴍᴜ ɪɴɢɪɴᴋᴀɴ', global.namebot)
+        for (const row of catRows) b.makeRow(row.header, row.title, row.description, row.id)
+
+        // Tombol link & copy
+        b.addUrl('🌐 ɢɪᴛʜᴜʙ ᴘʀᴏᴊᴇᴄᴛ', githubUrl, false, { merchant_url: githubUrl })
+        b.addCopy('⎙ ᴄᴏᴘʏ ᴘʀᴇꜰɪx', usedPrefix)
+
+        // Tombol cepat
+        b.addReply('⟨⟩ ꜱᴇᴍᴜᴀ ᴄᴏᴍᴍᴀɴᴅ', `${usedPrefix}allmenu`)
+        b.addReply('ⓘ ꜱᴛᴀᴛᴜꜱ ʙᴏᴛ', `${usedPrefix}ping`)
+        b.addReply('👑 ᴏᴡɴᴇʀ', `${usedPrefix}owner`)
+
+        return await b.send(m.chat, { quoted: troli })
+    } catch (e1) {
+        console.error('[menu] builder gagal:', e1.message)
+    }
+
+    // ── Lapis 2: interactiveMessage mentah → shim lib/simple.js ──
+    try {
         await conn.sendMessage(m.chat, {
             interactiveMessage: {
-                title: '',
+                title: global.namebot,
                 footer: footerText,
-                document: Buffer.from(JSON.stringify({ bot: global.namebot })),
+                document: thumb || Buffer.alloc(0),
                 mimetype: 'image/jpeg',
-                jpegThumbnail: thumbSmall,
-                contextInfo: {
-                    mentionedJid: [],
-                    forwardingScore: 7,
-                    isForwarded: true
-                },
-                
+                jpegThumbnail: thumb || null,
+                contextInfo: ctxInfo,
                 nativeFlowMessage: {
                     messageParamsJson: JSON.stringify({
                         bottom_sheet: {
                             in_thread_buttons_limit: 2,
-                            divider_indices: [1, 2, 3, 999],
-                            list_title: 'Silahkan pilih menu yang kamu inginkan',
-                            button_title: '🍀 Pilih Kategori'
+                            divider_indices: [2, 3, 4, 5, 999],
+                            list_title: 'ᴘɪʟɪʜ ᴋᴀᴛᴇɢᴏʀɪ ᴍᴇɴᴜ',
+                            button_title: 'ᴊᴇʟᴀᴊᴀʜɪ ᴍᴇɴᴜ sᴇᴋᴀʀᴀɴɢ'
                         }
                     }),
-                    buttons
+                    buttons: [
+                        {
+                            name: 'single_select',
+                            buttonParamsJson: JSON.stringify({
+                                title: '⌗ ᴅᴀꜰᴛᴀʀ ᴋᴀᴛᴇɢᴏʀɪ',
+                                sections: [{
+                                    title: '𓍢ִ໋ ᴘɪʟɪʜ ᴋᴀᴛᴇɢᴏʀɪ ʏᴀɴɢ ᴋᴀᴍᴜ ɪɴɢɪɴᴋᴀɴ',
+                                    highlight_label: global.namebot,
+                                    rows: catRows
+                                }],
+                                has_multiple_buttons: true
+                            })
+                        },
+                        {
+                            name: 'cta_url',
+                            buttonParamsJson: JSON.stringify({
+                                display_text: '🌐 ɢɪᴛʜᴜʙ ᴘʀᴏᴊᴇᴄᴛ',
+                                url: githubUrl,
+                                merchant_url: githubUrl
+                            })
+                        },
+                        {
+                            name: 'cta_copy',
+                            buttonParamsJson: JSON.stringify({
+                                display_text: '⎙ ᴄᴏᴘʏ ᴘʀᴇꜰɪx',
+                                copy_code: usedPrefix
+                            })
+                        },
+                        {
+                            name: 'quick_reply',
+                            buttonParamsJson: JSON.stringify({ display_text: '⟨⟩ ꜱᴇᴍᴜᴀ ᴄᴏᴍᴍᴀɴᴅ', id: `${usedPrefix}allmenu` })
+                        },
+                        {
+                            name: 'quick_reply',
+                            buttonParamsJson: JSON.stringify({ display_text: 'ⓘ ꜱᴛᴀᴛᴜꜱ ʙᴏᴛ', id: `${usedPrefix}ping` })
+                        },
+                        {
+                            name: 'quick_reply',
+                            buttonParamsJson: JSON.stringify({ display_text: '👑 ᴏᴡɴᴇʀ', id: `${usedPrefix}owner` })
+                        }
+                    ]
                 }
             }
-        }, { quoted: ftroliQuoted })
-    } catch (e) {
-        console.error('[Menu]', e.message)
-        throw e
+        }, { quoted: troli })
+        return
+    } catch (e2) {
+        console.error('[menu] shim gagal:', e2.message)
     }
+
+    // ── Lapis 3: gambar bawaan + caption teks (dijamin tampil di klien apa pun) ──
+    const textCats = sortedCats
+        .map(cat => ` │ ${CATEGORY_EMOJIS[cat] || '📁'} *${cat.toUpperCase()}* — \`${cmdMap[cat].length}\` cmds · ${usedPrefix}menucat ${cat}`)
+        .join('\n')
+
+    const fallbackText =
+`${bodyText}
+
+┌─〔 📁 \`ᴋᴀᴛᴇɢᴏʀɪ\` 〕─⬣
+${textCats}
+╰─⬣
+
+_© ${global.namebot} | ${global.wmcredit}_`
+
+    if (thumb) {
+        return conn.sendMessage(m.chat, {
+            image: thumb,
+            caption: fallbackText,
+            mentions: [m.sender]
+        }, { quoted: troli })
+    }
+    return conn.sendMessage(m.chat, {
+        text: fallbackText,
+        mentions: [m.sender]
+    }, { quoted: troli })
 }
 
 handler.help = ['menu', 'help', 'm']
