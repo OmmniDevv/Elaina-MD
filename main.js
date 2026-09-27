@@ -1,5 +1,12 @@
 import './config.js'
 
+// Filter noise libsignal: jangan cetak dump SessionEntry / ratchet state (bocorin key). Pola Luna-Botv6.
+const _origConsoleInfo = console.info.bind(console)
+const _origConsoleWarn = console.warn.bind(console)
+const SIGNAL_SESSION_NOISE = /Closing session|Opening session|Session already closed|Removing old closed session|Migrating session to|SessionEntry \{/
+console.info = (...args) => { if (typeof args[0] === 'string' && SIGNAL_SESSION_NOISE.test(args[0])) return; _origConsoleInfo(...args) }
+console.warn = (...args) => { if (typeof args[0] === 'string' && SIGNAL_SESSION_NOISE.test(args[0])) return; _origConsoleWarn(...args) }
+
 import { createRequire } from "module" // Bring in the ability to create the 'require' method
 import path, { join } from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
