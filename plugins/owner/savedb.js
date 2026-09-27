@@ -30,23 +30,27 @@ async function handler(m, { sock }) {
     if (!config.isOwner(m.sender)) {
         return m.reply('❌ *Owner Only!*')
     }
-    const dbPath = path.join(process.cwd(), 'database', 'db.json')
+    let dbPath = path.join(process.cwd(), 'database.json')
+    if (!fs.existsSync(dbPath)) {
+        dbPath = path.join(process.cwd(), 'database', 'db.json')
+    }
     if (!fs.existsSync(dbPath)) {
         return m.reply(`❌ File database tidak ditemukan!`)
     }
     try {
         const stats = fs.statSync(dbPath)
         const data = fs.readFileSync(dbPath)
+        const baseName = path.basename(dbPath)
         const now = moment().tz('Asia/Jakarta')
         const timestamp = now.format('YYYY-MM-DD_HH-mm-ss')
-        const fileName = `db_backup_${timestamp}.json`
+        const fileName = `${baseName.replace('.json', '')}_backup_${timestamp}.json`
         await sock.sendMessage(m.chat, {
             document: data,
             fileName: fileName,
             mimetype: 'application/json',
             caption: `📦 *ᴅᴀᴛᴀʙᴀsᴇ ʙᴀᴄᴋᴜᴘ*\n\n` +
                 `╭┈┈⬡「 📋 *ɪɴғᴏ* 」\n` +
-                `┃ 📁 File: \`db.json\`\n` +
+                `┃ 📁 File: \`${baseName}\`\n` +
                 `┃ 📊 Size: \`${(stats.size / 1024).toFixed(2)} KB\`\n` +
                 `┃ 📅 Date: \`${now.format('DD/MM/YYYY')}\`\n` +
                 `┃ ⏰ Time: \`${now.format('HH:mm:ss')}\`\n` +
