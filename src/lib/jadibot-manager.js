@@ -10,7 +10,7 @@ import {
 import { logger } from "./logger.js";
 import { addJadibotOwner } from "./jadibot-database.js";
 import { extendSocket } from "./socket.js";
-const JADIBOT_AUTH_FOLDER = path.join(process.cwd(), "session", "jadibot");
+const JADIBOT_AUTH_FOLDER = path.join(process.cwd(), "elaina_session", "jadibot");
 const jadibotSessions = new Map();
 const reconnectAttempts = new Map();
 const MAX_RECONNECT_ATTEMPTS = 3;
