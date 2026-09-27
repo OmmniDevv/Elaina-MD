@@ -10,17 +10,7 @@ let handler = async (m, { conn, args, command }) => {
       }) * 1000
     }
     let muptime = clockString(_muptime)
- conn.reply(m.chat, `${htki} *R U N T I M E* ${htka}\n${muptime}\n`, m, {
-contextInfo: { externalAdReply :{
-                        mediaUrl: '',
-                        mediaType: 2,
-                        description: 'anu',
-                        title: bottime,
-                        body: wm2,          previewType: 0,
-                        thumbnail: fs.readFileSync("./thumbnail.jpg"),
-                        sourceUrl: snh
-                      }}
-})
+ conn.reply(m.chat, `${htki} *R U N T I M E* ${htka}\n${muptime}\n`, m)
 }
 
 

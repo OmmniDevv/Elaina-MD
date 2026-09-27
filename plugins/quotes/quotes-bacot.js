@@ -10,14 +10,7 @@ ${pickRandom(global.bacot)}
     conn.sendMessage(m.chat, {
         text: anu,
         contextInfo: {
-            externalAdReply: {
-                title: '─────〔 𝗕𝗔𝗖𝗢𝗧 〕─────',
-                body: wm,
-                mediaUrl: sgc,
-                sourceUrl: sgc,
-                mediaType: 1,
-                thumbnail: global.adReply?.contextInfo?.externalAdReply?.thumbnail || Buffer.alloc(0)
-            }
+            
         }
     }, { quoted: m })
 }

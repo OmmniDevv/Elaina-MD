@@ -115,13 +115,7 @@ let str = `
 setTimeout(() => {
     conn.reply(m.chat, str, m, {
         contextInfo: {
-            externalAdReply: {
-                mediaType: 1,
-                title: wm,
-                thumbnail: global.thumbBuffer,
-                renderLargerThumbnail: true,
-                sourceUrl: ''
-            }
+            
         }
     })
 }, 0)

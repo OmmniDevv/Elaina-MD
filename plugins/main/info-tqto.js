@@ -67,14 +67,7 @@ ${global.wmcredit || '⫹⫺ github.com/OmmniDevv/Elaina-MD'}
   await conn.sendMessage(m.chat, {
     text: tqto,
     contextInfo: {
-      externalAdReply: {
-        showAdAttribution: true,
-        title: `${global.namebot || 'Elaina BOT'} — Credits`,
-        body: 'github.com/OmmniDevv/Elaina-MD',
-        sourceUrl: 'https://github.com/OmmniDevv/Elaina-MD',
-        mediaType: 1,
-        thumbnail: global.adReply?.contextInfo?.externalAdReply?.thumbnail || Buffer.alloc(0)
-      }
+      
     }
   }, { quoted: m })
 }

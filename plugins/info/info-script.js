@@ -10,13 +10,7 @@ let handler = async (m, { conn }) => {
             `_Script ini gratis untuk semua orang. Dilarang diperjualbelikan!_\n\n` +
             `_© ${global.namebot} | ${global.wmcredit}_`,
         contextInfo: {
-            externalAdReply: {
-                title: global.namebot,
-                body: global.wmcredit,
-                sourceUrl: global.sgh,
-                mediaType: 1,
-                renderLargerThumbnail: false
-            }
+            
         }
     }, { quoted: m })
 }

@@ -4,15 +4,7 @@ import fs from 'fs'
 let handler = async(m, { conn, text, usedPrefix: _p }) => {
 let animebree = pickRandom(global.animebre)
     await conn.reply(m.chat, animebree, 0, {
-    contextInfo: { mentionedJid: [m.sender],
-    externalAdReply :{
-    mediaUrl: '',
-    mediaType: 2,
-    title: '˜”*°•.˜”*°• KATA ELAINA •°*”˜.•°*”˜', 
-    body: 'Kamu Lagi Sad Ya KAK😖',  
-    sourceUrl: sgc, 
-    thumbnail: (() => { try { return fs.readFileSync('./thumbnail.jpg') } catch { return Buffer.alloc(0) } })()
-      }}
+    contextInfo: { mentionedJid: [m.sender]}
      })
 }
 handler.help = ['kataanimesad']

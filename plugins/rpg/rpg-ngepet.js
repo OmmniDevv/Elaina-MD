@@ -20,14 +20,7 @@ let handler = async (m, { conn, args, usedPrefix }) => {
         conn.sendMessage(m.chat, {
           text: `Kamu lengah Saat Ngepet, Dan Kamu Mines -10 juta`,
           contextInfo: {
-            externalAdReply: {
-              title: 'Nooo, Kamu sekarang memiliki hutang 10JT 😞',
-              body: wm,
-              thumbnail: global.thumbBuffer,
-              mediaType: 1,
-              showAdAttribution: false,
-              renderLargerThumbnail: true
-            }
+            
           }
         })
         user.money -= 10000000 // Penalty for failed robbery is -20 million
@@ -37,14 +30,7 @@ let handler = async (m, { conn, args, usedPrefix }) => {
         conn.sendMessage(m.chat, {
           text: `Kamu berhasil Ngepet, Dan kamu mendapatkan 5 Juta rupiah`,
           contextInfo: {
-            externalAdReply: {
-              title: 'Selamat Telah Mendapatkan 5JT',
-              body: wm,
-              thumbnail: global.thumbBuffer,
-              mediaType: 1,
-              showAdAttribution: false,
-              renderLargerThumbnail: true
-            }
+            
           }
         })
         global.db.data.users[m.sender].lastngepet = new Date * 1
@@ -55,14 +41,7 @@ let handler = async (m, { conn, args, usedPrefix }) => {
     } else conn.sendMessage(m.chat, {
       text: `Kamu sudah melakukan *ngepet*\nDan kamu harus menunggu selama agar bisa ngepet kembali ${timers}`,
       contextInfo: {
-        externalAdReply: {
-          title: 'C O O L D O W N',
-          body: `${timers}`,
-          thumbnail: global.thumbBuffer,
-          mediaType: 1,
-          showAdAttribution: false,
-          renderLargerThumbnail: true
-        }
+        
       }
     })
   } catch (e) {

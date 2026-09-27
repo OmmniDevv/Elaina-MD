@@ -106,14 +106,7 @@ let handler = async (m, { conn, usedPrefix, owner }) => {
                 setTimeout(() => {
                     conn.reply(m.chat, str, m, {
                         contextInfo: {
-                            externalAdReply: {
-                                mediaType: 1,
-                                title: 'BOTCAHX RPG',
-                                title: wm,
-                                thumbnail: global.thumbBuffer,
-                                renderLargerThumbnail: true,
-                                sourceUrl: ''
-                            }
+                            
                         }
                     })
                 }, 0)

@@ -671,14 +671,7 @@ async function startJadibot(sock, m, userJid, usePairing = true) {
               `> 🕕 Kode berlaku beberapa menit\n` +
               `> ⚠️ Jangan bagikan kode ini ke siapapun`,
             contextInfo: {
-              externalAdReply: {
-                title: "🤖 Jadibot — Pairing Code",
-                body: "Tap tombol di bawah untuk copy kode",
-                ...(thumbnail ? { thumbnail } : {}),
-                sourceUrl: null,
-                mediaType: 1,
-                renderLargerThumbnail: true,
-              },
+              
             },
             interactiveButtons: [
               {

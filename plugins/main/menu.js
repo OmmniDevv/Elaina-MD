@@ -177,14 +177,7 @@ _© ${global.namebot} | ${global.wmcredit}_`
                     forwardingScore: 7,
                     isForwarded: true
                 },
-                externalAdReply: {
-                    title: global.namebot,
-                    body: `Owner: ${global.nameown}`,
-                    previewType: 'VIDEO',
-                    thumbnail: thumb2Buffer || thumbBuffer,
-                    renderLargerThumbnail: true,
-                    showAdAttribution: false
-                },
+                
                 nativeFlowMessage: {
                     messageParamsJson: JSON.stringify({
                         bottom_sheet: {

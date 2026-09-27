@@ -101,14 +101,7 @@ let handler = async (m, { conn, usedPrefix, isOwner }) => {
     const contextInfo = {
         mentionedJid: [m.sender],
         forwardingScore: 9,
-        isForwarded: true,
-        externalAdReply: {
-            title: global.namebot,
-            body: `${totalCmds} Commands`,
-            mediaType: 1,
-            renderLargerThumbnail: true,
-            thumbnail: thumbBuffer
-        }
+        isForwarded: true
     }
 
     await conn.sendMessage(m.chat, { text: body, contextInfo }, { quoted: ftroliQuoted })

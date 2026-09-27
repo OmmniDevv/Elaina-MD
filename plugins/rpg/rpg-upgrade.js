@@ -219,13 +219,7 @@ const handler = async (m, {
             default:
                 await conn.reply(m.chat, lmao1, m, {
                     contextInfo: {
-                        externalAdReply: {
-                            mediaType: 1,
-                            title: 'BOTCAHX RPG',
-                            thumbnail: global.thumbBuffer,
-                            renderLargerThumbnail: true,
-                            sourceUrl: ''
-                        }
+                        
                     }
                 });
         }

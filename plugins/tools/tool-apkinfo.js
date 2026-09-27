@@ -11,7 +11,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
 	let str = `*Title:* ${title}\n  ${summary}\n*Installs:* ${installs}\n*Score:* ${scoreText}\n*Price:* ${priceText}\n`
 		+ `*Size:* ${size}\n*Android Ver:* ${androidVersionText}\n*Dev:* ${developer}\n*Released:* ${released}\n`
 		+ `*Updated:* ${moment(updated).locale('en').format('MMM D, Y')}\n*Version:* ${version}`
-	let opt = { contextInfo: { externalAdReply: { title, body: summary, thumbnail: (await conn.getFile(icon)).data, sourceUrl: res.url }}}
+	let opt = {}
 	conn.sendMessage(m.chat, { image: { url: screenshots.getRandom() }, caption: str, ...opt }, { quoted: m })
 }
 handler.command = /^(apk(info|detail))$/i

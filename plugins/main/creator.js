@@ -72,14 +72,7 @@ ${htjava} *🐈 ɢɪᴛʜᴜʙ:* ${sgh}
             interactiveMessage: {
               footer: teksbio,
               contextInfo: {
-                forwardingScore: 7, isForwarded: true,
-                externalAdReply: {
-                  title: `${htki} BIODATA ${htka}`,
-                  body: nameown,
-                  mediaType: 1,
-                  renderLargerThumbnail: false,
-                  sourceUrl: sig
-                }
+                forwardingScore: 7, isForwarded: true
               },
               nativeFlowMessage: {
                 messageParamsJson: '',

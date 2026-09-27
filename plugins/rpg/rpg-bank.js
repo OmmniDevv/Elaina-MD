@@ -25,15 +25,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             extendedTextMessage:{
                 text: capt, 
                 contextInfo: {
-                    mentionedJid: [m.sender],
-                    externalAdReply: {
-                        title: wm,
-                        mediaType: 1,
-                        previewType: 0,
-                        renderLargerThumbnail: true,
-                        thumbnail: global.thumbBuffer,
-                        sourceUrl: ''
-                    }
+                    mentionedJid: [m.sender]
                 }, 
                 mentions: [m.sender]
             }

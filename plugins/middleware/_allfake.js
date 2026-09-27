@@ -33,47 +33,18 @@ handler.all = async function (m) {
 		global.ephemeral = '86400' // 86400 = 24jam, kalo ingin di hilangkan ganti '86400' jadi 'null' atau ''
 		let urls = pickRandom(['https://tinyurl.com/248tem3e', 'https://tinyurl.com/2ygkf7cn', 'https://tinyurl.com/29rt6ynv', 'https://tinyurl.com/25ampr4y', 'https://tinyurl.com/2yq9srmd', 'https://tinyurl.com/2bahkesq', 'https://tinyurl.com/2xnzw74a', 'https://tinyurl.com/2b9hocps', 'https://tinyurl.com/265ekuvk', 
 'https://tinyurl.com/2c82ajhq', 'https://tinyurl.com/265y8p3e', 'https://tinyurl.com/286yslxu'])
-		// externalAdReply atau text with thumbnail. gatau bahasa Inggris? coba translate!
+		// Kartu preview: pakai thumbnail biasa saja. Jangan pakai kartu iklan
+		// (sudah tidak didukung WA dan bikin pesan gagal terkirim).
 		let _thumb
 		try { _thumb = fs.readFileSync(global.thumb) } catch { _thumb = Buffer.alloc(0) }
 		global.thumbBuffer = _thumb
 		global.adReply = {
 			contextInfo: {
-				forwardingScore: 9999,
-				externalAdReply: {
-                    showAdAttribution: true,
-					title: global.ucapan,
-					body: wm,
-					mediaUrl: sgc,
-					description: 'Elaina-MultiDevice',
-					previewType: "PHOTO",
-					thumbnail: _thumb,
-					sourceUrl: "https://github.com/OmmniDevv",					
-				}
+				forwardingScore: 9999
 			}
 		}
-		global.fakeig = {
-         contextInfo: { externalAdReply: { showAdAttribution: true,
-            mediaUrl: "https://Instagram.com/Xiao_yan_21",
-            mediaType: "VIDEO",
-            description: "https://Instagram.com/Xiao_yan_21", 
-            title: 'Elaina-MultiDevice',
-            body: wm,
-            thumbnail: _thumb,
-            sourceUrl: sgc
-    }
-    } }
-global.fakefb = {
-         contextInfo: { externalAdReply: { showAdAttribution: true,
-            mediaUrl: "https://Facebook.com/Fay.cats.Kun",
-            mediaType: "VIDEO",
-            description: "https://www.Facebook.com/Fay.cats.kun", 
-            title: 'Elaina-MultiDevice',
-            body: wm,
-            thumbnail: _thumb,
-            sourceUrl: sgc
-    }
-    } }
+		global.fakeig = {}
+global.fakefb = {}
 		// Fake ðŸ¤¥
 		global.ftroli = { key: { remoteJid: 'status@broadcast', participant: '0@s.whatsapp.net' }, message: { orderMessage: { itemCount: 9999999999999999999999999999999999999999999999999999999, status: 1, surface: 1, message: wm, orderTitle: wm, sellerJid: '0@s.whatsapp.net' } } }
 		global.fkontak = { key: { fromMe: false, participant: `0@s.whatsapp.net`, ...(m.chat ? { remoteJid: `status@broadcast` } : {}) }, message: { 'contactMessage': { 'displayName': wm, 'vcard': `BEGIN:VCARD\nVERSION:3.0\nN:XL;${wm},;;;\nFN:${wm},\nitem1.TEL;waid=${m.sender.split('@')[0]}:${m.sender.split('@')[0]}\nitem1.X-ABLabell:Ponsel\nEND:VCARD`, 'jpegThumbnail': (() => { try { return fs.readFileSync('./thumbnail.jpg') } catch { return Buffer.alloc(0) } })(), thumbnail: (() => { try { return fs.readFileSync('./thumbnail.jpg') } catch { return Buffer.alloc(0) } })(),sendEphemeral: true}}}

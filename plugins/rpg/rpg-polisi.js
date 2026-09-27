@@ -28,13 +28,7 @@ const handler = async (m, { conn, usedPrefix, command, args }) => {
         "🏆 Cek peringkat Anda dengan perintah *.polisi leaderboard*.\n" +
         "ℹ️ Gunakan perintah *.polisi status* untuk melihat status Anda saat ini.", m, {
         contextInfo: {
-          externalAdReply: {
-            mediaType: 1,
-            title: wm,
-            thumbnail: global.thumbBuffer,
-            renderLargerThumbnail: true,
-            sourceUrl: ''
-          }
+          
         }
       });
       return;

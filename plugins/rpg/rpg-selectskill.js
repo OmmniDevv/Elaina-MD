@@ -24,17 +24,11 @@ let handler = async (m, { conn, usedPrefix, text, command }) => {
             return `- *${s}* *[ ${stars} ]*\n_Difficulty_ : ${difficulty}`
         }).join('\n')
 
-        // Context info for available skills with externalAdReply
+        // Context info untuk daftar skill
         const availableSkillsMessage = `乂 *C L A S S*\n\nPilih *Class* yang anda sukai atau sesuai dengan skill atau talent mu :\n\n${skillList}\n\n_How To Use_ :\n${usedPrefix + command} *nameskill*\n\n_Example_ :\n${usedPrefix + command} *wizard*`.trim();
         await conn.reply(m.chat, availableSkillsMessage, m, {
             contextInfo: {
-                externalAdReply: {
-                    mediaType: 1,
-                    title: 'AXELLDX',
-                    thumbnail: global.thumbBuffer,
-                    renderLargerThumbnail: true,
-                    sourceUrl: ''
-                }
+                
             }
         });
         return;

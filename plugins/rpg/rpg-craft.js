@@ -148,13 +148,7 @@ let handler = async (m, { conn, command, args, usedPrefix }) => {
                 default:
                     await conn.reply(m.chat, caption, m, {
                         contextInfo: {
-                            externalAdReply: {
-                                mediaType: 1,
-                                title: 'BOTCAHX RPG',
-                                thumbnail: global.thumbBuffer,
-                                renderLargerThumbnail: true,
-                                sourceUrl: ''
-                            }
+                            
                         }
                     });
             }

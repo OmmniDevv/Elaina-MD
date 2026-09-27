@@ -18,13 +18,7 @@ let handler = async (m, { conn, text }) => {
     if (!attributes.includes(attribute)) {
       conn.reply(m.chat, `乂 *B E R L A T I H*\n\nSilahkan pilih *Attribute* yang kamu ingin latih :\n\n- Attack\n- Speed\n- Strenght\n- Health\n- Defense\n\n_Example_ :\n.berlatih defense`, m, {
             contextInfo: {
-                externalAdReply: {
-                    mediaType: 1,
-                    title: wm,
-                    thumbnail: global.thumbBuffer,
-                    renderLargerThumbnail: true,
-                    sourceUrl: ''
-                }
+                
             }
         })
       return;
@@ -53,13 +47,7 @@ let handler = async (m, { conn, text }) => {
 
     conn.reply(m.chat, message, m, {
             contextInfo: {
-                externalAdReply: {
-                    mediaType: 1,
-                    title: wm,
-                    thumbnail: global.thumbBuffer,
-                    renderLargerThumbnail: true,
-                    sourceUrl: ''
-                }
+                
             }
         })
   } catch (e) {

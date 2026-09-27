@@ -31,14 +31,7 @@ forwardedNewsletterMessageInfo: {
 newsletterJid: '120363248530706545@newsletter', 
 newsletterName: '>>BOTCAHX RPG<<', 
 serverMessageId: -1
-},
-          externalAdReply: {
-            mediaType: 1,
-            title: 'BOTCAHX RPG',
-            thumbnail: global.thumbBuffer,
-            renderLargerThumbnail: true,
-            sourceUrl: ''
-          }
+}
         }
       });
       return;

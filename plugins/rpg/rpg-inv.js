@@ -84,12 +84,7 @@ let handler = async (m, { conn, args }) => {
 /*conn.sendMessage(m.chat, {
 text: capt,
 contextInfo: {
-externalAdReply: {
-title: 'I N V E N T O R Y',
-thumbnail: global.thumbBuffer,
-mediaType: 1,
-renderLargerThumbnail: true
-}}}, { quoted: m })*/
+}}, { quoted: m })*/
 
 conn.fakeReply(m.chat, capt, '0@s.whatsapp.net', 'Inventory', 'status@broadcast')
   //conn.sendFile(m.chat, 'https://telegra.ph/file/5488aa5c5b3c28cd35e0e.jpg', 'balance.jpg', caption, m)

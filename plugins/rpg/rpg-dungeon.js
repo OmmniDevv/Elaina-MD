@@ -14,41 +14,21 @@ async function handler(m, { conn, usedPrefix, command, text }) {
       if (SWORD) return conn.sendMessage(m.chat, {
         text: anjy,
         contextInfo: {
-        externalAdReply: {
-        title: 'D u n g e o n',
-        thumbnail: global.thumbBuffer,
-        mediaType: 1,
-        renderLargerThumbnail: true
-        }}})
+        }})
       if (ARMOR) return conn.sendMessage(m.chat, {
         text: kemii,
         contextInfo: {
-        externalAdReply: {
-        title: 'D u n g e o n',
-        thumbnail: global.thumbBuffer,
-        mediaType: 1,
-        renderLargerThumbnail: true
-        }}})
+        }})
       if (HEALT) return conn.sendMessage(m.chat, {
         text: kemii1,
         contextInfo: {
-        externalAdReply: {
-        title: 'D u n g e o n',
-        thumbnail: global.thumbBuffer,
-        mediaType: 1,
-        renderLargerThumbnail: true
-        }}})
+        }})
       
       let lmao = item(user.sword * 1, user.armor * 1, user.healt * 1, usedPrefix)
       if (danzz.length == 0) return conn.sendMessage(m.chat, {
         text: lmao,
         contextInfo: {
-        externalAdReply: {
-        title: 'D u n g e o n',
-        thumbnail: global.thumbBuffer,
-        mediaType: 1,
-        renderLargerThumbnail: true
-        }}})
+        }})
   }
   global.dungeon = global.dungeon ? global.dungeon : {}
   if (Object.values(global.dungeon).find(room => room.id.startsWith('dungeon') && [room.game.player1, room.game.player2, room.game.player3, room.game.player4].includes(m.sender))) return conn.reply(m.chat, 'Kamu masih di dalam Dungeon', m)// nek iseh neng njero dungeon
@@ -88,12 +68,7 @@ async function handler(m, { conn, usedPrefix, command, text }) {
       conn.sendMessage(m.chat, {
         text: lmao,
         contextInfo: {
-        externalAdReply: {
-        title: 'D u n g e o n',
-        thumbnail: global.thumbBuffer,
-        mediaType: 1,
-        renderLargerThumbnail: true
-        }}})
+        }})
       
       if (room.game.player1 && room.game.player2 && room.game.player3 && room.game.player4) {
 
@@ -358,12 +333,7 @@ ${usedPrefix}${command} ${text}` : '') + '\natau ketik *sendiri* untuk bermain s
 conn.sendMessage(m.chat, {
   text: lmao,
   contextInfo: {
-  externalAdReply: {
-  title: 'D u n g e o n',
-  thumbnail: global.thumbBuffer,
-  mediaType: 1,
-  renderLargerThumbnail: true
-  }}})
+  }})
       global.dungeon[room.id] = room
     }
 }
@@ -392,12 +362,7 @@ if (room) {
       conn.sendMessage(m.chat, {
         text: lmao,
         contextInfo: {
-        externalAdReply: {
-        title: 'D u n g e o n',
-        thumbnail: global.thumbBuffer,
-        mediaType: 1,
-        renderLargerThumbnail: true
-        }}})
+        }})
 
     if (room.player2 || room.player3 || room.player4) return this.sendMessage(m.chat, lmao, { quoted: m })
     room.state = 'PLAYING'

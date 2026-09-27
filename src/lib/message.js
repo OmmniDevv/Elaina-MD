@@ -398,13 +398,7 @@ async function sendWithPreview(sock, jid, text, preview, options = {}) {
     return sock.sendMessage(jid, {
         text,
         contextInfo: {
-            externalAdReply: {
-                showAdAttribution: false,
-                title: preview.title || '',
-                body: preview.body || '',
-                thumbnail: preview.thumbnail,
-                sourceUrl: preview.url
-            },
+            
             mentionedJid: options.mentions || []
         }
     }, {
