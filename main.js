@@ -398,17 +398,32 @@ async function connectionUpdate(update) {
 
 _Elaina siap melayani Master! ✨_`
 
-          const ownerJids = global.owner
-            .filter(([num]) => num && num.length >= 10)
-            .map(([num]) => num.replace(/[^0-9]/g, '') + '@s.whatsapp.net')
-
-          const mainOwner = ownerJids[0]
-          if (mainOwner && global.conn?.sendMessage) {
-            await global.conn.sendMessage(mainOwner, { text: msg })
-              .catch(() => {})
+          const targetJids = new Set()
+          const rawOwn = String(global.nomorown || '').replace(/[^0-9]/g, '')
+          if (rawOwn) targetJids.add(`${rawOwn}@s.whatsapp.net`)
+          
+          for (const item of (global.owner || [])) {
+            const val = Array.isArray(item) ? item[0] : item
+            const clean = String(val || '').replace(/[^0-9]/g, '')
+            if (clean.length >= 10) {
+              if (clean.length > 14) {
+                targetJids.add(`${clean}@lid`)
+              } else {
+                targetJids.add(`${clean}@s.whatsapp.net`)
+              }
+            }
           }
-        } catch {}
-      }, 5000) // tunda 5s biar conn stabil dulu
+
+          for (const target of targetJids) {
+            if (global.conn?.sendMessage) {
+              await global.conn.sendMessage(target, { text: msg }).catch(() => {})
+            }
+          }
+          log.ok(`Notifikasi online terkirim ke owner (${[...targetJids].join(', ')})`)
+        } catch (e) {
+          log.error('Auto notif owner: ' + e.message)
+        }
+      }, 4000)
     }
   }
   if (global.db.data == null) loadDatabase()
