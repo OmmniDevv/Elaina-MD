@@ -1,6 +1,5 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
 import fetch from 'node-fetch'
-import { MB } from '@rexxhayanasi/elaina-baileys'
 
 const CATEGORY_EMOJIS = {
     owner: '👑', main: '🏠', downloader: '📥', sticker: '🖼️',
@@ -84,18 +83,32 @@ let handler = async (m, { conn, usedPrefix, isOwner, isPrems }) => {
         thumbSmall = await sharp(raw1).resize(300, 300, { fit: 'cover' }).jpeg({ quality: 80 }).toBuffer()
     } catch { }
 
-    // Kategori ditulis sebagai TEKS + tombol quick_reply, BUKAN single_select.
-    // Sebab: WhatsApp tidak lagi merender list (single_select) di Web/iOS, dan di
-    // banyak versi Android pesannya malah tidak terkirim sama sekali (centang
-    // satu) — jadi isi menu hilang total. quick_reply didukung lintas klien.
-    const listText = sortedCats
-        .map((cat, i) => `${String(i + 1).padStart(2, '0')}. ${CATEGORY_EMOJIS[cat] || '📁'} *${cat.toUpperCase()}* — ${cmdMap[cat].length} cmd`)
-        .join('\n')
+    // Category rows untuk single_select dropdown (variant 15)
+    const catRows = sortedCats.map(cat => ({
+        title: `${CATEGORY_EMOJIS[cat] || '📁'} ${cat.toUpperCase()} MENU`,
+        description: `${cmdMap[cat].length} commands`,
+        id: `${usedPrefix}menucat ${cat}`
+    }))
 
-    // Maksimal 10 quick_reply per pesan, dan tidak boleh dicampur tipe tombol lain.
-    const btnList = sortedCats.slice(0, 9)
-        .map(cat => [`${CATEGORY_EMOJIS[cat] || '📁'} ${cat.toUpperCase()}`, `${usedPrefix}menucat ${cat}`])
-    btnList.push(['🌺 Semua Menu', `${usedPrefix}allmenu`])
+    // Buttons (variant 15 style — tanpa call_permission_request)
+    const buttons = [
+        {
+            name: 'single_select',
+            buttonParamsJson: JSON.stringify({ has_multiple_buttons: true })
+        },
+        {
+            name: 'quick_reply',
+            buttonParamsJson: JSON.stringify({ display_text: '🌺 Lihat Semua Menu', id: `${usedPrefix}allmenu` })
+        },
+        {
+            name: 'single_select',
+            buttonParamsJson: JSON.stringify({
+                title: '📁 Pilih Kategori',
+                sections: [{ title: '📋 PILIH CATEGORY', rows: catRows }],
+                has_multiple_buttons: true
+            })
+        }
+    ]
 
     // ftroliQuoted — orderMessage
     const ftroliQuoted = {
@@ -126,7 +139,7 @@ let handler = async (m, { conn, usedPrefix, isOwner, isPrems }) => {
         }
     }
 
-    const bodyText = `Hai *${pushName}* 👋
+    const footerText = `Hai *${pushName}* 👋
 Selamat datang di *${global.namebot}* ✨
 
 ╭─〔 🤖 \`ʙᴏᴛ ɪɴꜰᴏ\` 〕─⬣
@@ -147,40 +160,44 @@ Selamat datang di *${global.namebot}* ✨
 │ ✦ *ᴡᴀᴋᴛᴜ : ${timeStr} WIB*
 ╰─⬣
 
-╭─〔 📁 \`ᴋᴀᴛᴇɢᴏʀɪ\` 〕─⬣
-${listText}
-╰─⬣
-
-Pilih lewat tombol di bawah, atau ketik \`${usedPrefix}menucat <kategori>\`
+Silahkan tekan tombol di bawah untuk memilih kategori
 _© ${global.namebot} | ${global.wmcredit}_`
 
     try {
-        // Kartu bisnis: gambar header + nama bot + subtitle. Isi menu ditaruh di
-        // body sebagai teks, navigasi lewat quick_reply — kombinasi ini didukung
-        // Web, iOS, dan Android (single_select tidak).
-        const menuBtn = new MB.Button(conn)
-            .setTitle(global.namebot)
-            .setSubtitle(`Owner: ${global.nameown}`)
-            .setBody(bodyText)
-            .setFooter(`© ${global.namebot}`)
-            .setContextInfo({
+        // variant 15: raw interactiveMessage via sendMessage (bukan generateWAMessageFromContent)
+        await conn.sendMessage(m.chat, {
+            interactiveMessage: {
+                title: '',
+                footer: footerText,
+                document: Buffer.from(JSON.stringify({ bot: global.namebot })),
+                mimetype: 'image/jpeg',
+                jpegThumbnail: thumbSmall,
+                contextInfo: {
+                    mentionedJid: [],
+                    forwardingScore: 7,
+                    isForwarded: true
+                },
                 externalAdReply: {
                     title: global.namebot,
                     body: `Owner: ${global.nameown}`,
-                    mediaType: 1,
-                    thumbnail: thumbSmall || thumbBuffer || undefined,
+                    previewType: 'VIDEO',
+                    thumbnail: thumb2Buffer || thumbBuffer,
                     renderLargerThumbnail: true,
-                    showAdAttribution: false,
-                    sourceUrl: 'https://github.com/OmmniDevv'
+                    showAdAttribution: false
                 },
-                forwardingScore: 7,
-                isForwarded: true
-            })
-        for (const [label, id] of btnList) menuBtn.addReply(label, id)
-        // Gambar header kartu bisnis (dari thumbnail lokal, sudah di-resize).
-        if (thumb2Buffer || thumbBuffer) menuBtn.setImage(thumb2Buffer || thumbBuffer)
-
-        await menuBtn.send(m.chat, { quoted: ftroliQuoted })
+                nativeFlowMessage: {
+                    messageParamsJson: JSON.stringify({
+                        bottom_sheet: {
+                            in_thread_buttons_limit: 2,
+                            divider_indices: [1, 2, 3, 999],
+                            list_title: 'Silahkan pilih menu yang kamu inginkan',
+                            button_title: '🍀 Pilih Kategori'
+                        }
+                    }),
+                    buttons
+                }
+            }
+        }, { quoted: ftroliQuoted })
     } catch (e) {
         console.error('[Menu]', e.message)
         throw e
