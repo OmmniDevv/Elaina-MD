@@ -342,6 +342,74 @@ async function connectionUpdate(update) {
       if (existsSync(flagFile)) unlinkSync(flagFile)
     } catch {}
     global.timestamp.connect = new Date
+
+    // ── Auto-notif ke owner saat pertama konek ──
+    if (!global._ownerNotified) {
+      global._ownerNotified = true
+      setTimeout(async () => {
+        try {
+          const { default: osModule } = await import('os')
+          const totalMem = (osModule.totalmem() / 1024 / 1024 / 1024).toFixed(1)
+          const freeMem  = (osModule.freemem()  / 1024 / 1024 / 1024).toFixed(2)
+          const usedMem  = (osModule.totalmem() - osModule.freemem())
+          const usedMemMB = (usedMem / 1024 / 1024).toFixed(0)
+          const cpuModel = osModule.cpus()[0]?.model?.replace(/\s+/g, ' ').trim() || 'Unknown CPU'
+          const cpuCount = osModule.cpus().length
+          const platform = osModule.platform()
+          const arch     = osModule.arch()
+          const hostname = osModule.hostname()
+          const uptime   = osModule.uptime()
+          const uptimeFmt = `${Math.floor(uptime/3600)}j ${Math.floor((uptime%3600)/60)}m`
+          const pluginCount = Object.keys(global.plugins || {}).length
+          const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour12: false })
+          const waVer = baileysVersion?.version?.join('.') || 'unknown'
+          const bootMs = Date.now() - (global.timestamp?.start?.getTime?.() || Date.now())
+          const bootSec = (bootMs / 1000).toFixed(1)
+
+          const msg =
+`╭─────────────────────────╮
+│  🌸 *${botName}* — ONLINE  │
+╰─────────────────────────╯
+
+✅ Bot berhasil terhubung ke WhatsApp~
+
+╭── *🤖 INFO BOT* ──────────
+│ 📛 Nama     : ${botName}
+│ 🏷️ Versi    : v${_pkg.version}
+│ 📁 Session  : ${global.authFile}
+│ ⚡ Plugin   : ${pluginCount} dimuat
+│ 🕒 Boot     : ${bootSec}s
+╰────────────────────────────
+
+╭── *💻 INFO SISTEM* ────────
+│ 🖥️ Host     : ${hostname}
+│ 🐧 OS       : ${platform} (${arch})
+│ ⚙️ CPU      : ${cpuModel}
+│ 🔢 Core     : ${cpuCount} vCPU
+│ 🧠 RAM      : ${usedMemMB}MB / ${totalMem}GB
+│ 💾 RAM Free : ${freeMem}GB
+│ ⏱️ Uptime   : ${uptimeFmt}
+╰────────────────────────────
+
+╭── *📡 WHATSAPP* ───────────
+│ 📶 WA Web  : v${waVer}
+│ 🕐 Konek   : ${now}
+╰────────────────────────────
+
+_Elaina siap melayani Master! ✨_`
+
+          const ownerJids = global.owner
+            .filter(([num]) => num && num.length >= 10)
+            .map(([num]) => num.replace(/[^0-9]/g, '') + '@s.whatsapp.net')
+
+          const mainOwner = ownerJids[0]
+          if (mainOwner && global.conn?.sendMessage) {
+            await global.conn.sendMessage(mainOwner, { text: msg })
+              .catch(() => {})
+          }
+        } catch {}
+      }, 5000) // tunda 5s biar conn stabil dulu
+    }
   }
   if (global.db.data == null) loadDatabase()
 }
