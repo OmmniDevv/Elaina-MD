@@ -604,7 +604,33 @@ function normalizePluginModule(module) {
           botConfig = (await import('./config.js')).default || {}
         } catch {}
       }
-      return hdl.call(this, m, {
+
+      const rawText = (typeof m.text === 'string' ? m.text : '') || m.msg?.caption || m.msg?.text || ''
+      const argText = extra.text !== undefined ? extra.text : (extra._args ? extra._args.join(' ') : '')
+      const argsList = extra.args || (argText ? argText.trim().split(/\s+/) : [])
+      const cmdName = extra.command || ''
+      const pfx = extra.usedPrefix || '.'
+
+      // Buat proxy m agar kompatibel dengan ekspektasi modular plugin:
+      // m.text = argumen teks (bukan raw command e.g. "dimas", bukan ".brat dimas")
+      // m.body = raw full text pesan e.g. ".brat dimas"
+      // m.args = argumen array e.g. ["dimas"]
+      // m.command = nama command e.g. "brat"
+      // m.prefix = prefix e.g. "."
+      const mProxy = Object.create(m)
+      mProxy.rawText = rawText
+      mProxy.body = rawText
+      mProxy.text = argText
+      mProxy.args = argsList
+      mProxy.command = cmdName
+      mProxy.prefix = pfx
+      mProxy.fullArgs = argText
+      mProxy.isImage = m.mtype === 'imageMessage' || (m.quoted && m.quoted.mtype === 'imageMessage')
+      mProxy.isVideo = m.mtype === 'videoMessage' || (m.quoted && m.quoted.mtype === 'videoMessage')
+      mProxy.isSticker = m.mtype === 'stickerMessage' || (m.quoted && m.quoted.mtype === 'stickerMessage')
+      mProxy.isMedia = !!(m.mediaMessage || (m.quoted && m.quoted.mediaMessage))
+
+      return hdl.call(this, mProxy, {
         sock: this,
         conn: this,
         store: global.store,
@@ -613,6 +639,10 @@ function normalizePluginModule(module) {
         pluginConfig: cfg,
         uptime: process.uptime,
         plugins: global.plugins,
+        text: argText,
+        args: argsList,
+        command: cmdName,
+        prefix: pfx,
         ...extra
       })
     }
