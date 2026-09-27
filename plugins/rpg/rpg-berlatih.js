@@ -1,4 +1,5 @@
 // Fungsi untuk mengubah waktu menjadi format jam:menit:detik
+import { sendQuickMenu } from '../../lib/menuHelper.js'
 function clockString(ms) {
   let h = Math.floor(ms / 3600000);
   let m = Math.floor(ms / 60000) % 60;
@@ -6,7 +7,7 @@ function clockString(ms) {
   return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
 }
 
-let handler = async (m, { conn, text }) => {
+let handler = async (m, { conn, text, usedPrefix, command }) => {
   try {
     let user = global.db.data.users[m.sender];
     
@@ -16,12 +17,17 @@ let handler = async (m, { conn, text }) => {
     // Cek apakah atribut yang diminta valid
     let attribute = text.toLowerCase().trim();
     if (!attributes.includes(attribute)) {
-      conn.reply(m.chat, `乂 *B E R L A T I H*\n\nSilahkan pilih *Attribute* yang kamu ingin latih :\n\n- Attack\n- Speed\n- Strenght\n- Health\n- Defense\n\n_Example_ :\n.berlatih defense`, m, {
-            contextInfo: {
-                
-            }
-        })
-      return;
+      return sendQuickMenu(conn, m, {
+        title: '🏋️ Berlatih',
+        text: `乂 *B E R L A T I H*\n\nPilih *Attribute* yang ingin kamu latih.\n\n_Example_ :\n${usedPrefix}${command} defense`,
+        items: [
+          { label: '⚔️ Attack', id: `${usedPrefix}${command} attack` },
+          { label: '💨 Speed', id: `${usedPrefix}${command} speed` },
+          { label: '💪 Strength', id: `${usedPrefix}${command} strength` },
+          { label: '❤️ Health', id: `${usedPrefix}${command} health` },
+          { label: '🛡️ Defense', id: `${usedPrefix}${command} defense` }
+        ]
+      });
     }
 
     // Cek apakah pengguna memiliki cukup stamina
