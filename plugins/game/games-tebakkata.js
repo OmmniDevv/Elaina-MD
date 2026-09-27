@@ -2,6 +2,7 @@
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import path from 'path'
+import { elainaSay, elainaFooter } from '../../lib/elainaVoice.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -13,23 +14,25 @@ let handler = async (m, { conn, usedPrefix }) => {
     conn.tebakkata = conn.tebakkata ? conn.tebakkata : {}
     let id = m.chat
     if (id in conn.tebakkata) {
-        conn.reply(m.chat, 'Masih ada soal belum terjawab di chat ini', conn.tebakkata[id][0])
+        conn.reply(m.chat, elainaSay('mikir', 'masih ada soal yang belum dijawab di chat ini lho~ selesaikan dulu ya~'), conn.tebakkata[id][0])
         throw false
     }
     const data = JSON.parse(fs.readFileSync(dataPath, 'utf-8'))
     const json = data[Math.floor(Math.random() * data.length)]
-    
-    let caption = `
+
+    let caption = `*${global.htki} ᴛᴇʙᴀᴋ ᴋᴀᴛᴀ ${global.htka}*
+
 ${json.soal}
-Timeout *${(timeout / 1000).toFixed(2)} detik*
-Ketik ${usedPrefix}teka untuk bantuan
-Bonus: ${poin} XP
-`.trim()
+
+⏳ Timeout *${(timeout / 1000).toFixed(0)} detik*
+💡 Ketik ${usedPrefix}teka buat bantuan
+🎁 Bonus: ${poin} XP`
+
     conn.tebakkata[id] = [
-        await conn.sendButton(m.chat, caption, author, ['hint', `${usedPrefix}teka`], m),
+        await conn.sendButton(m.chat, caption, elainaFooter(), null, [['💡 Bantuan', `${usedPrefix}teka`]], m),
         json, poin,
         setTimeout(() => {
-            if (conn.tebakkata[id]) conn.sendButton(m.chat, `Waktu habis!\nJawabannya adalah *${json.jawaban}*`, author, ['tebakkata', `${usedPrefix}tebakkata`], conn.tebakkata[id][0])
+            if (conn.tebakkata[id]) conn.sendButton(m.chat, elainaSay('gagal', `waktu habis~ jawabannya adalah *${json.jawaban}*`), elainaFooter(), null, [['🔁 Main Lagi', `${usedPrefix}tebakkata`]], conn.tebakkata[id][0])
             delete conn.tebakkata[id]
         }, timeout)
     ]
