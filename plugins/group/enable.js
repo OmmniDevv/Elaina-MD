@@ -1,4 +1,5 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
+import { sendQuickMenu } from '../../lib/menuHelper.js'
 let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isROwner }) => {
 
   const optRows = [
@@ -147,39 +148,27 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
       if (!isROwner) { global.dfail('rowner', m, conn); throw false }
       global.opts['swonly'] = isEnable
       break
-    default:
-      if (!/[01]/.test(command)) return await conn.sendMessage(m.chat, {
-        interactiveMessage: {
-          footer: botdate,
-          contextInfo: { forwardingScore: 7, isForwarded: true },
-          nativeFlowMessage: {
-            messageParamsJson: JSON.stringify({ bottom_sheet: { button_title: '⚙️ Pilih Opsi' } }),
-            buttons: [{
-              name: 'single_select',
-              buttonParamsJson: JSON.stringify({
-                title: '⚙️ Pilih Opsi',
-                sections: [{ title: `${dmenub} List Options`, rows: optRows }]
-              })
-            }]
-          }
-        }
-      }, { quoted: ftroliQuoted })
+    default: {
+      const listTxt = optRows.map(r => `  • ${r.title} → \`${r.id}\``).join('\n')
+      await sendQuickMenu(conn, m, {
+        title: `⚙️ ${global.namebot}`,
+        text: `*⚙️ PILIH OPSI*\n\n${listTxt}`,
+        footer: `_Ketik ${usedPrefix}enable <opsi>_`,
+        items: optRows.slice(0, 10).map(r => ({ label: r.title, id: r.id })),
+        quoted: ftroliQuoted
+      })
       throw false
+    }
   }
 
-  await conn.sendMessage(m.chat, {
-    interactiveMessage: {
-      footer: `*${htki} 𝙾𝙿𝚃𝙸𝙾𝙽𝚂 ${htka}*\n🗂️ *ᴛʏᴘᴇ:* ${type}\n📊 *sᴛᴀᴛᴜs:* Succes ✅\n🎚️ *ᴏᴘᴛɪᴏɴs:* ${isEnable ? 'Enable' : 'Disable'}\n📣 *ғᴏʀ:* ${isAll ? 'This Bot' : isUser ? 'You' : 'This Chat'}`,
-      contextInfo: { forwardingScore: 7, isForwarded: true },
-      nativeFlowMessage: {
-        messageParamsJson: '',
-        buttons: [
-          { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: isEnable ? '✖️ Disable' : '✔️ Enable', id: `${isEnable ? `.off ${type}` : `.on ${type}`}` }) },
-          { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '🎀 Menu', id: '.menu' }) }
-        ]
-      }
-    }
-  }, { quoted: m })
+  await sendQuickMenu(conn, m, {
+    title: `⚙️ ${global.namebot}`,
+    text: `*${htki} 𝙾𝙿𝚃𝙸𝙾𝙽𝚂 ${htka}*\n🗂️ *ᴛʏᴘᴇ:* ${type}\n📊 *sᴛᴀᴛᴜs:* Succes ✅\n🎚️ *ᴏᴘᴛɪᴏɴs:* ${isEnable ? 'Enable' : 'Disable'}\n📣 *ғᴏʀ:* ${isAll ? 'This Bot' : isUser ? 'You' : 'This Chat'}`,
+    items: [
+      { label: isEnable ? '✖️ Disable' : '✔️ Enable', id: `${isEnable ? `.off ${type}` : `.on ${type}`}` },
+      { label: '🎀 Menu', id: '.menu' }
+    ]
+  })
 }
 
 handler.help = ['en', 'dis'].map(v => v + 'able <option>')

@@ -1,4 +1,5 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
+import { sendQuickMenu } from '../../lib/menuHelper.js'
 let handler = async (m, { conn }) => {
   const sh = '5', sn = '15', ss = '30', sp = '35', sv = '65'
   const ph = '5', pn = '20', pp = '40', pv = '50', ppm = '70'
@@ -64,25 +65,19 @@ let handler = async (m, { conn }) => {
     }
   }
 
-  await conn.sendMessage(m.chat, {
-    interactiveMessage: {
-      footer: info,
-      contextInfo: { forwardingScore: 7, isForwarded: true },
-      nativeFlowMessage: {
-        messageParamsJson: JSON.stringify({ bottom_sheet: { button_title: '💎 Pilih Paket' } }),
-        buttons: [{
-          name: 'single_select',
-          buttonParamsJson: JSON.stringify({
-            title: '💎 Pilih Paket',
-            sections: [
-              { title: `${htjava} SEWA ✦-------`, rows: sewaRows },
-              { title: `${htjava} PREMIUM ✦-------`, rows: premRows }
-            ]
-          })
-        }]
-      }
-    }
-  }, { quoted: ftroliQuoted })
+  const items = [
+    ...sewaRows.map(r => ({ label: `${r.title} — ${r.description}`, id: r.id })),
+    ...premRows.map(r => ({ label: `${r.title} — ${r.description}`, id: r.id }))
+  ]
+  const listTxt = items.map(it => `  • ${it.label}`).join('\n')
+
+  await sendQuickMenu(conn, m, {
+    title: `💎 ${global.namebot}`,
+    text: `${info}\n\n*📋 PILIH PAKET*\n${listTxt}`,
+    footer: `_Klik tombol di bawah untuk memesan_`,
+    items: items.slice(0, 10),
+    quoted: ftroliQuoted
+  })
 }
 
 handler.help = ['sewa', 'premium']

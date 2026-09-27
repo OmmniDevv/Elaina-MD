@@ -1,6 +1,7 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
-// RPG Menu — Kategori dropdown style (kayak menucat.js)
-// Bukan button, biar nggak kebanyakan
+// RPG Menu — Kategori via quick_reply (WA buang single_select → pesan
+// "tidak didukung"). Panjang >10 ditaruh di body teks.
+import { sendQuickMenu } from '../../lib/menuHelper.js'
 
 const RPG_CATEGORIES = {
     'adventure': { emoji: '⚔️', label: 'ADVENTURE', cmds: ['adventure', 'dungeon', 'aot', 'airdrop', 'battlepet', 'bansos'] },
@@ -45,68 +46,18 @@ let handler = async (m, { conn, usedPrefix }) => {
         id: `${usedPrefix}rpgcat ${key}`
     }))
 
-    const buttons = [
-        {
-            name: 'single_select',
-            buttonParamsJson: JSON.stringify({
-                title: '⚔️ RPG MENU',
-                sections: [{ title: 'PILIH KATEGORI', rows: catRows }],
-                has_multiple_buttons: true
-            })
-        }
-    ]
+    const headerRows = Object.entries(RPG_CATEGORIES)
+        .map(([key, cat]) => `  ${cat.emoji} *${cat.label}* — ${(cmdMap[key] || []).length} cmds`)
+        .join('\n')
 
-    const ftroliQuoted = {
-        key: { fromMe: false, participant: '0@s.whatsapp.net', remoteJid: 'status@broadcast' },
-        message: {
-            orderMessage: {
-                orderId: '1337',
-                itemCount: Object.values(cmdMap).reduce((a, b) => a + b.length, 0),
-                status: 'INQUIRY',
-                surface: 'CATALOG',
-                message: '⚔️ RPG Menu',
-                orderTitle: '⚔️ RPG Commands',
-                sellerJid: `${global.nomorbot || '0'}@s.whatsapp.net`,
-                token: 'elaina-rpg',
-                totalAmount1000: 0,
-                totalCurrencyCode: 'IDR'
-            }
-        }
-    }
-
-    try {
-        await conn.sendMessage(m.chat, {
-            interactiveMessage: {
-                title: '',
-                footer: `⚔️ *RPG MENU*\n\nPilih kategori di bawah~\n_© ${global.namebot || 'Elaina-MD'}_`,
-                document: Buffer.from(JSON.stringify({ rpg: true })),
-                mimetype: 'image/jpeg',
-                jpegThumbnail: null,
-                nativeFlowMessage: {
-                    messageParamsJson: JSON.stringify({
-                        bottom_sheet: {
-                            in_thread_buttons_limit: 1,
-                            divider_indices: [1],
-                            list_title: 'Pilih kategori RPG',
-                            button_title: '⚔️ RPG Menu'
-                        }
-                    }),
-                    buttons
-                }
-            }
-        }, { quoted: ftroliQuoted })
-    } catch (e) {
-        // Fallback: text menu
-        let txt = `⚔️ *RPG MENU*\n\n`
-        for (const [key, cat] of Object.entries(RPG_CATEGORIES)) {
-            const cmds = cmdMap[key] || []
-            if (!cmds.length) continue
-            txt += `${cat.emoji} *${cat.label}*\n`
-            cmds.forEach(c => { txt += `  • ${usedPrefix}${c}\n` })
-            txt += '\n'
-        }
-        await m.reply(txt)
-    }
+    await sendQuickMenu(conn, m, {
+        title: `⚔️ ${global.namebot || 'Elaina-MD'}`,
+        text: `*⚔️ RPG MENU*\n\nPilih kategori di bawah~\n\n${headerRows || '(tidak ada RPG plugin aktif)'}`,
+        footer: `_© ${global.namebot || 'Elaina-MD'}_`,
+        items: Object.entries(RPG_CATEGORIES)
+            .filter(([k]) => cmdMap[k] && cmdMap[k].length)
+            .map(([key, cat]) => ({ label: `${cat.emoji} ${cat.label}`, id: `${usedPrefix}rpgcat ${key}` }))
+    })
 }
 
 handler.help = ['rpg', 'rpgmenu']

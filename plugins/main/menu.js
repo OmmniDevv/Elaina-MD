@@ -65,12 +65,11 @@ function getSortedCats(cmdMap, isOwner) {
 }
 
 // Thumbnail: pakai gambar bawaan Elaina (global.thumb), bukan file baru.
+// Dibiarkan skala & rasio asli — WA yang motong pas render, bukan kita.
 async function loadThumb() {
     try {
         const { readFileSync } = await import('fs')
-        const sharp = (await import('sharp')).default
-        const raw = readFileSync(global.thumb)
-        return await sharp(raw).resize(300, 300, { fit: 'cover' }).jpeg({ quality: 85 }).toBuffer()
+        return readFileSync(global.thumb)
     } catch {
         return null
     }
@@ -173,95 +172,58 @@ ${greeting}! ꜱᴇʟᴀᴍᴀᴛ ᴅᴀᴛᴀɴɢ ᴅɪ *${global.namebot}* ✨
     const githubUrl = 'https://github.com/OmmniDevv/Elaina-MD'
     const ownerWa = `https://wa.me/${global.nomorbot}`
 
-    // ── Lapis 1: kartu + tombol via builder paket ──
+    // Tombol kategori: WAJIB quick_reply (single_select dibuang WA → pesan
+    // "tidak didukung"). Maks 10 tombol; sisanya tetap terbaca di body teks.
+    const btnCats = sortedCats.slice(0, 9)
+    const quickItems = btnCats.map(cat => ({
+        label: `${CATEGORY_EMOJIS[cat] || '📁'} ${cat.toUpperCase()}`,
+        id: `${usedPrefix}menucat ${cat}`
+    }))
+    quickItems.push({ label: '🌸 ꜱᴇᴍᴜᴀ ᴍᴇɴᴜ', id: `${usedPrefix}allmenu` })
+
+    const bodyWithCats =
+`${bodyText}
+
+┌─〔 📁 \`ᴋᴀᴛᴇɢᴏʀɪ\` 〕─⬣
+${sortedCats.map(cat => ` │ ${CATEGORY_EMOJIS[cat] || '📁'} *${cat.toUpperCase()}* — \`${cmdMap[cat].length}\` cmds · ${usedPrefix}menucat ${cat}`).join('\n')}
+╰─⬣`
+
+    // ── Lapis 1: kartu + tombol quick_reply via builder paket ──
     try {
         const b = new MB.Button(conn)
         b.setTitle(global.namebot)
         b.setSubtitle(`Owner: ${global.nameown}`)
-        b.setBody(bodyText)
+        b.setBody(bodyWithCats)
         b.setFooter(footerText)
         if (thumb) b.setImage(thumb)
         b.setContextInfo(ctxInfo)
-
-        // Dropdown kategori (single_select + rows)
-        b.addSelection('⌗ ᴅᴀꜰᴛᴀʀ ᴋᴀᴛᴇɢᴏʀɪ', { has_multiple_buttons: true })
-        b.makeSection('𓍢ִ໋ ᴘɪʟɪʜ ᴋᴀᴛᴇɢᴏʀɪ ʏᴀɴɢ ᴋᴀᴍᴜ ɪɴɢɪɴᴋᴀɴ', global.namebot)
-        for (const row of catRows) b.makeRow(row.header, row.title, row.description, row.id)
-
-        // Tombol link & copy
-        b.addUrl('🌐 ɢɪᴛʜᴜʙ ᴘʀᴏᴊᴇᴄᴛ', githubUrl, false, { merchant_url: githubUrl })
-        b.addCopy('⎙ ᴄᴏᴘʏ ᴘʀᴇꜰɪx', usedPrefix)
-
-        // Tombol cepat
-        b.addReply('⟨⟩ ꜱᴇᴍᴜᴀ ᴄᴏᴍᴍᴀɴᴅ', `${usedPrefix}allmenu`)
-        b.addReply('ⓘ ꜱᴛᴀᴛᴜꜱ ʙᴏᴛ', `${usedPrefix}ping`)
-        b.addReply('👑 ᴏᴡɴᴇʀ', `${usedPrefix}owner`)
-
+        for (const it of quickItems) b.addReply(it.label, it.id)
         return await b.send(m.chat, { quoted: troli })
     } catch (e1) {
         console.error('[menu] builder gagal:', e1.message)
     }
 
-    // ── Lapis 2: interactiveMessage mentah → shim lib/simple.js ──
+    // ── Lapis 2: interactiveMessage mentah (proto benar) → shim lib/simple.js ──
     try {
         await conn.sendMessage(m.chat, {
             interactiveMessage: {
-                title: global.namebot,
-                footer: footerText,
-                document: thumb || Buffer.alloc(0),
-                mimetype: 'image/jpeg',
-                jpegThumbnail: thumb || null,
+                header: { title: global.namebot, subtitle: `Owner: ${global.nameown}`, hasMediaAttachment: false },
+                body: { text: bodyWithCats },
+                footer: { text: footerText },
                 contextInfo: ctxInfo,
                 nativeFlowMessage: {
                     messageParamsJson: JSON.stringify({
                         bottom_sheet: {
                             in_thread_buttons_limit: 2,
-                            divider_indices: [2, 3, 4, 5, 999],
+                            divider_indices: [999],
                             list_title: 'ᴘɪʟɪʜ ᴋᴀᴛᴇɢᴏʀɪ ᴍᴇɴᴜ',
                             button_title: 'ᴊᴇʟᴀᴊᴀʜɪ ᴍᴇɴᴜ sᴇᴋᴀʀᴀɴɢ'
                         }
                     }),
-                    buttons: [
-                        {
-                            name: 'single_select',
-                            buttonParamsJson: JSON.stringify({
-                                title: '⌗ ᴅᴀꜰᴛᴀʀ ᴋᴀᴛᴇɢᴏʀɪ',
-                                sections: [{
-                                    title: '𓍢ִ໋ ᴘɪʟɪʜ ᴋᴀᴛᴇɢᴏʀɪ ʏᴀɴɢ ᴋᴀᴍᴜ ɪɴɢɪɴᴋᴀɴ',
-                                    highlight_label: global.namebot,
-                                    rows: catRows
-                                }],
-                                has_multiple_buttons: true
-                            })
-                        },
-                        {
-                            name: 'cta_url',
-                            buttonParamsJson: JSON.stringify({
-                                display_text: '🌐 ɢɪᴛʜᴜʙ ᴘʀᴏᴊᴇᴄᴛ',
-                                url: githubUrl,
-                                merchant_url: githubUrl
-                            })
-                        },
-                        {
-                            name: 'cta_copy',
-                            buttonParamsJson: JSON.stringify({
-                                display_text: '⎙ ᴄᴏᴘʏ ᴘʀᴇꜰɪx',
-                                copy_code: usedPrefix
-                            })
-                        },
-                        {
-                            name: 'quick_reply',
-                            buttonParamsJson: JSON.stringify({ display_text: '⟨⟩ ꜱᴇᴍᴜᴀ ᴄᴏᴍᴍᴀɴᴅ', id: `${usedPrefix}allmenu` })
-                        },
-                        {
-                            name: 'quick_reply',
-                            buttonParamsJson: JSON.stringify({ display_text: 'ⓘ ꜱᴛᴀᴛᴜꜱ ʙᴏᴛ', id: `${usedPrefix}ping` })
-                        },
-                        {
-                            name: 'quick_reply',
-                            buttonParamsJson: JSON.stringify({ display_text: '👑 ᴏᴡɴᴇʀ', id: `${usedPrefix}owner` })
-                        }
-                    ]
+                    buttons: quickItems.map(it => ({
+                        name: 'quick_reply',
+                        buttonParamsJson: JSON.stringify({ display_text: it.label, id: it.id })
+                    }))
                 }
             }
         }, { quoted: troli })
@@ -271,18 +233,7 @@ ${greeting}! ꜱᴇʟᴀᴍᴀᴛ ᴅᴀᴛᴀɴɢ ᴅɪ *${global.namebot}* ✨
     }
 
     // ── Lapis 3: gambar bawaan + caption teks (dijamin tampil di klien apa pun) ──
-    const textCats = sortedCats
-        .map(cat => ` │ ${CATEGORY_EMOJIS[cat] || '📁'} *${cat.toUpperCase()}* — \`${cmdMap[cat].length}\` cmds · ${usedPrefix}menucat ${cat}`)
-        .join('\n')
-
-    const fallbackText =
-`${bodyText}
-
-┌─〔 📁 \`ᴋᴀᴛᴇɢᴏʀɪ\` 〕─⬣
-${textCats}
-╰─⬣
-
-_© ${global.namebot} | ${global.wmcredit}_`
+    const fallbackText = `${bodyWithCats}\n\n_© ${global.namebot} | ${global.wmcredit}_`
 
     if (thumb) {
         return conn.sendMessage(m.chat, {

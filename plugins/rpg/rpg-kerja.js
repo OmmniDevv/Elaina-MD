@@ -85,68 +85,31 @@ _*Pilih Pekerjaan Yang Kamu Inginkan*_
 
 - Dokter [👨‍⚕]
 - Pedagang [👨🏻‍🍳]
-- Ojek[🛵] 
+- Ojek[🛵]
 - Kuli [👷‍♂️]
 - Montir [👨‍🔧]
 - Petani [👨‍🌾]
 - Polisi [👮]
 `
-                let msg = {
-		viewOnceMessage: {
-			message: {
-				messageContextInfo: {
-					deviceListMetadata: {},
-					deviceListMetadataVersion: 2,
-				},
-				interactiveMessage: {
-					body: {
-						text: judul,
-					},
-					footer: {
-						text: `by Killua Fourteen`,
-					},
-					header: {
-						title: '',
-						subtitle: '',
-						hasMediaAttachment: false
-					},
-					nativeFlowMessage: {
-						buttons: [
-							{
-              "name": "single_select",
-              "buttonParamsJson":
-JSON.stringify({
- "title": "Pilih Pekerjaan",
-"sections": [
-      {
-        title: 'List Pekerjaan',
-        highlight_label: 'Select', /*personal*/
-        rows: [
-          { "header": "", "title": 'Dokter [👨‍⚕]', "description": "Menjadi Seorang Dokter", "id": `.kerja dokter` },
-          { "header": "", "title": 'Pedagang [👨🏻‍🍳]', "description": "Menjadi Seorang Pedagang", "id": `.kerja pedagang` },
-          { "header": "", "title": 'Ojek[🛵]', "description": "Menjadi Seorang Gojek", "id": `.kerja ojek` },
-          { "header": "", "title": 'Kuli [👷‍♂️]', "description": "Menjadi Seorang Kuli Bangunan", "id": `.kerja kuli` },
-          { "header": "", "title": 'Montir [👨‍🔧]', "description": "Menjadi Seorang Montir", "id": `.kerja montir` },
-          { "header": "", "title": 'Petani [👨‍🌾]', "description": "Menjadi Seorang Petani", "id": `.kerja petani` },
-          { "header": "", "title": 'Polisi [👮]', "description": "Menjadi Seorang Polisi", "id": `.kerja polisi` },
-        ]
-      }
-    ]
-              })              
-            } 
-						],
-					},
-					contextInfo: {
-						quotedMessage: m.message,
-						participant: m.sender,
-						...m.key
-					},
-				    
-				},
-			},
-		},
-	};
-         return conn.relayMessage(m.chat, msg, { });
+
+                const kerjaItems = [
+                    { label: '👨‍⚕ Dokter', id: '.kerja dokter', description: 'Menjadi Seorang Dokter' },
+                    { label: '👨🏻‍🍳 Pedagang', id: '.kerja pedagang', description: 'Menjadi Seorang Pedagang' },
+                    { label: '🛵 Ojek', id: '.kerja ojek', description: 'Menjadi Seorang Gojek' },
+                    { label: '👷‍♂️ Kuli', id: '.kerja kuli', description: 'Menjadi Seorang Kuli Bangunan' },
+                    { label: '👨‍🔧 Montir', id: '.kerja montir', description: 'Menjadi Seorang Montir' },
+                    { label: '👨‍🌾 Petani', id: '.kerja petani', description: 'Menjadi Seorang Petani' },
+                    { label: '👮 Polisi', id: '.kerja polisi', description: 'Menjadi Seorang Polisi' }
+                ]
+                const listTxt = kerjaItems.map(it => `  • ${it.label} → \`${it.id}\``).join('\n')
+
+                const { sendQuickMenu } = await import('../../lib/menuHelper.js')
+                return sendQuickMenu(conn, m, {
+                    title: '⚔️ Pilih Pekerjaan',
+                    text: `${judul}\n*PILIH PEKERJAAN*\n${listTxt}`,
+                    footer: `by Killua Fourteen`,
+                    items: kerjaItems
+                })
         }
     }
 }

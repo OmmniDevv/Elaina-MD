@@ -1,6 +1,7 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
 import { createHash } from 'crypto'
 import { readFileSync } from 'fs'
+import { sendQuickMenu } from '../../lib/menuHelper.js'
 let Reg = /\|?(.*)([.|] *?)([0-9]*)$/i
 
 function pickRandom(list) {
@@ -17,53 +18,23 @@ let handler = async function (m, { text, usedPrefix, command }) {
         let thumb = null
         try { thumb = readFileSync('./assets/images/elaina-daftar.jpg') } catch { }
 
-        const ageRows = [
+        const ageList = [
             { title: '🎲 Random', id: `${usedPrefix}${command} ${namae}.${pickRandom(['30','29','28','27','26','25','24','23','22','21','20','19','18','17','16','15','14','13','12','11','10','9'])}` },
-            ...['30','29','28','27','26','25','24','23','22','21'].map(a => ({ title: `${a} Years`, id: `${usedPrefix}${command} ${namae}.${a}` })),
-            ...['20','19','18','17','16','15','14','13','12','11','10','9'].map(a => ({ title: `${a} Years`, id: `${usedPrefix}${command} ${namae}.${a}` }))
+            ...['30','29','28','27','26','25','24','23','22','21','20','19','18','17','16','15','14','13','12','11','10','9'].map(a => ({ title: `${a} Years`, id: `${usedPrefix}${command} ${namae}.${a}` }))
         ]
+        // single_select dibuang WA → pesan "tidak didukung". Pakai quick_reply
+        // (maks 10). Sisanya tetap bisa diakses via teks (contoh di footer).
+        const ageBtns = ageList.slice(0, 10)
+        const more = ageList.length - ageBtns.length
+        const footer = more > 0 ? `_Pilih dari tombol di bawah, atau ketik sendiri (tersisa ${more} umur di lain)_` : `_Pilih umur lewat tombol_`
 
-        // orderMessage sebagai quoted (seperti menu.js)
-        const ftroliQuoted = {
-            key: { fromMe: false, participant: '0@s.whatsapp.net', remoteJid: 'status@broadcast' },
-            message: {
-                orderMessage: {
-                    orderId: '1337',
-                    thumbnail: thumb,
-                    itemCount: ageRows.length,
-                    status: 'INQUIRY',
-                    surface: 'CATALOG',
-                    message: `Pilih umurmu di bawah`,
-                    orderTitle: `📋 Register`,
-                    sellerJid: `${global.nomorbot}@s.whatsapp.net`,
-                    token: 'elaina-daftar',
-                    totalAmount1000: 0,
-                    totalCurrencyCode: 'IDR'
-                }
-            }
-        }
-
-        return await conn.sendMessage(m.chat, {
-            interactiveMessage: {
-                footer: `*ʏᴏᴜʀ ɴᴀᴍᴇ:* ${namae}\n❔ Custom name? ketik *${usedPrefix + command} yourname.age*`,
-                jpegThumbnail: thumb,
-                contextInfo: { forwardingScore: 7, isForwarded: true },
-                nativeFlowMessage: {
-                    messageParamsJson: JSON.stringify({ bottom_sheet: { button_title: '📅 Pilih Umur' } }),
-                    buttons: [{
-                        name: 'single_select',
-                        buttonParamsJson: JSON.stringify({
-                            title: '📅 Pilih Umur',
-                            sections: [
-                                { title: 'Select Your Age Here !', rows: ageRows.slice(0, 1) },
-                                { title: 'O L D  (21-30)', rows: ageRows.slice(1, 11) },
-                                { title: 'Y O U N G  (9-20)', rows: ageRows.slice(11) }
-                            ]
-                        })
-                    }]
-                }
-            }
-        }, { quoted: ftroliQuoted })
+        return await sendQuickMenu(conn, m, {
+            title: `📅 Daftar — ${namae}`,
+            text: `*ʏᴏᴜʀ ɴᴀᴍᴇ:* ${namae}\n❔ Custom name? ketik *${usedPrefix + command} yourname.age*`,
+            footer,
+            image: thumb,
+            items: ageBtns.map(a => ({ label: a.title, id: a.id }))
+        })
     }
 
     let [_, name, splitter, age] = text.match(Reg)

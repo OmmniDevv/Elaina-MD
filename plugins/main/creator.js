@@ -1,4 +1,5 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
+import { sendQuickMenu } from '../../lib/menuHelper.js'
 let handler = async (m, { conn, command, args, usedPrefix }) => {
   let type = (args[0] || '').toLowerCase()
   let nowner = `${nomorown.split`@`[0]}@s.whatsapp.net`
@@ -68,42 +69,25 @@ ${htjava} *🐈 ɢɪᴛʜᴜʙ:* ${sgh}
           conn.reply(m.chat, teksnomor, m, { contextInfo: { mentionedJid: [nowner] } })
           break
         case 'bio':
-          await conn.sendMessage(m.chat, {
-            interactiveMessage: {
-              footer: teksbio,
-              contextInfo: {
-                forwardingScore: 7, isForwarded: true
-              },
-              nativeFlowMessage: {
-                messageParamsJson: '',
-                buttons: [
-                  { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '📷 Instagram', id: sig }) },
-                  { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '📱 Nomor', id: `${usedPrefix}owner nomor` }) }
-                ]
-              }
-            }
-          }, { quoted: m })
+          await sendQuickMenu(conn, m, {
+            title: `👑 ${nameown}`,
+            text: teksbio,
+            footer: `✦ ${global.namebot}`,
+            items: [
+              { label: '📷 Instagram', id: sig },
+              { label: '📱 Nomor', id: `${usedPrefix}owner nomor` }
+            ]
+          })
           break
-        default:
-          return await conn.sendMessage(m.chat, {
-            interactiveMessage: {
-              footer: `Pilih dibawah kak ! o(〃＾▽＾〃)o`,
-              contextInfo: { forwardingScore: 7, isForwarded: true },
-              nativeFlowMessage: {
-                messageParamsJson: JSON.stringify({ bottom_sheet: { button_title: '👑 Pilih Info' } }),
-                buttons: [{
-                  name: 'single_select',
-                  buttonParamsJson: JSON.stringify({
-                    title: '👑 Pilih Info',
-                    sections: [
-                      { title: `${htjava} OWNER –––––––––·•`, rows: optRows.slice(0, 3) },
-                      { title: `${htjava} SUPPORT ME –––––––·•`, rows: optRows.slice(3) }
-                    ]
-                  })
-                }]
-              }
-            }
-          }, { quoted: ftroliQuoted })
+        default: {
+          const listTxt = optRows.map(r => `  • ${r.title.replace(/^[^ ]+ • /, '')} → ${r.id}`).join('\n')
+          await sendQuickMenu(conn, m, {
+            title: `👑 ${global.namebot}`,
+            text: `*👑 OWNER & SUPPORT*\n\nPilih info yang kamu butuhkan:\n\n${listTxt}`,
+            footer: `_© ${global.namebot} | ${global.wmcredit}_`,
+            items: optRows.map(r => ({ label: r.title, id: r.id }))
+          })
+        }
       }
     }
   } catch (err) {

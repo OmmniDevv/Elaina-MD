@@ -3,6 +3,7 @@
 // Recode 2026: waifu.im NSFW API
 
 import fetch from 'node-fetch'
+import { sendQuickMenu } from '../../lib/menuHelper.js'
 
 function pickRandom(list) { return list[Math.floor(Math.random() * list.length)] }
 
@@ -46,22 +47,16 @@ let handler = async (m, { conn, command, args, usedPrefix }) => {
     rows: Object.keys(tagMap).map(k => ({ title: `${f}${k.charAt(0).toUpperCase() + k.slice(1)}`, rowId: `.nsfw ${k}` }))
   }]
 
-  if (!type) return conn.sendMessage(m.chat, {
-    interactiveMessage: {
-      footer: 'Ⓕ = Free',
-      contextInfo: { forwardingScore: 7, isForwarded: true },
-      nativeFlowMessage: {
-        messageParamsJson: JSON.stringify({ bottom_sheet: { button_title: '🔞 Pilih Kategori' } }),
-        buttons: [{
-          name: 'single_select',
-          buttonParamsJson: JSON.stringify({
-            title: '🔞 Pilih Kategori NSFW',
-            sections: [{ title: 'KATEGORI NSFW', rows: Object.keys(tagMap).map(k => ({ title: `Ⓕ ${k.charAt(0).toUpperCase() + k.slice(1)}`, id: `.nsfw ${k}` })) }]
-          })
-        }]
-      }
-    }
-  }, { quoted: m })
+  const allTags = Object.keys(tagMap)
+  if (!type) {
+    const listTxt = allTags.map(k => `  • ${k} → \`.nsfw ${k}\``).join('\n')
+    return sendQuickMenu(conn, m, {
+      title: `🔞 ${global.namebot}`,
+      text: `${teks}\n\n*🔞 KATEGORI NSFW*\n${listTxt}`,
+      footer: `Ⓕ = Free`,
+      items: allTags.slice(0, 10).map(k => ({ label: `Ⓕ ${k.charAt(0).toUpperCase() + k.slice(1)}`, id: `.nsfw ${k}` }))
+    })
+  }
 
   const tag = tagMap[type] || 'ecchi'
   const url = await getNsfwImg(tag)
