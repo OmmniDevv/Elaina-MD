@@ -1,6 +1,6 @@
 
 
-import { generateWAMessageFromContent, proto } from 'ourin-baileys'
+import { generateWAMessageFromContent, proto } from '@rexxhayanasi/elaina-baileys'
 import fs from 'fs'
 import path from 'path'
 import { fetchBuffer, getMimeType } from './utils.js'

@@ -16,9 +16,9 @@ import fs from 'fs'
 import fetch from 'node-fetch'
 
 /**
- * @type {import('ourin-baileys')}
+ * @type {import('@rexxhayanasi/elaina-baileys')}
  */
-const { proto, jidNormalizedUser } = await import('ourin-baileys')
+const { proto, jidNormalizedUser } = await import('@rexxhayanasi/elaina-baileys')
 const isNumber = x => typeof x === 'number' && !isNaN(x)
 const delay = ms => isNumber(ms) && new Promise(resolve => setTimeout(function () {
     clearTimeout(this)
@@ -27,7 +27,7 @@ const delay = ms => isNumber(ms) && new Promise(resolve => setTimeout(function (
 
 /**
  * Handle messages upsert
- * @param {import('ourin-baileys').BaileysEventMap<unknown>['messages.upsert']} groupsUpdate 
+ * @param {import('@rexxhayanasi/elaina-baileys').BaileysEventMap<unknown>['messages.upsert']} groupsUpdate 
  */
 export async function handler(chatUpdate) {
     this.msgqueque = this.msgqueque || []
@@ -46,7 +46,7 @@ export async function handler(chatUpdate) {
     if (global.db.data == null)
         await global.loadDatabase()
     try {
-        // ourin-baileys: @lid messages have extra fields (remoteJidAlt, addressingMode) in key
+        // @rexxhayanasi/elaina-baileys: @lid messages have extra fields (remoteJidAlt, addressingMode) in key
         if (m.key?.addressingMode === 'lid' || m.key?.remoteJidAlt) {
             const { remoteJidAlt, addressingMode, ...cleanKey } = m.key
             m = { ...m, key: { ...cleanKey, remoteJid: remoteJidAlt || cleanKey.remoteJid } }
@@ -855,7 +855,7 @@ export async function handler(chatUpdate) {
 
 /**
  * Handle groups participants update
- * @param {import('ourin-baileys').BaileysEventMap<unknown>['group-participants.update']} groupsUpdate 
+ * @param {import('@rexxhayanasi/elaina-baileys').BaileysEventMap<unknown>['group-participants.update']} groupsUpdate 
  */
 export async function participantsUpdate({ id, participants, action }) {
     if (opts['self'])
@@ -907,7 +907,7 @@ export async function participantsUpdate({ id, participants, action }) {
 
 /**
  * Handle groups update
- * @param {import('ourin-baileys').BaileysEventMap<unknown>['groups.update']} groupsUpdate 
+ * @param {import('@rexxhayanasi/elaina-baileys').BaileysEventMap<unknown>['groups.update']} groupsUpdate 
  */
 export async function groupsUpdate(groupsUpdate) {
     if (opts['self'])

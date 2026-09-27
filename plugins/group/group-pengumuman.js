@@ -1,5 +1,5 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
-import { generateWAMessageFromContent } from 'ourin-baileys'
+import { generateWAMessageFromContent } from '@rexxhayanasi/elaina-baileys'
 let handler = async (m, { conn, text, participants }) => {
   let users = participants.map(u => conn.decodeJid(u.id))
   let q = m.quoted ? m.quoted : m

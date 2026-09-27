@@ -69,14 +69,13 @@ let handler = async (m, { conn, args, usedPrefix, DevMode }) => {
         .filter((v) => v != conn.user.id)) {
         conn.sendMessage(
           jid,
-          "casino.js error\nNo: *" +
+          { text: "casino.js error\nNo: *" +
             m.sender.split`@`[0] +
             "*\nCommand: *" +
             m.text +
             "*\n\n*" +
             e +
-            "*",
-          MessageType.text
+            "*" }
         );
       }
     }

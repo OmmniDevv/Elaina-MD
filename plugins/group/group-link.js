@@ -1,5 +1,5 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
-import { areJidsSameUser } from 'ourin-baileys'
+import { areJidsSameUser } from '@rexxhayanasi/elaina-baileys'
 let handler = async (m, { conn, args }) => {
     let group = m.chat
     if (/^[0-9]{5,16}-?[0-9]+@g\.us$/.test(args[0])) group = args[0]

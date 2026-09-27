@@ -3,7 +3,7 @@ const {
     proto,
     generateWAMessage,
     areJidsSameUser
-} = await import('ourin-baileys')
+} = await import('@rexxhayanasi/elaina-baileys')
 
 export async function all(m, chatUpdate) {
     if (m.isBaileys) return

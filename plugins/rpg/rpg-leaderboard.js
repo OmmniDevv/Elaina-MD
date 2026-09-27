@@ -1,5 +1,5 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
-import { areJidsSameUser } from 'ourin-baileys'
+import { areJidsSameUser } from '@rexxhayanasi/elaina-baileys'
 const leaderboards = [
   'level',
   'exp',

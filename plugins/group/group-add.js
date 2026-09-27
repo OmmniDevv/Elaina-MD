@@ -1,9 +1,9 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
 import fetch from 'node-fetch'
 /**
- * @type {import('ourin-baileys')}
+ * @type {import('@rexxhayanasi/elaina-baileys')}
  */
-const { getBinaryNodeChild, getBinaryNodeChildren } = await import('ourin-baileys')
+const { getBinaryNodeChild, getBinaryNodeChildren } = await import('@rexxhayanasi/elaina-baileys')
 let handler = async (m, { conn, text, participants }) => {
     let _participants = participants.map(user => user.id)
     let users = (await Promise.all(

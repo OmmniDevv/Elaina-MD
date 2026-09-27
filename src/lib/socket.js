@@ -14,7 +14,7 @@ import {
   proto,
   areJidsSameUser,
   generateForwardMessageContent,
-} from "ourin-baileys";
+} from "@rexxhayanasi/elaina-baileys";
 import {
   isLid,
   isLidConverted,
@@ -24,7 +24,7 @@ import {
 
 import fs from "fs";
 import path from "path";
-import { downloadMediaMessage, getContentType } from "ourin-baileys";
+import { downloadMediaMessage, getContentType } from "@rexxhayanasi/elaina-baileys";
 import { addExifToWebp, DEFAULT_METADATA } from './exif.js';
 import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
 import ffmpeg from "fluent-ffmpeg";

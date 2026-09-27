@@ -20,7 +20,7 @@ import { makeWASocket, protoType, serialize } from './lib/simple.js'
 import { Low } from 'lowdb'
 import { JSONFile } from 'lowdb/node'
 import pino from 'pino'
-import { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } from 'ourin-baileys'
+import { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } from '@rexxhayanasi/elaina-baileys'
 import qrcode from 'qrcode-terminal'
 import './lib/errorLogger.js'
 
@@ -80,7 +80,7 @@ let saveCreds = _saveCreds
 const usePairingCode = global.usePairingCode === true
 const pairingNumber = (global.pairingNumber || '').replace(/[^0-9]/g, '')
 
-// Pin versi WA terbaru dari server — tanpa ini ourin-baileys pakai VERSION internal
+// Pin versi WA terbaru dari server — tanpa ini @rexxhayanasi/elaina-baileys pakai VERSION internal
 // yang basi, bikin handshake pairing ditolak (Connection Closed) & notif HP nggak muncul.
 let baileysVersion
 try { baileysVersion = await fetchLatestBaileysVersion() } catch { baileysVersion = undefined }
@@ -226,37 +226,9 @@ function printPairingBox(code, sisaSecs) {
 
 requestPairing().catch(e => log.error('Pairing: ' + e.message))
 
-// Patch deprecated button methods → plain sendMessage fallback
-// Buttons API sudah tidak didukung WA, fallback ke text biasa
-;['sendBut', 'send2Button', 'send3Button'].forEach(fn => {
-  try {
-    Object.defineProperty(conn, fn, {
-      value: async (jid, content, footer, ...rest) => {
-        const quoted = rest.find(r => r && typeof r === 'object' && r.key)
-        return conn.sendMessage(jid, { text: `${content}\n\n_${footer || ''}_`.trim(), ...global.adReply }, { quoted })
-      },
-      writable: true, configurable: true
-    })
-  } catch {}
-})
-try {
-  Object.defineProperty(conn, 'sendButton', {
-    value: async (jid, text, footer, buffer, buttons, quoted, options) => {
-      if (Array.isArray(buffer)) { options = quoted; quoted = buttons; buttons = buffer; buffer = null }
-      const btnText = Array.isArray(buttons) ? buttons.map(b => Array.isArray(b) ? `• ${b[0]}` : `• ${b}`).join('\n') : ''
-      return conn.sendMessage(jid, { text: `${text}\n\n${btnText}\n\n_${footer || ''}_`.trim(), ...global.adReply, ...options }, { quoted })
-    },
-    writable: true, configurable: true
-  })
-} catch {}
-try {
-  Object.defineProperty(conn, 'sendButtonDoc', {
-    value: async (jid, content, footer, btn1, id1, quoted, options) => {
-      return conn.sendMessage(jid, { text: `${content}\n\n• ${btn1}\n\n_${footer || ''}_`.trim(), ...global.adReply, ...options }, { quoted })
-    },
-    writable: true, configurable: true
-  })
-} catch {}
+// Tombol native flow sekarang dikirim oleh lib/simple.js lewat MB.Button
+// (wrapper sendButton/sendBut/send*ButtonDoc/sendHydrated). Fallback teks
+// defineProperty lama dihapus supaya tidak menutupi tombol asli.
 
 // Pairing code akan di-request di connectionUpdate saat status 'open' pertama kali
 

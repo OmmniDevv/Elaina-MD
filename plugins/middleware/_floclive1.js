@@ -1,6 +1,6 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
 import fetch from "node-fetch"
-import { generateWAMessageFromContent } from "ourin-baileys"
+import { generateWAMessageFromContent } from "@rexxhayanasi/elaina-baileys"
 
 let handler  = async (m, { conn }) => {
 

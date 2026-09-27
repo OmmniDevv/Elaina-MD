@@ -1,4 +1,4 @@
-import { jidDecode } from "ourin-baileys";
+import { jidDecode } from "@rexxhayanasi/elaina-baileys";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
 

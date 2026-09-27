@@ -1,5 +1,4 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
-let { MessageType, Presence } = await import('ourin-baileys')
 
 async function handler(m, { command, conn, text }) {
 	this.anonymous = this.anonymous ? this.anonymous : {}

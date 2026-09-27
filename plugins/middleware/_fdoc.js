@@ -1,10 +1,6 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
 import fs from 'fs'
 let handler  = async (m, { conn, usedPrefix: _p }) => {
-const {
-    MessageType,
-    Mimetype
-} = await import("ourin-baileys")
 const anu = {
 	key : {
            participant : '0@s.whatsapp.net'

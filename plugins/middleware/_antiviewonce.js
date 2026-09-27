@@ -1,5 +1,5 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
-const { downloadContentFromMessage } = await import('ourin-baileys')
+const { downloadContentFromMessage } = await import('@rexxhayanasi/elaina-baileys')
 let handler = m => m
 
 handler.before = async function (m) {

@@ -6,7 +6,7 @@ import {
   DisconnectReason,
   jidNormalizedUser,
   useMultiFileAuthState,
-} from "ourin-baileys";
+} from "@rexxhayanasi/elaina-baileys";
 import { logger } from "./logger.js";
 import { addJadibotOwner } from "./jadibot-database.js";
 import { extendSocket } from "./socket.js";
@@ -325,7 +325,7 @@ async function startJadibot(sock, m, userJid, usePairing = true) {
     default: makeWASocket,
     fetchLatestBaileysVersion,
     makeCacheableSignalKeyStore,
-  } = await import("ourin-baileys");
+  } = await import("@rexxhayanasi/elaina-baileys");
   const { version } = await fetchLatestBaileysVersion();
   const pinoModule = await import("pino");
   const pinoLogger = pinoModule.default({ level: "silent" });
