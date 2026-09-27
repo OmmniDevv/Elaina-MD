@@ -8,7 +8,7 @@ function pickRandom(list) {
     return list[Math.floor(Math.random() * list.length)]
 }
 
-let handler = async function (m, { text, usedPrefix, command }) {
+let handler = async function (m, { conn, text, usedPrefix, command }) {
     let user = global.db.data.users[m.sender]
     if (user.registered === true) throw `[💬] Kamu sudah terdaftar\nMau daftar ulang? *${usedPrefix}unreg <SERIAL NUMBER>*`
 
