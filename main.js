@@ -23,6 +23,7 @@ import pino from 'pino'
 import { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } from '@rexxhayanasi/elaina-baileys'
 import qrcode from 'qrcode-terminal'
 import './lib/errorLogger.js'
+import { startTempCleaner } from './src/lib/elaina-temp-cleaner.js'
 
 const { CONNECTING } = ws
 const { chain } = lodash
@@ -460,7 +461,10 @@ function normalizePluginModule(module) {
         ...extra
       })
     }
-    const names = [cfg.name, ...(cfg.alias || [])].filter(Boolean)
+    const names = [
+      ...(Array.isArray(cfg.name) ? cfg.name : cfg.name ? [cfg.name] : []),
+      ...(Array.isArray(cfg.alias) ? cfg.alias : cfg.alias ? [cfg.alias] : [])
+    ].filter(v => v && typeof v === 'string')
     fn.help = names
     fn.tags = [cfg.category || 'tools']
     if (names.length > 0) {
@@ -500,6 +504,7 @@ async function filesInit() {
   log.plugin(`${loaded} plugin dimuat`)
 }
 filesInit().catch(e => log.error(`Plugin init gagal: ${e.message}`))
+startTempCleaner()
 
 global.reload = async (_ev, filename) => {
   if (!pluginFilter(filename)) return
