@@ -7,14 +7,7 @@ import { platform } from 'process'
 global.__filename = function filename(pathURL = import.meta.url, rmPrefix = platform !== 'win32') { return rmPrefix ? /file:\/\/\//.test(pathURL) ? fileURLToPath(pathURL) : pathURL : pathToFileURL(pathURL).toString() }; global.__dirname = function dirname(pathURL) { return path.dirname(global.__filename(pathURL, true)) }; global.__require = function require(dir = import.meta.url) { return createRequire(dir) }
 
 import * as ws from 'ws';
-import {
-  readdirSync,
-  statSync,
-  unlinkSync,
-  existsSync,
-  readFileSync,
-  watch
-} from 'fs';
+import { readdirSync, statSync, unlinkSync, existsSync, readFileSync, watch, mkdirSync, writeFileSync } from 'fs';
 import yargs from 'yargs'
 import { spawn } from 'child_process'
 import lodash from 'lodash'
@@ -25,7 +18,7 @@ import { makeWASocket, protoType, serialize } from './lib/simple.js'
 import { Low } from 'lowdb'
 import { JSONFile } from 'lowdb/node'
 import pino from 'pino'
-import { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore } from 'ourin-baileys'
+import { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } from 'ourin-baileys'
 import qrcode from 'qrcode-terminal'
 import './lib/errorLogger.js'
 
@@ -110,36 +103,35 @@ const connectionOptions = {
 global.conn = makeWASocket(connectionOptions)
 conn.isInit = false
 
-// Request pairing code SEBELUM setup event listener (seperti RTXZY)
-// Gunakan flag file untuk prevent multiple requests
+// Request pairing code SETELAH WS open (bukan timer buta).
+// Pakai waitForSocketOpen dari baileys supaya sendNode nggak lempar Connection Closed.
 const pairingFlagFile = `./${global.authFile}/.pairing_requested`
-if (usePairingCode && !conn.authState.creds.registered && !existsSync(pairingFlagFile)) {
+async function requestPairing() {
+  if (!usePairingCode || conn.authState.creds.registered) return
+  if (existsSync(pairingFlagFile)) return
   let phone = pairingNumber
   if (!phone) {
     const { createInterface } = await import('readline')
     const rl = createInterface({ input: process.stdin, output: process.stdout })
     phone = await new Promise(resolve => rl.question('\x1b[36m📱 Masukkan nomor WA (contoh: 6281234567890): \x1b[0m', ans => { rl.close(); resolve(ans.replace(/[^0-9]/g, '')) }))
   }
-  
-  // Buat flag file SEBELUM request (di folder auth aktif, bukan hardcode)
-  try {
-    const { writeFileSync, mkdirSync } = await import('fs')
-    mkdirSync(global.authFile, { recursive: true })
-    writeFileSync(pairingFlagFile, phone)
-  } catch {}
-  
-  setTimeout(async () => {
+  try { mkdirSync(global.authFile, { recursive: true }); writeFileSync(pairingFlagFile, phone) } catch {}
+  for (let attempt = 1; attempt <= 3; attempt++) {
     try {
+      await conn.waitForSocketOpen()
       const pairCode = await conn.requestPairingCode(phone)
       console.log('\n\x1b[42m\x1b[30m  PAIRING CODE  \x1b[0m')
       console.log(`\x1b[1m\x1b[32m  ${pairCode}  \x1b[0m`)
       console.log('\x1b[33m  Masukkan kode ini di WhatsApp:\x1b[0m')
       console.log('\x1b[33m  Settings → Linked Devices → Link a Device\x1b[0m\n')
+      return
     } catch (e) {
-      console.error('\x1b[31m[PAIRING] Gagal:', e.message, '\x1b[0m')
+      console.error(`\x1b[31m[PAIRING] Gagal (${attempt}/3):`, e.message, '\x1b[0m')
+      if (attempt < 3) await new Promise(r => setTimeout(r, 5000 * attempt))
     }
-  }, 3000)
+  }
 }
+requestPairing().catch(e => console.error('[PAIRING]', e.message))
 
 // Patch deprecated button methods → plain sendMessage fallback
 // Buttons API sudah tidak didukung WA, fallback ke text biasa

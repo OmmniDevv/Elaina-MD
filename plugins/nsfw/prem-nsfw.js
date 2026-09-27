@@ -75,6 +75,7 @@ let handler = async (m, { conn, command, args, usedPrefix }) => {
 
 handler.help = ['nsfw <kategori>']
 handler.tags = ['nsfw']
-handler.command = /^(nsfw|hentai)$/i
+handler.command = /^(nsfw)$/i
 handler.nsfw = true
+handler.premium = true
 export default handler

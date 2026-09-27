@@ -62,7 +62,7 @@ let handler = async (m, { conn, command }) => {
 handler.help = ['waifu18', 'neko18', 'boobs', 'corean', 'tik18']
 handler.tags = ['nsfw']
 handler.command = /^(waifu18|neko18|boobs|corean|tik18)$/i
-handler.premium = false
+handler.premium = true
 handler.nsfw = true
 
 export default handler
