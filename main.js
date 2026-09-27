@@ -20,7 +20,8 @@ import { makeWASocket, protoType, serialize } from './lib/simple.js'
 import { Low } from 'lowdb'
 import { JSONFile } from 'lowdb/node'
 import pino from 'pino'
-import { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } from '@rexxhayanasi/elaina-baileys'
+import chalk from 'chalk'
+import { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore, fetchLatestBaileysVersion, fetchLatestWaWebVersion } from '@rexxhayanasi/elaina-baileys'
 import qrcode from 'qrcode-terminal'
 import './lib/errorLogger.js'
 import { startTempCleaner } from './src/lib/elaina-temp-cleaner.js'
@@ -81,13 +82,17 @@ let saveCreds = _saveCreds
 const usePairingCode = global.usePairingCode === true
 const pairingNumber = (global.pairingNumber || '').replace(/[^0-9]/g, '')
 
-// Pin versi WA terbaru dari server — tanpa ini @rexxhayanasi/elaina-baileys pakai VERSION internal
-// yang basi, bikin handshake pairing ditolak (Connection Closed) & notif HP nggak muncul.
+// Pin versi WA Web terbaru dari server (sw.js) via fetchLatestWaWebVersion (pola Luna-Bot).
+// Tanpa ini Baileys pakai VERSION usang yang menyebabkan handshake ditolak (Connection Closed).
 let baileysVersion
-try { baileysVersion = await fetchLatestBaileysVersion() } catch { baileysVersion = undefined }
+try {
+  baileysVersion = await fetchLatestWaWebVersion()
+} catch (e) {
+  try { baileysVersion = await fetchLatestBaileysVersion() } catch { baileysVersion = undefined }
+}
 
 const connectionOptions = {
-  ...(baileysVersion ? { version: baileysVersion.version } : {}),
+  ...(baileysVersion?.version ? { version: baileysVersion.version } : {}),
   auth: {
     creds: state.creds,
     keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' }))
@@ -163,6 +168,7 @@ async function requestPairing() {
     try {
       intentos++
       log.auth(`Meminta kode pairing ... (${intentos}/${maxIntentos})`)
+      try { global.conn.cancelPairingCode?.() } catch {}
       codigo = await global.conn.requestPairingCode(phone, 'ELAINAMD')
       if (codigo) {
         codigo = codigo.match(/.{1,4}/g)?.join('-') || codigo
@@ -218,14 +224,20 @@ async function requestPairing() {
 function printPairingBox(code, sisaSecs) {
   const sisa = sisaSecs ?? Math.floor((PAIRING_TIMEOUT_DURATION - (Date.now() - pairingStartTime)) / 1000)
   console.log('')
-  log.auth(`Kode Pairing: ${code}`)
-  log.info('1. Buka WhatsApp di HP')
-  log.info('2. Pengaturan > Perangkat Tertaut > Tautkan Perangkat')
-  log.info(`3. Masukkan kode di atas (berlaku ${sisa} dtk)`)
+  console.log(chalk.cyan('┌────────────────────────────────────────────────────────┐'))
+  console.log(chalk.cyan('│  🌸 ') + chalk.bold.green('KODE PAIRING ELAINA-MD') + chalk.cyan('                             │'))
+  console.log(chalk.cyan('│  👉  ') + chalk.bold.yellowBright(code.padEnd(46)) + chalk.cyan('│'))
+  console.log(chalk.cyan('├────────────────────────────────────────────────────────┤'))
+  console.log(chalk.cyan('│  📱 ') + chalk.white('Langkah-langkah menautkan WhatsApp:') + chalk.cyan('                │'))
+  console.log(chalk.cyan('│  1. Buka WhatsApp di ponsel kamu                       │'))
+  console.log(chalk.cyan('│  2. Tekan menu titik tiga (⋮) / Pengaturan             │'))
+  console.log(chalk.cyan('│  3. Pilih Perangkat Tertaut > Tautkan Perangkat        │'))
+  console.log(chalk.cyan('│  4. Pilih "Tautkan dengan nomor telepon saja"          │'))
+  console.log(chalk.cyan('│  5. Masukkan kode 8 digit di atas                      │'))
+  console.log(chalk.cyan(`│  ⏰ Sisa waktu pairing: ${String(sisa).padEnd(3)} detik                         │`))
+  console.log(chalk.cyan('└────────────────────────────────────────────────────────┘'))
   console.log('')
 }
-
-requestPairing().catch(e => log.error('Pairing: ' + e.message))
 
 // Tombol native flow sekarang dikirim oleh lib/simple.js lewat MB.Button
 // (wrapper sendButton/sendBut/send*ButtonDoc/sendHydrated). Fallback teks
@@ -335,6 +347,10 @@ async function connectionUpdate(update) {
       setTimeout(() => global.reloadHandler(true).catch(e => log.error('Reconnect: ' + e.message)), 3000)
     }
   } else if (connection === 'open') {
+    if (pairingTimeout) {
+      clearTimeout(pairingTimeout)
+      pairingTimeout = null
+    }
     const botName = global.namebot || PROJECT_NAME
     log.ok(`Terhubung sebagai ${botName}`)
     try {
@@ -632,6 +648,10 @@ try { watch(pluginFolder, { recursive: true }, global.reload) } catch (e) {
   log.error('Plugin watcher gagal start: ' + e.message)
 }
 await global.reloadHandler()
+
+if (usePairingCode && !conn.authState.creds.registered) {
+  requestPairing().catch(e => log.error('Pairing: ' + e.message))
+}
 
 // Quick Test — cek binary pendukung (ffmpeg, imagemagick, find)
 async function _quickTest() {
