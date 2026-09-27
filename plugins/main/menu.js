@@ -20,7 +20,7 @@ const CATEGORY_ORDER = [
     'islamic', 'quotes', 'random', 'audio', 'anime', 'canvas', 'nsfw'
 ]
 
-const NEWSLETTER_JID = '120363208449943317@newsletter'
+const NEWSLETTER_JID = '120363420914057249@newsletter'
 
 function clockString(ms) {
     const h = Math.floor(ms / 3600000)

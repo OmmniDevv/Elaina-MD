@@ -25,6 +25,7 @@ import { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore, f
 import qrcode from 'qrcode-terminal'
 import './lib/errorLogger.js'
 import { startTempCleaner } from './src/lib/elaina-temp-cleaner.js'
+import { initDatabase, getDatabase } from './src/lib/elaina-database.js'
 
 const { CONNECTING } = ws
 const { chain } = lodash
@@ -74,6 +75,7 @@ global.loadDatabase = async function loadDatabase() {
   global.db.chain = chain(global.db.data)
 }
 loadDatabase()
+await initDatabase(join(process.cwd(), 'database')).catch(e => log.error('Modular database init: ' + e.message))
 
 global.authFile = `${opts._[0] || 'elaina_session'}`
 const { state, saveCreds: _saveCreds } = await useMultiFileAuthState(global.authFile)
@@ -592,11 +594,24 @@ function normalizePluginModule(module) {
   const hdl = module.handler || mod.handler
   if (cfg && typeof hdl === 'function') {
     const fn = async function(m, extra = {}) {
+      let db = null
+      try {
+        db = getDatabase()
+      } catch {}
+      let botConfig = global.config || {}
+      if (!botConfig || Object.keys(botConfig).length === 0) {
+        try {
+          botConfig = (await import('./config.js')).default || {}
+        } catch {}
+      }
       return hdl.call(this, m, {
         sock: this,
         conn: this,
         store: global.store,
-        config: cfg,
+        db,
+        config: botConfig,
+        pluginConfig: cfg,
+        uptime: process.uptime,
         plugins: global.plugins,
         ...extra
       })

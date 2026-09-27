@@ -737,20 +737,25 @@ class Database {
 }
 
 let dbInstance = null;
+let initPromise = null;
 
-async function initDatabase(dbPath) {
+async function initDatabase(dbPath = path.join(process.cwd(), "database")) {
   if (!dbInstance) {
     dbInstance = new Database(dbPath);
-    await dbInstance.init();
+    initPromise = dbInstance.init();
+    await initPromise;
+  } else if (initPromise) {
+    await initPromise;
   }
   return dbInstance;
 }
 
 function getDatabase() {
   if (!dbInstance) {
-    throw new Error(
-      "Database belum diinisialisasi. Panggil initDatabase terlebih dahulu.",
-    );
+    dbInstance = new Database(path.join(process.cwd(), "database"));
+    initPromise = dbInstance.init().catch((e) => {
+      logger.error("database", `auto-init gagal: ${e.message}`);
+    });
   }
   return dbInstance;
 }

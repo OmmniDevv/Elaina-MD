@@ -6,3 +6,4 @@ log/
 database_backup_*.json
 tmp/
 data/lid-cache.json
+database/
