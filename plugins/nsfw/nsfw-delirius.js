@@ -36,6 +36,17 @@ let handler = async (m, { conn, command }) => {
         if (!res.ok) throw `HTTP ${res.status}`
 
         const ct = res.headers.get('content-type') || ''
+        
+        if (ct.includes('video/')) {
+            // TikTok endpoint return raw MP4 stream
+            const buffer = Buffer.from(await res.arrayBuffer())
+            await conn.sendMessage(m.chat, { 
+                video: buffer, 
+                caption: '🔞 *TikTok 18+*' 
+            }, { quoted: m })
+            return
+        }
+
         let imageBuffer
 
         if (ct.includes('image/')) {
