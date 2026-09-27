@@ -78,16 +78,28 @@ let saveCreds = _saveCreds
 const usePairingCode = global.usePairingCode === true
 const pairingNumber = (global.pairingNumber || '').replace(/[^0-9]/g, '')
 
+// Pin versi WA terbaru dari server — tanpa ini ourin-baileys pakai VERSION internal
+// yang basi, bikin handshake pairing ditolak (Connection Closed) & notif HP nggak muncul.
+let baileysVersion
+try { baileysVersion = await fetchLatestBaileysVersion() } catch { baileysVersion = undefined }
+
 const connectionOptions = {
+  ...(baileysVersion ? { version: baileysVersion.version } : {}),
   auth: {
     creds: state.creds,
     keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' }))
   },
   logger: pino({ level: 'silent' }),
-  browser: ['Ubuntu', 'Chrome', '20.0.0'],
+  browser: ['Windows', 'Chrome', '149.0.7827.197'],
   syncFullHistory: false,
   markOnlineOnConnect: false,
   generateHighQualityLinkPreview: false,
+  fireInitQueries: false,
+  emitOwnEvents: false,
+  connectTimeoutMs: 60000,
+  defaultQueryTimeoutMs: 60000,
+  keepAliveIntervalMs: 30000,
+  qrTimeout: 40000,
   getMessage: async (key) => {
     try {
       const jid = global.conn?.decodeJid?.(key.remoteJid) || key.remoteJid
@@ -103,34 +115,114 @@ const connectionOptions = {
 global.conn = makeWASocket(connectionOptions)
 conn.isInit = false
 
-// Request pairing code SETELAH WS open (bukan timer buta).
-// Pakai waitForSocketOpen dari baileys supaya sendNode nggak lempar Connection Closed.
-const pairingFlagFile = `./${global.authFile}/.pairing_requested`
+const PAIRING_TIMEOUT_DURATION = 120000
+let pairingTimeout = null
+let pairingStartTime = null
+
+async function clearSessionAndRestart() {
+  console.log('\x1b[31m[ ✖ ] Timeout pairing tercapai. Bersihkan sesi...\x1b[0m')
+  if (pairingTimeout) { clearTimeout(pairingTimeout); pairingTimeout = null }
+  try {
+    if (existsSync(global.authFile)) {
+      const { rm } = await import('fs/promises')
+      await rm(global.authFile, { recursive: true, force: true })
+    }
+  } catch {}
+  setTimeout(() => process.exit(1), 2000)
+}
+
 async function requestPairing() {
   if (!usePairingCode || conn.authState.creds.registered) return
-  if (existsSync(pairingFlagFile)) return
   let phone = pairingNumber
   if (!phone) {
     const { createInterface } = await import('readline')
     const rl = createInterface({ input: process.stdin, output: process.stdout })
     phone = await new Promise(resolve => rl.question('\x1b[36m📱 Masukkan nomor WA (contoh: 6281234567890): \x1b[0m', ans => { rl.close(); resolve(ans.replace(/[^0-9]/g, '')) }))
   }
-  try { mkdirSync(global.authFile, { recursive: true }); writeFileSync(pairingFlagFile, phone) } catch {}
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  phone = phone.replace(/[^0-9]/g, '')
+  global.conn.phoneNumber = phone
+  pairingStartTime = Date.now()
+
+  pairingTimeout = setTimeout(() => {
+    if (!global.conn?.user) clearSessionAndRestart()
+  }, PAIRING_TIMEOUT_DURATION)
+
+  console.log(`\x1b[33m[ ⏰ ] Kamu punya ${PAIRING_TIMEOUT_DURATION / 1000}s untuk menyelesaikan pairing\x1b[0m`)
+
+  // Delay 5s — kasih WS cukup waktu handshake penuh (pola Luna)
+  await new Promise(r => setTimeout(r, 5000))
+
+  let codigo = null
+  let intentos = 0
+  const maxIntentos = 3
+
+  while (intentos < maxIntentos && !global.conn?.user) {
     try {
-      await conn.waitForSocketOpen()
-      const pairCode = await conn.requestPairingCode(phone)
-      console.log('\n\x1b[42m\x1b[30m  PAIRING CODE  \x1b[0m')
-      console.log(`\x1b[1m\x1b[32m  ${pairCode}  \x1b[0m`)
-      console.log('\x1b[33m  Masukkan kode ini di WhatsApp:\x1b[0m')
-      console.log('\x1b[33m  Settings → Linked Devices → Link a Device\x1b[0m\n')
-      return
-    } catch (e) {
-      console.error(`\x1b[31m[PAIRING] Gagal (${attempt}/3):`, e.message, '\x1b[0m')
-      if (attempt < 3) await new Promise(r => setTimeout(r, 5000 * attempt))
+      intentos++
+      console.log(`\x1b[33m[ ℹ️ ] Request pairing code... (coba ${intentos}/${maxIntentos})\x1b[0m`)
+      codigo = await global.conn.requestPairingCode(phone, 'ELAINAMD')
+      if (codigo) {
+        codigo = codigo.match(/.{1,4}/g)?.join('-') || codigo
+        console.log('\n\x1b[32m┌─────────────────────────────────────────┐\x1b[0m')
+        console.log('\x1b[32m│\x1b[1m 📱 PAIRING CODE:\x1b[0m')
+        console.log(`\x1b[33m   ${codigo}\x1b[0m`)
+        console.log('\x1b[32m├─────────────────────────────────────────┤\x1b[0m')
+        console.log('\x1b[36m│ 1. Buka WhatsApp di HP\x1b[0m')
+        console.log('\x1b[36m│ 2. Settings → Linked Devices\x1b[0m')
+        console.log('\x1b[36m│ 3. Link a Device\x1b[0m')
+        console.log('\x1b[36m│ 4. Link with phone number\x1b[0m')
+        console.log('\x1b[36m│ 5. Masukkan kode di atas\x1b[0m')
+        const sisa = Math.floor((PAIRING_TIMEOUT_DURATION - (Date.now() - pairingStartTime)) / 1000)
+        console.log(`\x1b[31m│ ⚠ Sisa waktu: ${sisa}s\x1b[0m`)
+        console.log('\x1b[32m└─────────────────────────────────────────┘\x1b[0m\n')
+        break
+      }
+    } catch (error) {
+      console.error(`\x1b[31m[ ● ] Error coba ${intentos}:\x1b[0m`, error.message)
+      if (error.message.includes('rate limit') || error.message.includes('too many')) {
+        console.log('\x1b[33m[ ⏳ ] Rate limit. Tunggu 10s...\x1b[0m')
+        await new Promise(r => setTimeout(r, 10000))
+      } else if (intentos < maxIntentos) {
+        console.log('\x1b[33m[ ↻ ] Retry dalam 3s...\x1b[0m')
+        await new Promise(r => setTimeout(r, 3000))
+      }
     }
   }
+
+  if (!codigo) {
+    console.log('\x1b[31m[ ● ] Gagal dapat kode setelah 3 percobaan.\x1b[0m')
+    clearSessionAndRestart()
+    return
+  }
+
+  // Renewal check — tiap 15s cek apakah sudah login atau perlu refresh kode
+  let codigoRenovado = false
+  const intervaloCodigo = setInterval(async () => {
+    if (global.conn?.user) {
+      clearInterval(intervaloCodigo)
+      if (pairingTimeout) { clearTimeout(pairingTimeout); pairingTimeout = null }
+      console.log('\x1b[32m[ ✅ ] Perangkat berhasil ditautkan!\x1b[0m')
+      return
+    }
+    if (!pairingTimeout) { clearInterval(intervaloCodigo); return }
+    const tiempoRestante = Math.floor((PAIRING_TIMEOUT_DURATION - (Date.now() - pairingStartTime)) / 1000)
+    if (tiempoRestante <= 0) { clearInterval(intervaloCodigo); return }
+    if (!codigoRenovado && tiempoRestante < 90) {
+      try {
+        console.log(`\x1b[33m[ ℹ️ ] Renovasi kode... (${tiempoRestante}s tersisa)\x1b[0m`)
+        const nuevoCodigo = await global.conn.requestPairingCode(phone, 'ELAINAMD')
+        const formatted = nuevoCodigo?.match(/.{1,4}/g)?.join('-') || nuevoCodigo
+        console.log(`\x1b[32m[ 🔄 ] Kode baru: ${formatted}  (${tiempoRestante}s tersisa)\x1b[0m`)
+        codigoRenovado = true
+      } catch (e) {
+        if (e.message.includes('rate limit') || e.message.includes('too many')) {
+          console.log('\x1b[33m[ ⚠ ] Rate limit renovasi. Lanjut kode lama.\x1b[0m')
+        }
+      }
+    }
+  }, 15000)
 }
+
 requestPairing().catch(e => console.error('[PAIRING]', e.message))
 
 // Patch deprecated button methods → plain sendMessage fallback
@@ -259,6 +351,11 @@ async function connectionUpdate(update) {
     const shouldReconnect = code !== DisconnectReason.loggedOut
 
     if (code === DisconnectReason.loggedOut) {
+      // Pairing belum selesai: jangan exit, tunggu user masukkan kode di HP.
+      if (usePairingCode && !conn.authState.creds.registered) {
+        console.log(`${_tag('PAIRING', '\x1b[33m')} \x1b[33mMenunggu kode pairing dimasukkan di WhatsApp...\x1b[0m`)
+        return
+      }
       console.log(`${_tag('SESSION', '\x1b[31m')} \x1b[31mLogged out\x1b[0m — hapus folder session lalu restart`)
       process.exit(0)
     }
