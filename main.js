@@ -505,43 +505,48 @@ async function filesInit() {
 filesInit().catch(console.error)
 
 global.reload = async (_ev, filename) => {
-  if (pluginFilter(filename)) {
-    let dir = global.__filename(join(pluginFolder, filename), true)
-    if (filename in global.plugins) {
-      if (existsSync(dir)) conn.logger.info(`re - require plugin '${filename}'`)
-      else {
-        conn.logger.warn(`deleted plugin '${filename}'`)
-        return delete global.plugins[filename]
-      }
-    } else conn.logger.info(`requiring new plugin '${filename}'`)
-    let err = syntaxerror(readFileSync(dir), filename, {
+  if (!pluginFilter(filename)) return
+  // filename dari watcher recursive = path relatif terhadap pluginFolder (mis. main/menu.js)
+  const rel = String(filename).replace(/\\/g, '/')
+  if (!rel.endsWith('.js') || rel.endsWith('.disabled')) return
+  const dir = join(pluginFolder, rel)
+  // Atomic-save editor bisa bikin file sementara hilang saat event fired — cek dulu.
+  if (!existsSync(dir)) {
+    if (rel in global.plugins) {
+      conn.logger.warn(`deleted plugin '${rel}'`)
+      delete global.plugins[rel]
+    }
+    return
+  }
+  if (rel in global.plugins) conn.logger.info(`re - require plugin '${rel}'`)
+  else conn.logger.info(`requiring new plugin '${rel}'`)
+  let err
+  try {
+    err = syntaxerror(readFileSync(dir), rel, {
       sourceType: 'module',
       allowAwaitOutsideFunction: true
     })
-    if (err) conn.logger.error(`syntax error while loading '${filename}'\n${format(err)}`)
-    else try {
-      const fileUrl = pathToFileURL(path.resolve(dir)).href + '?update=' + Date.now()
-      const module = await import(fileUrl)
-      global.plugins[filename] = module.default || module
-    } catch (e) {
-      conn.logger.error(`error require plugin '${filename}\n${format(e)}'`)
-    } finally {
-      global.plugins = Object.fromEntries(Object.entries(global.plugins).sort(([a], [b]) => a.localeCompare(b)))
-    }
+  } catch (e) {
+    conn.logger.error(`error read plugin '${rel}': ${e.message}`)
+    return
+  }
+  if (err) conn.logger.error(`syntax error while loading '${rel}'\n${format(err)}`)
+  else try {
+    const fileUrl = pathToFileURL(path.resolve(dir)).href + '?update=' + Date.now()
+    const module = await import(fileUrl)
+    global.plugins[rel] = module.default || module
+    conn.logger.info(`loaded plugin '${rel}' ✓`)
+  } catch (e) {
+    conn.logger.error(`error require plugin '${rel}\n${format(e)}`)
+  } finally {
+    global.plugins = Object.fromEntries(Object.entries(global.plugins).sort(([a], [b]) => a.localeCompare(b)))
   }
 }
 Object.freeze(global.reload)
-// Watch all subfolders recursively
-;(function watchRecursive(dir) {
-  try { watch(dir, global.reload) } catch {}
-  try {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (entry.isDirectory() && entry.name !== 'node_modules' && entry.name !== '.git') {
-        watchRecursive(join(dir, entry.name))
-      }
-    }
-  } catch {}
-})(pluginFolder)
+// Recursive watcher sekali di root — Node >=20 dukung { recursive:true }.
+try { watch(pluginFolder, { recursive: true }, global.reload) } catch (e) {
+  conn.logger.error(`plugin watcher gagal start: ${e.message}`)
+}
 await global.reloadHandler()
 
 // Quick Test
