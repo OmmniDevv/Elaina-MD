@@ -1,7 +1,8 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
 import gtts from 'node-gtts'
-import { readFileSync, unlinkSync } from 'fs'
+import { readFileSync, unlinkSync, mkdirSync } from 'fs'
 import { join } from 'path'
+import { tmpdir } from 'os'
 
 const defaultLang = 'id'
 let handler = async (m, { conn, args, usedPrefix, command }) => {
@@ -36,10 +37,15 @@ function tts(text, lang = 'id') {
   return new Promise((resolve, reject) => {
     try {
       let tts = gtts(lang)
-      let filePath = join(global.__dirname(import.meta.url), '../tmp', (1 * new Date) + '.wav')
+      const dir = join(tmpdir(), 'elaina-tts')
+      mkdirSync(dir, { recursive: true })
+      let filePath = join(dir, (1 * new Date) + '.wav')
       tts.save(filePath, text, () => {
-        resolve(readFileSync(filePath))
-        unlinkSync(filePath)
+        try {
+          resolve(readFileSync(filePath))
+        } finally {
+          try { unlinkSync(filePath) } catch {}
+        }
       })
     } catch (e) { reject(e) }
   })
