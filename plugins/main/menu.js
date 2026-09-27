@@ -84,15 +84,18 @@ let handler = async (m, { conn, usedPrefix, isOwner, isPrems }) => {
         thumbSmall = await sharp(raw1).resize(300, 300, { fit: 'cover' }).jpeg({ quality: 80 }).toBuffer()
     } catch { }
 
-    // Kategori jadi single_select (dropdown) lewat MB.Button.
-    // PENTING: jangan campur single_select dengan quick_reply dalam satu payload —
-    // klien menolak SELURUH set tombolnya, bukan cuma yang salah. Menu kategori
-    // di sini murni list.
-    const catRows = sortedCats.map(cat => ({
-        title: `${CATEGORY_EMOJIS[cat] || '📁'} ${cat.toUpperCase()} MENU`,
-        description: `${cmdMap[cat].length} commands`,
-        id: `${usedPrefix}menucat ${cat}`
-    }))
+    // Kategori ditulis sebagai TEKS + tombol quick_reply, BUKAN single_select.
+    // Sebab: WhatsApp tidak lagi merender list (single_select) di Web/iOS, dan di
+    // banyak versi Android pesannya malah tidak terkirim sama sekali (centang
+    // satu) — jadi isi menu hilang total. quick_reply didukung lintas klien.
+    const listText = sortedCats
+        .map((cat, i) => `${String(i + 1).padStart(2, '0')}. ${CATEGORY_EMOJIS[cat] || '📁'} *${cat.toUpperCase()}* — ${cmdMap[cat].length} cmd`)
+        .join('\n')
+
+    // Maksimal 10 quick_reply per pesan, dan tidak boleh dicampur tipe tombol lain.
+    const btnList = sortedCats.slice(0, 9)
+        .map(cat => [`${CATEGORY_EMOJIS[cat] || '📁'} ${cat.toUpperCase()}`, `${usedPrefix}menucat ${cat}`])
+    btnList.push(['🌺 Semua Menu', `${usedPrefix}allmenu`])
 
     // ftroliQuoted — orderMessage
     const ftroliQuoted = {
@@ -123,7 +126,7 @@ let handler = async (m, { conn, usedPrefix, isOwner, isPrems }) => {
         }
     }
 
-    const footerText = `Hai *${pushName}* 👋
+    const bodyText = `Hai *${pushName}* 👋
 Selamat datang di *${global.namebot}* ✨
 
 ╭─〔 🤖 \`ʙᴏᴛ ɪɴꜰᴏ\` 〕─⬣
@@ -144,18 +147,21 @@ Selamat datang di *${global.namebot}* ✨
 │ ✦ *ᴡᴀᴋᴛᴜ : ${timeStr} WIB*
 ╰─⬣
 
-Silahkan tekan tombol di bawah untuk memilih kategori
+╭─〔 📁 \`ᴋᴀᴛᴇɢᴏʀɪ\` 〕─⬣
+${listText}
+╰─⬣
+
+Pilih lewat tombol di bawah, atau ketik \`${usedPrefix}menucat <kategori>\`
 _© ${global.namebot} | ${global.wmcredit}_`
 
     try {
-        // Tampilan ala Menu WhatsApp Business: kartu bisnis (gambar header +
-        // nama bisnis + subtitle) dengan daftar kategori sebagai single_select.
-        // PENTING: jangan campur single_select dengan quick_reply dalam satu
-        // payload — klien menolak SELURUH set tombolnya, bukan cuma yang salah.
+        // Kartu bisnis: gambar header + nama bot + subtitle. Isi menu ditaruh di
+        // body sebagai teks, navigasi lewat quick_reply — kombinasi ini didukung
+        // Web, iOS, dan Android (single_select tidak).
         const menuBtn = new MB.Button(conn)
             .setTitle(global.namebot)
             .setSubtitle(`Owner: ${global.nameown}`)
-            .setBody(footerText)
+            .setBody(bodyText)
             .setFooter(`© ${global.namebot}`)
             .setContextInfo({
                 externalAdReply: {
@@ -170,11 +176,7 @@ _© ${global.namebot} | ${global.wmcredit}_`
                 forwardingScore: 7,
                 isForwarded: true
             })
-            .addSelection('📁 Pilih Kategori')
-            .makeSection('📋 PILIH CATEGORY')
-        for (const row of catRows) {
-            menuBtn.makeRow('', row.title, row.description, row.id)
-        }
+        for (const [label, id] of btnList) menuBtn.addReply(label, id)
         // Gambar header kartu bisnis (dari thumbnail lokal, sudah di-resize).
         if (thumb2Buffer || thumbBuffer) menuBtn.setImage(thumb2Buffer || thumbBuffer)
 
