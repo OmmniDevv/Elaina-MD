@@ -1,4 +1,10 @@
 import fetch from 'node-fetch'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const dataPath = path.join(__dirname, '../../data/tebakjkt48.json')
 
 let handler = async (m, { conn, usedPrefix, command }) => {
     conn.game = conn.game ? conn.game : {};
@@ -12,14 +18,9 @@ let handler = async (m, { conn, usedPrefix, command }) => {
 
     try {
         await conn.sendMessage(m.chat, { react: { text: "⏳", key: m.key } });
-        let apiKey = global.apikey?.jereapi || global.apiKey;
-        
-        const response = await fetch(`${global.web}/api/game/tebakjkt?apikey=${apiKey}`);
-        const json = await response.json();
-        
-        if (!json.status || !json.result) throw new Error(json.error || json.message || "Gagal mengambil soal game dari server");
-
-        let p = json.result;
+        const _data = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+        let p = _data[Math.floor(Math.random() * _data.length)];
+        const json = { status: true, result: p };
 
         let soalText = p.soal || p.pertanyaan || p.str || p.deskripsi || p.caption || "Tebak jawaban dari petunjuk berikut:";
         let answerData = p.jawaban !== undefined ? p.jawaban : (p.result !== undefined ? p.result : (p.nama || p.name || p.title || ''));

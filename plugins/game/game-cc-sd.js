@@ -1,85 +1,75 @@
+// © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
+// Cerdas Cermat SD via Deline API — gratis, no key
+// API: https://api.deline.web.id/game/cc-sd?matapelajaran=<mapel>
+// Mapel: bindo, tik, pkn, bing, penjas, pai, matematika, jawa, ips, ipa
 import fetch from 'node-fetch'
+import { elainaSay, elainaReact } from '../../lib/elainaVoice.js'
 
-let handler = async (m, { conn, usedPrefix, command }) => {
+const MAPEL = ['bindo', 'tik', 'pkn', 'bing', 'penjas', 'pai', 'matematika', 'jawa', 'ips', 'ipa']
+
+let handler = async (m, { conn, args, usedPrefix, command }) => {
     conn.game = conn.game ? conn.game : {};
-    conn['${g.name}'] = conn['${g.name}'] ? conn['${g.name}'] : {};
+    conn['ccsd'] = conn['ccsd'] ? conn['ccsd'] : {};
     let id = m.chat;
 
-    if (id in conn['${g.name}'] || id in conn.game) {
-        conn.reply(m.chat, `⚠️ Masih ada game *${conn.game[id] || '${g.name}'}* yang belum terjawab di chat ini!\nSelesaikan atau ketik *nyerah* terlebih dahulu.`, conn['${g.name}']?.[id]?.[0] || m);
+    if (id in conn['ccsd'] || id in conn.game) {
+        conn.reply(m.chat, elainaSay('gagal', `masih ada game *${conn.game[id] || 'ccsd'}* yang belum terjawab... selesaikan atau ketik *nyerah* dulu ya~`), conn['ccsd']?.[id]?.[0] || m);
         throw false;
     }
 
+    let mapel = (args[0] || 'bindo').toLowerCase();
+    if (!MAPEL.includes(mapel)) {
+        return m.reply(elainaSay('noargs', `mapelnya apa nih? Pilih salah satu: ${MAPEL.join(', ')}\nContoh: ${usedPrefix + command} matematika`));
+    }
+
     try {
-        await conn.sendMessage(m.chat, { react: { text: "⏳", key: m.key } });
-        let apiKey = global.apikey?.jereapi || global.apiKey;
-        
-        const response = await fetch(`${global.web}/api/game/${g.name}?apikey=${apiKey}`);
+        await conn.sendMessage(m.chat, { react: { text: elainaReact('mikir'), key: m.key } });
+
+        const response = await fetch(`https://api.deline.web.id/game/cc-sd?matapelajaran=${mapel}`, { headers: { 'User-Agent': 'Mozilla/5.0' } });
         const json = await response.json();
-        
-        if (!json.status || !json.result) throw new Error(json.error || json.message || "Gagal mengambil soal game dari server");
 
-        let p = json.result;
+        if (!json.status || !Array.isArray(json.soal) || !json.soal.length) throw new Error(json.error || 'Gagal mengambil soal dari server');
 
-        let soalText = p.soal || p.pertanyaan || p.str || p.deskripsi || p.caption || "Tebak jawaban dari petunjuk berikut:";
-        let answerData = p.jawaban !== undefined ? p.jawaban : (p.result !== undefined ? p.result : (p.nama || p.name || p.title || ''));
-        let clueText = p.bantuan || p.clue || p.tipe || '';
-        let mediaUrl = p.img || p.image || p.gambar || p.link || p.audio || p.url || null;
-        let isAudio = 'null' === 'audio' || (mediaUrl && (mediaUrl.endsWith('.mp3') || mediaUrl.endsWith('.opus') || mediaUrl.endsWith('.m4a')));
+        let q = json.soal[Math.floor(Math.random() * json.soal.length)];
+        let opts = (q.semua_jawaban || []).map(o => {
+            let k = Object.keys(o)[0];
+            return `  ${k.toUpperCase()}. ${o[k]}`;
+        }).join('\n');
 
-        let text = `🎮 *${'CERDAS CERMAT SD'}*\n\n`;
-        text += `📝 *Soal:* ${soalText}\n`;
-        if (clueText) text += `💡 *Petunjuk:* ${clueText}\n`;
+        let answerData = String(q.jawaban_benar || '').toLowerCase().trim();
+
+        let text = `📚 *CERDAS CERMAT SD — ${mapel.toUpperCase()}*\n\n`;
+        text += `📝 *Soal:* ${q.pertanyaan}\n\n${opts}\n`;
         text += `\n⏰ *Waktu:* 60 detik\n`;
         text += `🎁 *Hadiah:* +500 XP & +10 Koin\n\n`;
-        text += `Balas (reply) pesan ini untuk menjawab!\n`;
+        text += `Jawab dengan huruf jawabannya (A/B/C/D)!\n`;
         text += `Ketik *nyerah* untuk menyerah.`;
 
-        let msgOptions = { text: text.trim() };
-        if (mediaUrl && typeof mediaUrl === 'string' && mediaUrl.startsWith('http')) {
-            if (isAudio) {
-                msgOptions = { audio: { url: mediaUrl }, mimetype: 'audio/mp4', ptt: false, caption: text.trim() };
-            } else {
-                try {
-                    let imgRes = await fetch(mediaUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } });
-                    if (imgRes.ok) {
-                        let buffer = await imgRes.arrayBuffer();
-                        msgOptions = { image: Buffer.from(buffer), caption: text.trim() };
-                    } else {
-                        msgOptions = { image: { url: mediaUrl }, caption: text.trim() };
-                    }
-                } catch (err) {
-                    msgOptions = { image: { url: mediaUrl }, caption: text.trim() };
-                }
-            }
-        }
-
-        conn.game[id] = '${g.name}';
-        conn['${g.name}'][id] = [
-            await conn.sendMessage(m.chat, msgOptions, { quoted: m }),
-            json,
+        conn.game[id] = 'ccsd';
+        conn['ccsd'][id] = [
+            await conn.sendMessage(m.chat, { text: text.trim() }, { quoted: m }),
+            { status: true, result: { jawaban: answerData, deskripsi: `Mapel ${mapel}` } },
             setTimeout(() => {
-                if (conn['${g.name}'] && conn['${g.name}'][id]) {
-                    let ansDisplay = Array.isArray(answerData) ? answerData.join(' / ') : answerData;
-                    conn.reply(m.chat, `⏳ *WAKTU HABIS!*\n\nJawabannya adalah: *${ansDisplay}*`, conn['${g.name}'][id][0]);
-                    delete conn['${g.name}'][id];
+                if (conn['ccsd'] && conn['ccsd'][id]) {
+                    conn.reply(m.chat, `⏳ *WAKTU HABIS!*\n\nJawabannya adalah: *${answerData.toUpperCase()}*`, conn['ccsd'][id][0]);
+                    delete conn['ccsd'][id];
                     if (conn.game) delete conn.game[id];
                 }
             }, 60000),
             answerData
         ];
-        
-        await conn.sendMessage(m.chat, { react: { text: "✅", key: m.key } });
+
+        await conn.sendMessage(m.chat, { react: { text: elainaReact('sukses'), key: m.key } });
     } catch (e) {
-        await conn.sendMessage(m.chat, { react: { text: "❌", key: m.key } }).catch(() => {});
-        console.error('[Game ${g.name} Error]', e);
-        m.reply("❌ Error: " + (e.message || "Gagal memulai game"));
+        await conn.sendMessage(m.chat, { react: { text: elainaReact('gagal'), key: m.key } }).catch(() => {});
+        console.error('[Game ccsd Error]', e);
+        m.reply(elainaSay('gagal', 'nggak bisa ambil soal... coba lagi ya~'));
     }
 }
 
-handler.help = ['${g.name}']
+handler.help = ['ccsd <mapel>']
 handler.tags = ['game']
-handler.command = /^${g.name}$/i
+handler.command = /^(ccsd|cc-sd|cerdascermat)$/i
 handler.limit = 1;
 
 export default handler;

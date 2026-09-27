@@ -12,14 +12,14 @@ let handler = async (m, { conn, usedPrefix, command }) => {
 
     try {
         await conn.sendMessage(m.chat, { react: { text: "⏳", key: m.key } });
-        let apiKey = global.apikey?.jereapi || global.apiKey;
-        
-        const response = await fetch(`${global.web}/api/game/tebakkimia?apikey=${apiKey}`);
+        const response = await fetch('https://api.deline.web.id/game/tebakkimia', { headers: { 'User-Agent': 'Mozilla/5.0' } });
         const json = await response.json();
         
-        if (!json.status || !json.result) throw new Error(json.error || json.message || "Gagal mengambil soal game dari server");
+        if (!json.status || (!json.result && !json.data)) throw new Error(json.error || json.message || "Gagal mengambil soal game dari server");
 
-        let p = json.result;
+        let _raw = json.result || json.data;
+        // Deline: { unsur, lambang } → ubah ke format standar
+        let p = (_raw.unsur && _raw.lambang) ? { soal: `Apa lambang unsur dari *${_raw.unsur}*?`, jawaban: _raw.lambang } : _raw;
 
         let soalText = p.soal || p.pertanyaan || p.str || p.deskripsi || p.caption || "Tebak jawaban dari petunjuk berikut:";
         let answerData = p.jawaban !== undefined ? p.jawaban : (p.result !== undefined ? p.result : (p.nama || p.name || p.title || ''));
