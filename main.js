@@ -1,11 +1,6 @@
 import './config.js'
-
-// Filter noise libsignal: jangan cetak dump SessionEntry / ratchet state (bocorin key). Pola Luna-Botv6.
-const _origConsoleInfo = console.info.bind(console)
-const _origConsoleWarn = console.warn.bind(console)
-const SIGNAL_SESSION_NOISE = /Closing session|Opening session|Session already closed|Removing old closed session|Migrating session to|SessionEntry \{/
-console.info = (...args) => { if (typeof args[0] === 'string' && SIGNAL_SESSION_NOISE.test(args[0])) return; _origConsoleInfo(...args) }
-console.warn = (...args) => { if (typeof args[0] === 'string' && SIGNAL_SESSION_NOISE.test(args[0])) return; _origConsoleWarn(...args) }
+import { log, printStatus, patchConsole } from './lib/logger.js'
+patchConsole()
 
 import { createRequire } from "module" // Bring in the ability to create the 'require' method
 import path, { join } from 'path'
@@ -63,7 +58,7 @@ global.loadDatabase = async function loadDatabase() {
   }, 1 * 1000))
   if (global.db.data !== null) return
   global.db.READ = true
-  await global.db.read().catch(console.error)
+  await global.db.read().catch(e => log.error('DB read: ' + e.message))
   global.db.READ = null
   global.db.data = {
     users: {},
@@ -127,7 +122,7 @@ let pairingTimeout = null
 let pairingStartTime = null
 
 async function clearSessionAndRestart() {
-  console.log('\x1b[31m[ ✖ ] Timeout pairing tercapai. Bersihkan sesi...\x1b[0m')
+  log.error('Waktu pairing habis — membersihkan sesi ...')
   if (pairingTimeout) { clearTimeout(pairingTimeout); pairingTimeout = null }
   try {
     if (existsSync(global.authFile)) {
@@ -154,7 +149,7 @@ async function requestPairing() {
     if (!global.conn?.user) clearSessionAndRestart()
   }, PAIRING_TIMEOUT_DURATION)
 
-  console.log(`\x1b[33m[ ⏰ ] Kamu punya ${PAIRING_TIMEOUT_DURATION / 1000}s untuk menyelesaikan pairing\x1b[0m`)
+  log.auth(`Batas waktu pairing: ${PAIRING_TIMEOUT_DURATION / 1000} detik`)
 
   // Delay 5s — kasih WS cukup waktu handshake penuh (pola Luna)
   await new Promise(r => setTimeout(r, 5000))
@@ -166,38 +161,27 @@ async function requestPairing() {
   while (intentos < maxIntentos && !global.conn?.user) {
     try {
       intentos++
-      console.log(`\x1b[33m[ ℹ️ ] Request pairing code... (coba ${intentos}/${maxIntentos})\x1b[0m`)
+      log.auth(`Meminta kode pairing ... (${intentos}/${maxIntentos})`)
       codigo = await global.conn.requestPairingCode(phone, 'ELAINAMD')
       if (codigo) {
         codigo = codigo.match(/.{1,4}/g)?.join('-') || codigo
-        console.log('\n\x1b[32m┌─────────────────────────────────────────┐\x1b[0m')
-        console.log('\x1b[32m│\x1b[1m 📱 PAIRING CODE:\x1b[0m')
-        console.log(`\x1b[33m   ${codigo}\x1b[0m`)
-        console.log('\x1b[32m├─────────────────────────────────────────┤\x1b[0m')
-        console.log('\x1b[36m│ 1. Buka WhatsApp di HP\x1b[0m')
-        console.log('\x1b[36m│ 2. Settings → Linked Devices\x1b[0m')
-        console.log('\x1b[36m│ 3. Link a Device\x1b[0m')
-        console.log('\x1b[36m│ 4. Link with phone number\x1b[0m')
-        console.log('\x1b[36m│ 5. Masukkan kode di atas\x1b[0m')
-        const sisa = Math.floor((PAIRING_TIMEOUT_DURATION - (Date.now() - pairingStartTime)) / 1000)
-        console.log(`\x1b[31m│ ⚠ Sisa waktu: ${sisa}s\x1b[0m`)
-        console.log('\x1b[32m└─────────────────────────────────────────┘\x1b[0m\n')
+        printPairingBox(codigo)
         break
       }
     } catch (error) {
-      console.error(`\x1b[31m[ ● ] Error coba ${intentos}:\x1b[0m`, error.message)
+      log.error(`Pairing percobaan ${intentos} gagal: ${error.message}`)
       if (error.message.includes('rate limit') || error.message.includes('too many')) {
-        console.log('\x1b[33m[ ⏳ ] Rate limit. Tunggu 10s...\x1b[0m')
+        log.warn('Rate limit — tunggu 10 detik ...')
         await new Promise(r => setTimeout(r, 10000))
       } else if (intentos < maxIntentos) {
-        console.log('\x1b[33m[ ↻ ] Retry dalam 3s...\x1b[0m')
+        log.info('Coba lagi dalam 3 detik ...')
         await new Promise(r => setTimeout(r, 3000))
       }
     }
   }
 
   if (!codigo) {
-    console.log('\x1b[31m[ ● ] Gagal dapat kode setelah 3 percobaan.\x1b[0m')
+    log.error('Gagal dapat kode setelah 3 percobaan')
     clearSessionAndRestart()
     return
   }
@@ -208,7 +192,7 @@ async function requestPairing() {
     if (global.conn?.user) {
       clearInterval(intervaloCodigo)
       if (pairingTimeout) { clearTimeout(pairingTimeout); pairingTimeout = null }
-      console.log('\x1b[32m[ ✅ ] Perangkat berhasil ditautkan!\x1b[0m')
+      log.ok('Perangkat berhasil ditautkan')
       return
     }
     if (!pairingTimeout) { clearInterval(intervaloCodigo); return }
@@ -216,21 +200,31 @@ async function requestPairing() {
     if (tiempoRestante <= 0) { clearInterval(intervaloCodigo); return }
     if (!codigoRenovado && tiempoRestante < 90) {
       try {
-        console.log(`\x1b[33m[ ℹ️ ] Renovasi kode... (${tiempoRestante}s tersisa)\x1b[0m`)
+        log.auth(`Memperbarui kode ... (${tiempoRestante}dts tersisa)`)
         const nuevoCodigo = await global.conn.requestPairingCode(phone, 'ELAINAMD')
         const formatted = nuevoCodigo?.match(/.{1,4}/g)?.join('-') || nuevoCodigo
-        console.log(`\x1b[32m[ 🔄 ] Kode baru: ${formatted}  (${tiempoRestante}s tersisa)\x1b[0m`)
+        printPairingBox(formatted, tiempoRestante)
         codigoRenovado = true
       } catch (e) {
         if (e.message.includes('rate limit') || e.message.includes('too many')) {
-          console.log('\x1b[33m[ ⚠ ] Rate limit renovasi. Lanjut kode lama.\x1b[0m')
+          log.warn('Rate limit saat perbarui — pakai kode lama')
         }
       }
     }
   }, 15000)
 }
 
-requestPairing().catch(e => console.error('[PAIRING]', e.message))
+function printPairingBox(code, sisaSecs) {
+  const sisa = sisaSecs ?? Math.floor((PAIRING_TIMEOUT_DURATION - (Date.now() - pairingStartTime)) / 1000)
+  console.log('')
+  log.auth(`Kode Pairing: ${code}`)
+  log.info('1. Buka WhatsApp di HP')
+  log.info('2. Pengaturan > Perangkat Tertaut > Tautkan Perangkat')
+  log.info(`3. Masukkan kode di atas (berlaku ${sisa} dtk)`)
+  console.log('')
+}
+
+requestPairing().catch(e => log.error('Pairing: ' + e.message))
 
 // Patch deprecated button methods → plain sendMessage fallback
 // Buttons API sudah tidak didukung WA, fallback ke text biasa
@@ -272,7 +266,7 @@ global.getBuffer = async (url, options) => {
   try {
     const res = await axios({ method: 'get', url, headers: { DNT: 1, 'Upgrade-Insecure-Request': 1 }, ...options, responseType: 'arraybuffer' })
     return res.data
-  } catch (e) { console.log(`getBuffer Error: ${e}`) }
+  } catch (e) { log.warn('getBuffer: ' + e.message) }
 }
 global.fetchJson = async (url, options = {}) => {
   const res = await axios.get(url, { responseType: 'json', ...options })
@@ -295,11 +289,11 @@ global.runtime = ms => {
 
 if (!opts['test']) {
   setInterval(async () => {
-    if (global.db.data) await global.db.write().catch(console.error)
+    if (global.db.data) await global.db.write().catch(e => log.error('DB write: ' + e.message))
     if (opts['autocleartmp']) try {
       clearTmp()
 
-    } catch (e) { console.error(e) }
+    } catch (e) { log.error('Autocleartmp: ' + e.message) }
   }, 60 * 1000)
 }
 if (opts['server']) (await import('./server.js')).default(global.conn, PORT)
@@ -325,24 +319,20 @@ const PROJECT_NAME = _pkg.name.toUpperCase()          // "ELAINA-MD"
 const PROJECT_AUTHOR = _pkg.author?.name || 'OmmniDevv'
 
 function _banner() {
-  const line = '─'.repeat(50)
-  console.log(`\n\x1b[36m${line}\x1b[0m`)
-  console.log(`\x1b[1m\x1b[35m  ★  ${PROJECT_NAME}\x1b[0m`)
-  console.log(`\x1b[90m  By ${PROJECT_AUTHOR}  •  v${_pkg.version}\x1b[0m`)
-  console.log(`\x1b[36m${line}\x1b[0m\n`)
+  printStatus('Bot', `${global.namebot || PROJECT_NAME} v${_pkg.version}`)
+  printStatus('Owner', PROJECT_AUTHOR)
+  printStatus('Session', global.authFile)
+  printStatus('Mode', usePairingCode ? `Pairing (${pairingNumber || 'input manual'})` : 'QR Code')
+  if (baileysVersion?.version) printStatus('WA Web', `v${baileysVersion.version.join('.')}`)
 }
 _banner()
-
-function _tag(label, color = '\x1b[36m') {
-  return `${color}[${label}]\x1b[0m`
-}
 
 async function connectionUpdate(update) {
   const { connection, lastDisconnect, isNewLogin, qr } = update
   if (qr && !usePairingCode) {
     global.qrString = qr
     global.qrTime = Date.now()
-    console.log(`${_tag('QR', '\x1b[36m')} \x1b[36mScan QR ini untuk login (juga tersedia di http://127.0.0.1:${PORT}/qr):\x1b[0m`)
+    log.auth(`Scan QR untuk login (juga di http://127.0.0.1:${PORT}/qr):`)
     try { qrcode.generate(qr, { small: true }) } catch {}
   }
   if (isNewLogin) conn.isInit = true
@@ -360,20 +350,20 @@ async function connectionUpdate(update) {
     if (code === DisconnectReason.loggedOut) {
       // Pairing belum selesai: jangan exit, tunggu user masukkan kode di HP.
       if (usePairingCode && !conn.authState.creds.registered) {
-        console.log(`${_tag('PAIRING', '\x1b[33m')} \x1b[33mMenunggu kode pairing dimasukkan di WhatsApp...\x1b[0m`)
+        log.auth('Menunggu kode pairing dimasukkan di WhatsApp ...')
         return
       }
-      console.log(`${_tag('SESSION', '\x1b[31m')} \x1b[31mLogged out\x1b[0m — hapus folder session lalu restart`)
+      log.error('Logged out — hapus folder session lalu restart')
       process.exit(0)
     }
 
-    console.log(`${_tag('CONN', '\x1b[33m')} \x1b[33mDisconnected\x1b[0m — code: ${code} reconnect: ${shouldReconnect}${errMsg ? ` (${errMsg})` : ''}`)
+    log.warn(`Terputus (code ${code})${errMsg ? ` — ${errMsg}` : ''}${shouldReconnect ? ' — reconnect ...' : ''}`)
     if (shouldReconnect) {
-      setTimeout(() => global.reloadHandler(true).catch(console.error), 3000)
+      setTimeout(() => global.reloadHandler(true).catch(e => log.error('Reconnect: ' + e.message)), 3000)
     }
   } else if (connection === 'open') {
     const botName = global.namebot || PROJECT_NAME
-    console.log(`${_tag('CONN', '\x1b[32m')} \x1b[32mConnected\x1b[0m — berjalan sebagai \x1b[1m${botName}\x1b[0m`)
+    log.ok(`Terhubung sebagai ${botName}`)
     try {
       const flagFile = `./${global.authFile}/.pairing_requested`
       if (existsSync(flagFile)) unlinkSync(flagFile)
@@ -389,7 +379,7 @@ process.on('uncaughtException', (err) => {
   // Reconnect hanya untuk error WebSocket, bukan fetch/HTTP
   const isFetchError = err.stack && (err.stack.includes('undici') || err.stack.includes('node-fetch') || err.stack.includes('Fetch.') || err.stack.includes('onAborted'))
   if (!isFetchError && /terminated|connection reset|ECONNRESET|ETIMEDOUT/i.test(err.message)) {
-    global.reloadHandler(true).catch(console.error)
+    global.reloadHandler(true).catch(e => log.error('Reconnect: ' + e.message))
   }
 })
 // let strQuot = /(["'])(?:(?=(\\?))\2.)*?\1/
@@ -398,10 +388,10 @@ let isInit = true;
 let handler = await import('./handler.js')
 global.reloadHandler = async function (restatConn) {
   try {
-    const Handler = await import(`./handler.js?update=${Date.now()}`).catch(console.error)
+    const Handler = await import(`./handler.js?update=${Date.now()}`).catch(e => log.error('Handler reload: ' + e.message))
     if (Object.keys(Handler || {}).length) handler = Handler
   } catch (e) {
-    console.error(e)
+    log.error('Handler: ' + e.message)
   }
   if (restatConn) {
     const oldChats = global.conn.chats
@@ -442,7 +432,7 @@ global.reloadHandler = async function (restatConn) {
   conn.connectionUpdate = connectionUpdate.bind(global.conn)
   conn.credsUpdate = saveCreds.bind(global.conn)
 
-  if (!conn.handler) console.error(`${_tag('ERROR', '\x1b[31m')} handler.handler is undefined!`)
+  if (!conn.handler) log.error('handler.handler is undefined!')
   
   conn.ev.on('messages.upsert', conn.handler)
   conn.ev.on('group-participants.update', conn.participantsUpdate)
@@ -451,7 +441,7 @@ global.reloadHandler = async function (restatConn) {
   conn.ev.on('connection.update', conn.connectionUpdate)
   conn.ev.on('creds.update', conn.credsUpdate)
   isInit = false
-  console.log(`${_tag('HANDLER', '\x1b[36m')} Event listeners attached`)
+  log.info('Event handler terpasang')
   return true
 }
 
@@ -492,17 +482,14 @@ async function filesInit() {
       loaded++
     } catch (e) {
       failed++
-      if (global.conn?.logger) {
-        conn.logger.error(`Failed to load ${key}: ${e.message}`)
-      } else {
-        console.error(`Failed to load ${key}:`, e.message)
-      }
+      log.error(`Plugin ${key}: ${e.message}`)
       delete global.plugins[key]
     }
   }
-  console.log(`${_tag('PLUGIN', '\x1b[32m')} \x1b[32m${loaded} plugins loaded\x1b[0m${failed > 0 ? ` \x1b[31m(${failed} failed)\x1b[0m` : ''}`)
+  if (failed > 0) log.warn(`${failed} plugin gagal dimuat`)
+  log.plugin(`${loaded} plugin dimuat`)
 }
-filesInit().catch(console.error)
+filesInit().catch(e => log.error(`Plugin init gagal: ${e.message}`))
 
 global.reload = async (_ev, filename) => {
   if (!pluginFilter(filename)) return
@@ -513,13 +500,12 @@ global.reload = async (_ev, filename) => {
   // Atomic-save editor bisa bikin file sementara hilang saat event fired — cek dulu.
   if (!existsSync(dir)) {
     if (rel in global.plugins) {
-      conn.logger.warn(`deleted plugin '${rel}'`)
+      log.warn(`Plugin dihapus: ${rel}`)
       delete global.plugins[rel]
     }
     return
   }
-  if (rel in global.plugins) conn.logger.info(`re - require plugin '${rel}'`)
-  else conn.logger.info(`requiring new plugin '${rel}'`)
+  const isUpdate = rel in global.plugins
   let err
   try {
     err = syntaxerror(readFileSync(dir), rel, {
@@ -527,17 +513,17 @@ global.reload = async (_ev, filename) => {
       allowAwaitOutsideFunction: true
     })
   } catch (e) {
-    conn.logger.error(`error read plugin '${rel}': ${e.message}`)
+    log.error(`Plugin ${rel} gagal dibaca: ${e.message}`)
     return
   }
-  if (err) conn.logger.error(`syntax error while loading '${rel}'\n${format(err)}`)
+  if (err) log.error(`Plugin ${rel} syntax error\n${format(err)}`)
   else try {
     const fileUrl = pathToFileURL(path.resolve(dir)).href + '?update=' + Date.now()
     const module = await import(fileUrl)
     global.plugins[rel] = module.default || module
-    conn.logger.info(`loaded plugin '${rel}' ✓`)
+    log.plugin(`${isUpdate ? 'Reload' : 'Baru'}: ${rel}`)
   } catch (e) {
-    conn.logger.error(`error require plugin '${rel}\n${format(e)}`)
+    log.error(`Plugin ${rel}: ${format(e).split('\n')[0]}`)
   } finally {
     global.plugins = Object.fromEntries(Object.entries(global.plugins).sort(([a], [b]) => a.localeCompare(b)))
   }
@@ -545,13 +531,14 @@ global.reload = async (_ev, filename) => {
 Object.freeze(global.reload)
 // Recursive watcher sekali di root — Node >=20 dukung { recursive:true }.
 try { watch(pluginFolder, { recursive: true }, global.reload) } catch (e) {
-  conn.logger.error(`plugin watcher gagal start: ${e.message}`)
+  log.error('Plugin watcher gagal start: ' + e.message)
 }
 await global.reloadHandler()
 
-// Quick Test
+// Quick Test — cek binary pendukung (ffmpeg, imagemagick, find)
 async function _quickTest() {
-  let test = await Promise.all([
+  const names = ['ffmpeg', 'ffprobe', 'ffmpegWebp', 'convert', 'magick', 'gm', 'find']
+  const procs = [
     spawn('ffmpeg'),
     spawn('ffprobe'),
     spawn('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-filter_complex', 'color', '-frames:v', '1', '-f', 'webp', '-']),
@@ -559,7 +546,8 @@ async function _quickTest() {
     spawn('magick'),
     spawn('gm'),
     spawn('find', ['--version'])
-  ].map(p => {
+  ]
+  let test = await Promise.all(procs.map(p => {
     return Promise.race([
       new Promise(resolve => {
         p.on('close', code => {
@@ -572,7 +560,6 @@ async function _quickTest() {
     ])
   }))
   let [ffmpeg, ffprobe, ffmpegWebp, convert, magick, gm, find] = test
-  console.log(test)
   let s = global.support = {
     ffmpeg,
     ffprobe,
@@ -582,14 +569,16 @@ async function _quickTest() {
     gm,
     find
   }
-  // require('./lib/sticker').support = s
   Object.freeze(global.support)
 
-  if (!s.ffmpeg) conn.logger.warn('Please install ffmpeg for sending videos (pkg install ffmpeg)')
-  if (s.ffmpeg && !s.ffmpegWebp) conn.logger.warn('Stickers may not animated without libwebp on ffmpeg (--enable-ibwebp while compiling ffmpeg)')
-  if (!s.convert && !s.magick && !s.gm) conn.logger.warn('Stickers may not work without imagemagick if libwebp on ffmpeg doesnt isntalled (pkg install imagemagick)')
+  const ok = names.filter((_, i) => test[i])
+  const missing = names.filter((_, i) => !test[i])
+  log.info(`System check: ${ok.join(', ')}${missing.length ? ` (hilang: ${missing.join(', ')})` : ''}`)
+  if (!s.ffmpeg) log.warn('ffmpeg belum ada — video/stiker mungkin gagal (pkg install ffmpeg)')
+  if (s.ffmpeg && !s.ffmpegWebp) log.warn('ffmpeg tanpa libwebp — stiker animasi mungkin gagal')
+  if (!s.convert && !s.magick && !s.gm) log.warn('imagemagick belum ada — stiker mungkin gagal (pkg install imagemagick)')
 }
 
 _quickTest()
-  .then(() => console.log(`${_tag('TEST', '\x1b[32m')} \x1b[32mQuick test selesai\x1b[0m`))
-  .catch((e) => console.error(`${_tag('TEST', '\x1b[31m')} \x1b[31m${e.message}\x1b[0m`))
+  .then(() => log.ok('System check selesai'))
+  .catch((e) => log.error('System check: ' + e.message))
