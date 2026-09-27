@@ -148,14 +148,36 @@ Silahkan tekan tombol di bawah untuk memilih kategori
 _© ${global.namebot} | ${global.wmcredit}_`
 
     try {
-        // MB.Button: satu payload = satu set tombol, murni single_select.
+        // Tampilan ala Menu WhatsApp Business: kartu bisnis (gambar header +
+        // nama bisnis + subtitle) dengan daftar kategori sebagai single_select.
+        // PENTING: jangan campur single_select dengan quick_reply dalam satu
+        // payload — klien menolak SELURUH set tombolnya, bukan cuma yang salah.
         const menuBtn = new MB.Button(conn)
+            .setTitle(global.namebot)
+            .setSubtitle(`Owner: ${global.nameown}`)
             .setBody(footerText)
+            .setFooter(`© ${global.namebot}`)
+            .setContextInfo({
+                externalAdReply: {
+                    title: global.namebot,
+                    body: `Owner: ${global.nameown}`,
+                    mediaType: 1,
+                    thumbnail: thumbSmall || thumbBuffer || undefined,
+                    renderLargerThumbnail: true,
+                    showAdAttribution: false,
+                    sourceUrl: 'https://github.com/OmmniDevv'
+                },
+                forwardingScore: 7,
+                isForwarded: true
+            })
             .addSelection('📁 Pilih Kategori')
             .makeSection('📋 PILIH CATEGORY')
         for (const row of catRows) {
             menuBtn.makeRow('', row.title, row.description, row.id)
         }
+        // Gambar header kartu bisnis (dari thumbnail lokal, sudah di-resize).
+        if (thumb2Buffer || thumbBuffer) menuBtn.setImage(thumb2Buffer || thumbBuffer)
+
         await menuBtn.send(m.chat, { quoted: ftroliQuoted })
     } catch (e) {
         console.error('[Menu]', e.message)
