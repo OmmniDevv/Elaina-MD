@@ -1,4 +1,4 @@
-import { AIRich } from '../../messagebuilder.js'; 
+import { AIRich, MB } from '../../messagebuilder.js'; 
 
 const html = String.raw`<style>
 * { -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; box-sizing: border-box; }
@@ -788,16 +788,7 @@ let handler = async (m, { conn, args, text }) => {
             unsupportedTypeAlert: false
         });
 
-        rich.addSection({
-            view_model: {
-                primitive: {
-                    __typename: 'GenAIaeacdsnwHtmlPrimitive',
-                    payload: html,
-                    trusted_sources: ['lumnztyz.dev']
-                },
-                __typename: 'GenAISingleLayoutViewModel'
-            }
-        });
+        rich.addSection(MB.htmlSection(html, { trustedSources: ['lumnztyz.dev'] }))
 
         await rich.send(m.chat, {
             quoted: m,
