@@ -27,7 +27,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
   conn.sendMessage(m.chat, { react: { text: '🕕', key: m.key } })
   let buf = await ttsGtts(text, 'id')
   if (!buf) throw '❌ Gagal generate TTS'
-  await conn.sendMessage(m.chat, { audio: { url: buf }, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
+  await conn.sendMessage(m.chat, { audio: buf, mimetype: 'audio/mpeg', ptt: false }, { quoted: m })
   conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
 handler.help = ['tts <teks>']
