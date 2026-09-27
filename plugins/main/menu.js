@@ -1,5 +1,6 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
 import fetch from 'node-fetch'
+import { MB } from '@rexxhayanasi/elaina-baileys'
 
 const CATEGORY_EMOJIS = {
     owner: '👑', main: '🏠', downloader: '📥', sticker: '🖼️',
@@ -83,32 +84,15 @@ let handler = async (m, { conn, usedPrefix, isOwner, isPrems }) => {
         thumbSmall = await sharp(raw1).resize(300, 300, { fit: 'cover' }).jpeg({ quality: 80 }).toBuffer()
     } catch { }
 
-    // Category rows untuk single_select dropdown (variant 15)
+    // Kategori jadi single_select (dropdown) lewat MB.Button.
+    // PENTING: jangan campur single_select dengan quick_reply dalam satu payload —
+    // klien menolak SELURUH set tombolnya, bukan cuma yang salah. Menu kategori
+    // di sini murni list.
     const catRows = sortedCats.map(cat => ({
         title: `${CATEGORY_EMOJIS[cat] || '📁'} ${cat.toUpperCase()} MENU`,
         description: `${cmdMap[cat].length} commands`,
         id: `${usedPrefix}menucat ${cat}`
     }))
-
-    // Buttons (variant 15 style — tanpa call_permission_request)
-    const buttons = [
-        {
-            name: 'single_select',
-            buttonParamsJson: JSON.stringify({ has_multiple_buttons: true })
-        },
-        {
-            name: 'quick_reply',
-            buttonParamsJson: JSON.stringify({ display_text: '🌺 Lihat Semua Menu', id: `${usedPrefix}allmenu` })
-        },
-        {
-            name: 'single_select',
-            buttonParamsJson: JSON.stringify({
-                title: '📁 Pilih Kategori',
-                sections: [{ title: '📋 PILIH CATEGORY', rows: catRows }],
-                has_multiple_buttons: true
-            })
-        }
-    ]
 
     // ftroliQuoted — orderMessage
     const ftroliQuoted = {
@@ -164,40 +148,15 @@ Silahkan tekan tombol di bawah untuk memilih kategori
 _© ${global.namebot} | ${global.wmcredit}_`
 
     try {
-        // variant 15: raw interactiveMessage via sendMessage (bukan generateWAMessageFromContent)
-        await conn.sendMessage(m.chat, {
-            interactiveMessage: {
-                title: '',
-                footer: footerText,
-                document: Buffer.from(JSON.stringify({ bot: global.namebot })),
-                mimetype: 'image/jpeg',
-                jpegThumbnail: thumbSmall,
-                contextInfo: {
-                    mentionedJid: [],
-                    forwardingScore: 7,
-                    isForwarded: true
-                },
-                externalAdReply: {
-                    title: global.namebot,
-                    body: `Owner: ${global.nameown}`,
-                    previewType: 'VIDEO',
-                    thumbnail: thumb2Buffer || thumbBuffer,
-                    renderLargerThumbnail: true,
-                    showAdAttribution: false
-                },
-                nativeFlowMessage: {
-                    messageParamsJson: JSON.stringify({
-                        bottom_sheet: {
-                            in_thread_buttons_limit: 2,
-                            divider_indices: [1, 2, 3, 999],
-                            list_title: 'Silahkan pilih menu yang kamu inginkan',
-                            button_title: '🍀 Pilih Kategori'
-                        }
-                    }),
-                    buttons
-                }
-            }
-        }, { quoted: ftroliQuoted })
+        // MB.Button: satu payload = satu set tombol, murni single_select.
+        const menuBtn = new MB.Button(conn)
+            .setBody(footerText)
+            .addSelection('📁 Pilih Kategori')
+            .makeSection('📋 PILIH CATEGORY')
+        for (const row of catRows) {
+            menuBtn.makeRow('', row.title, row.description, row.id)
+        }
+        await menuBtn.send(m.chat, { quoted: ftroliQuoted })
     } catch (e) {
         console.error('[Menu]', e.message)
         throw e

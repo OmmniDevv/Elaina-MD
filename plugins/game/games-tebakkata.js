@@ -14,7 +14,7 @@ let handler = async (m, { conn, usedPrefix }) => {
     conn.tebakkata = conn.tebakkata ? conn.tebakkata : {}
     let id = m.chat
     if (id in conn.tebakkata) {
-        conn.reply(m.chat, elainaSay('mikir', 'masih ada soal yang belum dijawab di chat ini lho~ selesaikan dulu ya~'), conn.tebakkata[id][0])
+        conn.reply(m.chat, elainaSay('noargs', 'masih ada soal yang belum dijawab di chat ini lho~ selesaikan dulu ya~'), conn.tebakkata[id][0])
         throw false
     }
     const data = JSON.parse(fs.readFileSync(dataPath, 'utf-8'))

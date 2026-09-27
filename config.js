@@ -63,36 +63,11 @@ global.namebot = 'Elaina BOT' //Nama Bot
 global.nameown = 'ZansLord' // Nama Owner
 
 /*============== PERSONA / VOICE (waifuable moe) ==============*/
-// Semua text reply bot pake ini. Edit sesukamu~
-global.elaina_persona = {
-  // Reaksi emosi — array, dipilih random tiap reply
-  reactions: {
-    seneng:  ['Ehehe~', 'Yay~', 'Hihi~', 'Yatta~', 'Ufufu~'],
-    malu:    ['E-Eh?!', 'H-Hentee...', 'Mouu~', 'I-Iya...', 'Hngg...'],
-    mikir:   ['Hmm~', 'Chotto~', 'Eto...', 'Nee~'],
-    marah:   ['Mouu!', 'Hmph!', 'Jangan gitu dong~', 'Yada~'],
-    ngantuk: ['Fuaa~', 'Nemui...', 'Yawn~', 'Suyaa~'],
-    gagal:   ['Ehh?!', 'Uwahh...', 'Hics...', 'Kuso~'],
-    sukses:  ['Dekita~', 'Sippu~', 'Yoshi~', 'Hehe~', 'Kantan~'],
-    selamat: ['Omedetou~', 'Yatta ne~', 'Sugoi~'],
-    sayang:  ['Daisuki~', 'Suki~', 'Kawaii~', 'Fuee~'],
-    salam:   ['Ohayou~', 'Konnichiwa~', 'Konbanwa~', 'Hisashiburi~'],
-    pamit:   ['Jaa ne~', 'Oyasumi~', 'Mata ne~', 'See you~']
-  },
-  // Emoji per emosi (dipilih random, boleh kosong [])
-  emoji: {
-    seneng:  ['(⁠≧⁠▽⁠≦⁠)', '(⁠≧⁠◡⁠≦⁠) ♡', '🎀'],
-    malu:    ['(⁠⁄⁠ ⁠⁄⁠•⁠⁄⁠ω⁠⁄⁠•⁠⁄⁠ ⁠⁄⁠)', '>///<', '🫣'],
-    gagal:   ['(⁠╥⁠﹏⁠╥⁠)', '(⁠｡⁠•́⁠︿⁠•̀⁠｡⁠)', '💧'],
-    sukses:  ['✨', '🌟', '💫'],
-    sayang:  ['♡', '💗', '💕']
-  },
-  // Footer di bawah tiap pesan panjang
-  footer: '♡ Elaina-chan',
-  // Sticker metadata
-  sticker_packname: 'Elaina-chan ♡',
-  sticker_author: 'OmmniDevv'
-}
+// CATATAN: persona hidup di blok "PERSONA / VOICE" di bawah (dekat WATERMARK).
+// Hanya ada SATU definisi global.elaina_persona — dulu ada dua dan yang kedua
+// menang diam-diam, jadi blok mati di sini sudah dihapus. Edit di blok bawah.
+// Dibaca lib/elainaVoice.js (elainaSay, elainaReact, elainaFooter).
+
 // ↓ TAMBAHKAN INI ↓
 global.usePairingCode = true             // false = QR (scan), true = pairing code
 global.pairingNumber = '6285187605007'   // Nomor WA bot kamu (kosongkan untuk input manual)
