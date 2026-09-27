@@ -851,6 +851,27 @@ export async function handler(chatUpdate) {
                 break
             }
         }
+
+        // ── Auto AI Automation & Auto Downloader Hook ──
+        if (!m.plugin && (m.text || m.isImage || m.quoted)) {
+            try {
+                if (m.isGroup) {
+                    const { handleAutoAI } = await import('./src/lib/elaina-auto-ai.js')
+                    await handleAutoAI(m, this)
+                }
+            } catch (e) {
+                // AutoAI handled silently
+            }
+
+            try {
+                if (m.text) {
+                    const { handleAutoDownload } = await import('./src/lib/elaina-auto-download.js')
+                    await handleAutoDownload(m, this, m.text)
+                }
+            } catch (e) {
+                // AutoDownload handled silently
+            }
+        }
     } catch (e) {
         logError('handler', e)
     } finally {

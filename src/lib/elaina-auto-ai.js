@@ -946,7 +946,7 @@ async function handleAutoAI(m, sock) {
 
   if (!isBotQuoted && !isMentioned) return false;
 
-  const userMessage = m.body || "";
+  const userMessage = m.text || m.body || "";
   const hasImage =
     m.isImage ||
     (m.quoted && (m.quoted.isImage || m.quoted.type === "imageMessage"));
