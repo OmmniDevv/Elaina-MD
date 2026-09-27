@@ -441,6 +441,44 @@ function collectPluginFiles(dir) {
 }
 
 global.plugins = {}
+
+function normalizePluginModule(module) {
+  if (!module) return null
+  const mod = module.default || module
+  if (typeof mod === 'function') return mod
+
+  const cfg = module.config || mod.config
+  const hdl = module.handler || mod.handler
+  if (cfg && typeof hdl === 'function') {
+    const fn = async function(m, extra = {}) {
+      return hdl.call(this, m, {
+        sock: this,
+        conn: this,
+        store: global.store,
+        config: cfg,
+        plugins: global.plugins,
+        ...extra
+      })
+    }
+    const names = [cfg.name, ...(cfg.alias || [])].filter(Boolean)
+    fn.help = names
+    fn.tags = [cfg.category || 'tools']
+    if (names.length > 0) {
+      fn.command = new RegExp(`^(${names.map(v => v.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&')).join('|')})$`, 'i')
+    }
+    fn.owner = cfg.isOwner || false
+    fn.premium = cfg.isPremium || false
+    fn.group = cfg.isGroup || false
+    fn.private = cfg.isPrivate || false
+    fn.admin = cfg.isAdmin || false
+    fn.botAdmin = cfg.isBotAdmin || false
+    fn.limit = cfg.limit || false
+    return fn
+  }
+
+  return mod
+}
+
 async function filesInit() {
   const files = collectPluginFiles(pluginFolder)
   let loaded = 0
@@ -450,7 +488,7 @@ async function filesInit() {
     try {
       const fileUrl = pathToFileURL(path.resolve(file)).href
       const module = await import(fileUrl)
-      global.plugins[key] = module.default || module
+      global.plugins[key] = normalizePluginModule(module)
       loaded++
     } catch (e) {
       failed++
@@ -492,7 +530,7 @@ global.reload = async (_ev, filename) => {
   else try {
     const fileUrl = pathToFileURL(path.resolve(dir)).href + '?update=' + Date.now()
     const module = await import(fileUrl)
-    global.plugins[rel] = module.default || module
+    global.plugins[rel] = normalizePluginModule(module)
     log.plugin(`${isUpdate ? 'Reload' : 'Baru'}: ${rel}`)
   } catch (e) {
     log.error(`Plugin ${rel}: ${format(e).split('\n')[0]}`)

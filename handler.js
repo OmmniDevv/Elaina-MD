@@ -800,6 +800,8 @@ export async function handler(chatUpdate) {
                     command,
                     text,
                     conn: this,
+                    sock: this,
+                    store: global.store,
                     participants,
                     groupMetadata,
                     user,

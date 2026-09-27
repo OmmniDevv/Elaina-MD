@@ -283,8 +283,11 @@ conn.sendButton(
 | Nama | Kontribusi |
 |---|---|
 | [Allah SWT](https://github.com/OmmniDevv) | Atas segala kemudahan dan rahmat-Nya 🤲 |
-| [Adiwajshing](https://github.com/adiwajshing/Baileys) | Pencipta library Baileys original |
-| [BochilGaming](https://github.com/bochilgaming) | Base bot original |
+| [OmmniDevv](https://github.com/OmmniDevv) | Developer & Maintainer Elaina-MD 🌸 |
+| [Hyuu / Zann](https://whatsapp.com/channel/0029VbB37bgBfxoAmAlsgE0t) | Pencipta Ourin MD, arsitektur plugin & scraper original 👑 |
+| [Anita Putri Azzahra](https://whatsapp.com/channel/0029Vb8dmsUElagkVPIw9X2P) | Pengembang Rimuru MD v4.7 (basis porting fitur & scraper masif) 🪽 |
+| [Adiwajshing / Baileys](https://github.com/adiwajshing/Baileys) | Pencipta library Baileys original |
+| [BochilGaming](https://github.com/bochilgaming) | Base bot original & scraper |
 | [OURIN](https://github.com/OURIN) | Kontributor fitur Jadibot |
 | [RTXZY](https://github.com/RTXZY) | Kontributor fitur RPG |
 | [Nurutomo](https://github.com/nurutima) | Kontributor |
