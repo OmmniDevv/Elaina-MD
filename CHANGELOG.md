@@ -4,6 +4,31 @@ Semua perubahan penting pada project ini akan didokumentasikan di file ini.
 
 Format mengacu pada [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [6.3.0] - 2026-09-28
+
+### Added
+- **🌸 Real-Time Group Protection Middleware (`plugins/middleware/_groupprotection.js`)**:
+  - Deteksi dan penindakan otomatis di grup: AntiJudol (Judi Online), AntiPhising, AntiCustom (rule kata terlarang grup), AntiLink (All/WA/Kick), AntiViewOnce, AntiHidetag, AntiSwGc, dan AntiTagSW.
+  - Skema database grup diperbarui di `src/lib/elaina-database.js` untuk mendukung seluruh toggle proteksi.
+- **📱 Auto Notifikasi Boot Online ke Owner (`main.js`)**:
+  - Mengirimkan rangkuman status sistem lengkap langsung ke WhatsApp Owner (nomor telepon & akun LID) saat bot pertama kali terhubung: info bot, spek CPU, pemakaian RAM, uptime, dan versi WhatsApp Web.
+- **🧹 Auto-Clean Temporary Files (`src/lib/elaina-temp-cleaner.js`)**:
+  - Terintegrasi di siklus startup bot, membersihkan file sampah di direktori `tmp/` dan `temp/` setiap 30 menit secara otomatis.
+- **📦 Sinkronisasi Asset & Data Non-Plugin Rimuru**:
+  - Menambahkan dataset `data/quizbattle.json`, audio `media/tes.mp3`, template kertas `assets/kertas/` (magernulis), font kalender, dan font rimuru.
+- **💾 Optimasi Multi-Format `.getdb` & `.savedb`**:
+  - Mendeteksi `database.json` aktif secara dinamis dengan lampiran backup berformat timestamp dan detail metadata.
+
+### Fixed
+- **Plugin Loader Type Error (`v.replace is not a function`)**:
+  - Memperbaiki `normalizePluginModule` di `main.js` dengan mem-flatten `cfg.name` dan `cfg.alias` yang berformat Array string, memulihkan 49 plugin yang sempat gagal dimuat.
+- **Circular Dependency di Modul Error (`elaina-error.js` & `error.js`)**:
+  - Menghilangkan impor siklik ke `config.js` sehingga hot-reload plugin via watcher berjalan lancar tanpa exception.
+- **GitHub Push Protection Sanitization**:
+  - Mensterilkan hardcoded API token/secret dari riwayat commit Git.
+
+---
+
 ## [6.2.0] - 2026-09-28
 
 ### Added

@@ -1,6 +1,6 @@
 {
     "name": "elaina-md",
-    "version": "6.2.0",
+    "version": "6.3.0",
     "description": "Elaina-MD WhatsApp Bot",
     "main": "index.js",
     "type": "module",
