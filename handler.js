@@ -5,7 +5,18 @@
  * ║  https://github.com/OmmniDevv/Elaina-MD ║
  * ╚══════════════════════════════════════════╝
  */
-import { smsg, resolveLidToPn } from './lib/simple.js'
+import { smsg } from './lib/simple.js'
+import {
+    isLid,
+    isLidConverted,
+    cacheLidJid,
+    cacheParticipantLids,
+    resolveLidToPn,
+    resolvePnToLid,
+    resolveAnyLidToJid,
+    findParticipantByNumber,
+    convertLidArray
+} from './lib/lidHelper.js'
 import { logError } from './lib/errorLogger.js'
 import { format } from 'util'
 import { fileURLToPath } from 'url'
@@ -46,12 +57,18 @@ export async function handler(chatUpdate) {
     if (global.db.data == null)
         await global.loadDatabase()
     try {
-        // Baileys v7 / elaina-baileys LID handling:
-        if (m.key?.participantAlt && (!m.key.participant || m.key.participant.endsWith('@lid'))) {
-            m.key.participant = m.key.participantAlt
+        // Baileys LID handling & bidirectional caching:
+        if (m.key?.participantAlt && m.key?.participant) {
+            cacheLidJid(m.key.participant, m.key.participantAlt)
+            if (!m.key.participant || isLid(m.key.participant) || isLidConverted(m.key.participant)) {
+                m.key.participant = m.key.participantAlt
+            }
         }
-        if (m.key?.remoteJidAlt && m.key.remoteJid?.endsWith('@lid')) {
-            m.key.remoteJid = m.key.remoteJidAlt
+        if (m.key?.remoteJidAlt && m.key?.remoteJid) {
+            cacheLidJid(m.key.remoteJid, m.key.remoteJidAlt)
+            if (isLid(m.key.remoteJid) || isLidConverted(m.key.remoteJid)) {
+                m.key.remoteJid = m.key.remoteJidAlt
+            }
         }
         if (m.key?.addressingMode === 'lid') {
             const { addressingMode, ...cleanKey } = m.key
@@ -61,12 +78,11 @@ export async function handler(chatUpdate) {
         if (!m)
             return
 
-        // Ensure m.sender is normalized to real phone number if it is an LID
-        if (m.sender && (m.sender.endsWith('@lid') || (!m.sender.startsWith('62') && m.sender.split('@')[0].length > 13))) {
-            const userNum = m.sender.split('@')[0].split(':')[0]
-            const resolvedPn = resolveLidToPn(userNum, this)
-            if (resolvedPn) {
-                m.sender = `${resolvedPn}@s.whatsapp.net`
+        // Pastikan m.sender dinormalisasi ke format nomor telepon sah (@s.whatsapp.net)
+        if (m.sender && (isLid(m.sender) || isLidConverted(m.sender))) {
+            const resolved = resolveAnyLidToJid(m.sender, [], this)
+            if (resolved && !isLid(resolved) && !isLidConverted(resolved)) {
+                m.sender = resolved
             }
         }
 
@@ -618,8 +634,9 @@ export async function handler(chatUpdate) {
 
         const groupMetadata = (m.isGroup ? ((conn.chats[m.chat] || {}).metadata || await this.groupMetadata(m.chat).catch(_ => null)) : {}) || {}
         const participants = (m.isGroup ? groupMetadata.participants : []) || []
-        const user = (m.isGroup ? participants.find(u => conn.decodeJid(u.id) === m.sender) : {}) || {} // User Data
-        const bot = (m.isGroup ? participants.find(u => conn.decodeJid(u.id) == this.user.jid) : {}) || {} // Your Data
+        if (participants.length > 0) cacheParticipantLids(participants)
+        const user = (m.isGroup ? findParticipantByNumber(participants, m.sender) || participants.find(u => conn.decodeJid(u.id) === m.sender) : {}) || {} // User Data
+        const bot = (m.isGroup ? findParticipantByNumber(participants, this.user.jid) || participants.find(u => conn.decodeJid(u.id) == this.user.jid) : {}) || {} // Your Data
         const isRAdmin = user?.admin == 'superadmin' || false
         const isAdmin = isRAdmin || user?.admin == 'admin' || false // Is User Admin?
         const isBotAdmin = bot?.admin || false // Are you Admin?
@@ -910,13 +927,15 @@ export async function participantsUpdate({ id, participants, action }) {
         case 'remove':
             if (chat.welcome) {
                 let groupMetadata = await this.groupMetadata(id) || (conn.chats[id] || {}).metadata
-                for (let user of participants) {
+                if (groupMetadata?.participants) cacheParticipantLids(groupMetadata.participants)
+                for (let rawUser of participants) {
+                    let user = resolveAnyLidToJid(rawUser, groupMetadata?.participants || [], this)
                     let pp = 'https://telegra.ph/file/2d06f0936842064f6b3bb.png'
                     try {
                         pp = await this.profilePictureUrl(user, 'image')
                     } catch (e) {
                     } finally {
-                        text = (action === 'add' ? (chat.sWelcome || this.welcome || conn.welcome || 'Welcome, @user!').replace('@subject', await this.getName(id)).replace('@desc', groupMetadata.desc?.toString() || 'unknow') :
+                        text = (action === 'add' ? (chat.sWelcome || this.welcome || conn.welcome || 'Welcome, @user!').replace('@subject', await this.getName(id)).replace('@desc', groupMetadata?.desc?.toString() || 'unknow') :
                             (chat.sBye || this.bye || conn.bye || 'Bye, @user!')).replace('@user', `${this.getName(user)}`)
                         try {
                             await this.sendMessage(id, {
@@ -935,9 +954,10 @@ export async function participantsUpdate({ id, participants, action }) {
         case 'demote':
             if (!text)
                 text = (chat.sDemote || this.sdemote || conn.sdemote || '@user ```is no longer Admin```')
-            text = text.replace('@user', '@' + participants[0].split('@')[0])
+            const resolvedTarget = resolveAnyLidToJid(participants[0], (await this.groupMetadata(id).catch(() => null))?.participants || [], this)
+            text = text.replace('@user', '@' + (resolvedTarget || participants[0]).split('@')[0])
             if (chat.detect)
-                this.sendMessage(id, { text, mentions: this.parseMention(text) })
+                this.sendMessage(id, { text, mentions: [resolvedTarget, ...this.parseMention(text)].filter(Boolean) })
             break
     }
 }
@@ -966,7 +986,7 @@ export async function groupsUpdate(groupsUpdate) {
 
 export async function deleteUpdate(message) {
     try {
-        const { fromMe, id, participant } = message
+        let { fromMe, id, participant } = message
         if (fromMe)
             return
         let msg = this.serializeM(this.loadMessage(id))
@@ -976,6 +996,9 @@ export async function deleteUpdate(message) {
         let chat = global.db.data.chats[msg.chat] || {}
         if (chat.delete)
             return
+        if (participant && (isLid(participant) || isLidConverted(participant))) {
+            participant = resolveAnyLidToJid(participant, [], this)
+        }
         await this.reply(msg.chat, `
 Terdeteksi @${participant.split`@`[0]} telah menghapus pesan
 Untuk mematikan fitur ini, ketik
