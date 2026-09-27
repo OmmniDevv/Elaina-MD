@@ -1,5 +1,12 @@
 import './config.js'
 
+// Filter noise libsignal: jangan cetak dump SessionEntry / ratchet state (bocorin key). Pola Luna-Botv6.
+const _origConsoleInfo = console.info.bind(console)
+const _origConsoleWarn = console.warn.bind(console)
+const SIGNAL_SESSION_NOISE = /Closing session|Opening session|Session already closed|Removing old closed session|Migrating session to|SessionEntry \{/
+console.info = (...args) => { if (typeof args[0] === 'string' && SIGNAL_SESSION_NOISE.test(args[0])) return; _origConsoleInfo(...args) }
+console.warn = (...args) => { if (typeof args[0] === 'string' && SIGNAL_SESSION_NOISE.test(args[0])) return; _origConsoleWarn(...args) }
+
 import { createRequire } from "module" // Bring in the ability to create the 'require' method
 import path, { join } from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
@@ -7,14 +14,7 @@ import { platform } from 'process'
 global.__filename = function filename(pathURL = import.meta.url, rmPrefix = platform !== 'win32') { return rmPrefix ? /file:\/\/\//.test(pathURL) ? fileURLToPath(pathURL) : pathURL : pathToFileURL(pathURL).toString() }; global.__dirname = function dirname(pathURL) { return path.dirname(global.__filename(pathURL, true)) }; global.__require = function require(dir = import.meta.url) { return createRequire(dir) }
 
 import * as ws from 'ws';
-import {
-  readdirSync,
-  statSync,
-  unlinkSync,
-  existsSync,
-  readFileSync,
-  watch
-} from 'fs';
+import { readdirSync, statSync, unlinkSync, existsSync, readFileSync, watch, mkdirSync, writeFileSync } from 'fs';
 import yargs from 'yargs'
 import { spawn } from 'child_process'
 import lodash from 'lodash'
@@ -26,6 +26,7 @@ import { Low } from 'lowdb'
 import { JSONFile } from 'lowdb/node'
 import pino from 'pino'
 import { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } from 'ourin-baileys'
+import qrcode from 'qrcode-terminal'
 import './lib/errorLogger.js'
 
 const { CONNECTING } = ws
@@ -84,58 +85,152 @@ let saveCreds = _saveCreds
 const usePairingCode = global.usePairingCode === true
 const pairingNumber = (global.pairingNumber || '').replace(/[^0-9]/g, '')
 
-const { version, isLatest } = await fetchLatestBaileysVersion()
-console.log(`\x1b[36m[VERSION]\x1b[0m WA v${version.join('.')} — isLatest: ${isLatest}`)
+// Pin versi WA terbaru dari server — tanpa ini ourin-baileys pakai VERSION internal
+// yang basi, bikin handshake pairing ditolak (Connection Closed) & notif HP nggak muncul.
+let baileysVersion
+try { baileysVersion = await fetchLatestBaileysVersion() } catch { baileysVersion = undefined }
 
 const connectionOptions = {
-  version,
+  ...(baileysVersion ? { version: baileysVersion.version } : {}),
   auth: {
     creds: state.creds,
     keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' }))
   },
   logger: pino({ level: 'silent' }),
-  browser: ['Ubuntu', 'Chrome', '20.0.0'],
+  browser: ['Windows', 'Chrome', '149.0.7827.197'],
   syncFullHistory: false,
   markOnlineOnConnect: false,
   generateHighQualityLinkPreview: false,
+  fireInitQueries: false,
+  emitOwnEvents: false,
+  connectTimeoutMs: 60000,
+  defaultQueryTimeoutMs: 60000,
+  keepAliveIntervalMs: 30000,
+  qrTimeout: 40000,
   getMessage: async (key) => {
-    return { conversation: 'hello' }
+    try {
+      const jid = global.conn?.decodeJid?.(key.remoteJid) || key.remoteJid
+      const chat = global.conn?.chats?.[jid]
+      const msg = chat?.messages?.[key.id]
+      return msg?.message ? msg.message : undefined
+    } catch {
+      return undefined
+    }
   }
 }
 
 global.conn = makeWASocket(connectionOptions)
 conn.isInit = false
 
-// Request pairing code SEBELUM setup event listener (seperti RTXZY)
-// Gunakan flag file untuk prevent multiple requests
-const pairingFlagFile = `./${global.authFile}/.pairing_requested`
-if (usePairingCode && !conn.authState.creds.registered && !existsSync(pairingFlagFile)) {
+const PAIRING_TIMEOUT_DURATION = 120000
+let pairingTimeout = null
+let pairingStartTime = null
+
+async function clearSessionAndRestart() {
+  console.log('\x1b[31m[ ✖ ] Timeout pairing tercapai. Bersihkan sesi...\x1b[0m')
+  if (pairingTimeout) { clearTimeout(pairingTimeout); pairingTimeout = null }
+  try {
+    if (existsSync(global.authFile)) {
+      const { rm } = await import('fs/promises')
+      await rm(global.authFile, { recursive: true, force: true })
+    }
+  } catch {}
+  setTimeout(() => process.exit(1), 2000)
+}
+
+async function requestPairing() {
+  if (!usePairingCode || conn.authState.creds.registered) return
   let phone = pairingNumber
   if (!phone) {
     const { createInterface } = await import('readline')
     const rl = createInterface({ input: process.stdin, output: process.stdout })
     phone = await new Promise(resolve => rl.question('\x1b[36m📱 Masukkan nomor WA (contoh: 6281234567890): \x1b[0m', ans => { rl.close(); resolve(ans.replace(/[^0-9]/g, '')) }))
   }
-  
-  // Buat flag file SEBELUM request
-  try {
-    const { writeFileSync, mkdirSync } = await import('fs')
-    mkdirSync('./elaina_session', { recursive: true })
-    writeFileSync(pairingFlagFile, phone)
-  } catch {}
-  
-  setTimeout(async () => {
+  phone = phone.replace(/[^0-9]/g, '')
+  global.conn.phoneNumber = phone
+  pairingStartTime = Date.now()
+
+  pairingTimeout = setTimeout(() => {
+    if (!global.conn?.user) clearSessionAndRestart()
+  }, PAIRING_TIMEOUT_DURATION)
+
+  console.log(`\x1b[33m[ ⏰ ] Kamu punya ${PAIRING_TIMEOUT_DURATION / 1000}s untuk menyelesaikan pairing\x1b[0m`)
+
+  // Delay 5s — kasih WS cukup waktu handshake penuh (pola Luna)
+  await new Promise(r => setTimeout(r, 5000))
+
+  let codigo = null
+  let intentos = 0
+  const maxIntentos = 3
+
+  while (intentos < maxIntentos && !global.conn?.user) {
     try {
-      const pairCode = await conn.requestPairingCode(phone)
-      console.log('\n\x1b[42m\x1b[30m  PAIRING CODE  \x1b[0m')
-      console.log(`\x1b[1m\x1b[32m  ${pairCode}  \x1b[0m`)
-      console.log('\x1b[33m  Masukkan kode ini di WhatsApp:\x1b[0m')
-      console.log('\x1b[33m  Settings → Linked Devices → Link a Device\x1b[0m\n')
-    } catch (e) {
-      console.error('\x1b[31m[PAIRING] Gagal:', e.message, '\x1b[0m')
+      intentos++
+      console.log(`\x1b[33m[ ℹ️ ] Request pairing code... (coba ${intentos}/${maxIntentos})\x1b[0m`)
+      codigo = await global.conn.requestPairingCode(phone, 'ELAINAMD')
+      if (codigo) {
+        codigo = codigo.match(/.{1,4}/g)?.join('-') || codigo
+        console.log('\n\x1b[32m┌─────────────────────────────────────────┐\x1b[0m')
+        console.log('\x1b[32m│\x1b[1m 📱 PAIRING CODE:\x1b[0m')
+        console.log(`\x1b[33m   ${codigo}\x1b[0m`)
+        console.log('\x1b[32m├─────────────────────────────────────────┤\x1b[0m')
+        console.log('\x1b[36m│ 1. Buka WhatsApp di HP\x1b[0m')
+        console.log('\x1b[36m│ 2. Settings → Linked Devices\x1b[0m')
+        console.log('\x1b[36m│ 3. Link a Device\x1b[0m')
+        console.log('\x1b[36m│ 4. Link with phone number\x1b[0m')
+        console.log('\x1b[36m│ 5. Masukkan kode di atas\x1b[0m')
+        const sisa = Math.floor((PAIRING_TIMEOUT_DURATION - (Date.now() - pairingStartTime)) / 1000)
+        console.log(`\x1b[31m│ ⚠ Sisa waktu: ${sisa}s\x1b[0m`)
+        console.log('\x1b[32m└─────────────────────────────────────────┘\x1b[0m\n')
+        break
+      }
+    } catch (error) {
+      console.error(`\x1b[31m[ ● ] Error coba ${intentos}:\x1b[0m`, error.message)
+      if (error.message.includes('rate limit') || error.message.includes('too many')) {
+        console.log('\x1b[33m[ ⏳ ] Rate limit. Tunggu 10s...\x1b[0m')
+        await new Promise(r => setTimeout(r, 10000))
+      } else if (intentos < maxIntentos) {
+        console.log('\x1b[33m[ ↻ ] Retry dalam 3s...\x1b[0m')
+        await new Promise(r => setTimeout(r, 3000))
+      }
     }
-  }, 3000)
+  }
+
+  if (!codigo) {
+    console.log('\x1b[31m[ ● ] Gagal dapat kode setelah 3 percobaan.\x1b[0m')
+    clearSessionAndRestart()
+    return
+  }
+
+  // Renewal check — tiap 15s cek apakah sudah login atau perlu refresh kode
+  let codigoRenovado = false
+  const intervaloCodigo = setInterval(async () => {
+    if (global.conn?.user) {
+      clearInterval(intervaloCodigo)
+      if (pairingTimeout) { clearTimeout(pairingTimeout); pairingTimeout = null }
+      console.log('\x1b[32m[ ✅ ] Perangkat berhasil ditautkan!\x1b[0m')
+      return
+    }
+    if (!pairingTimeout) { clearInterval(intervaloCodigo); return }
+    const tiempoRestante = Math.floor((PAIRING_TIMEOUT_DURATION - (Date.now() - pairingStartTime)) / 1000)
+    if (tiempoRestante <= 0) { clearInterval(intervaloCodigo); return }
+    if (!codigoRenovado && tiempoRestante < 90) {
+      try {
+        console.log(`\x1b[33m[ ℹ️ ] Renovasi kode... (${tiempoRestante}s tersisa)\x1b[0m`)
+        const nuevoCodigo = await global.conn.requestPairingCode(phone, 'ELAINAMD')
+        const formatted = nuevoCodigo?.match(/.{1,4}/g)?.join('-') || nuevoCodigo
+        console.log(`\x1b[32m[ 🔄 ] Kode baru: ${formatted}  (${tiempoRestante}s tersisa)\x1b[0m`)
+        codigoRenovado = true
+      } catch (e) {
+        if (e.message.includes('rate limit') || e.message.includes('too many')) {
+          console.log('\x1b[33m[ ⚠ ] Rate limit renovasi. Lanjut kode lama.\x1b[0m')
+        }
+      }
+    }
+  }, 15000)
 }
+
+requestPairing().catch(e => console.error('[PAIRING]', e.message))
 
 // Patch deprecated button methods → plain sendMessage fallback
 // Buttons API sudah tidak didukung WA, fallback ke text biasa
@@ -170,6 +265,33 @@ try {
 } catch {}
 
 // Pairing code akan di-request di connectionUpdate saat status 'open' pertama kali
+
+// ── Helper global untuk plugin (dulu hilang setelah refactor lib/) ──
+import axios from 'axios'
+global.getBuffer = async (url, options) => {
+  try {
+    const res = await axios({ method: 'get', url, headers: { DNT: 1, 'Upgrade-Insecure-Request': 1 }, ...options, responseType: 'arraybuffer' })
+    return res.data
+  } catch (e) { console.log(`getBuffer Error: ${e}`) }
+}
+global.fetchJson = async (url, options = {}) => {
+  const res = await axios.get(url, { responseType: 'json', ...options })
+  return res.data
+}
+global.fetchText = async (url, options = {}) => {
+  const res = await axios.get(url, { responseType: 'text', ...options })
+  return res.data
+}
+global.makeid = (len = 8) => {
+  const a = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+'
+  let s = ''
+  for (let i = 0; i < len; i++) s += a.charAt(Math.floor(Math.random() * a.length))
+  return s
+}
+global.runtime = ms => {
+  let sec = Math.floor(ms / 1000); let min = Math.floor(sec / 60); let hr = Math.floor(min / 60)
+  return `${hr}h ${min % 60}m ${sec % 60}s`
+}
 
 if (!opts['test']) {
   setInterval(async () => {
@@ -216,7 +338,13 @@ function _tag(label, color = '\x1b[36m') {
 }
 
 async function connectionUpdate(update) {
-  const { connection, lastDisconnect, isNewLogin } = update
+  const { connection, lastDisconnect, isNewLogin, qr } = update
+  if (qr && !usePairingCode) {
+    global.qrString = qr
+    global.qrTime = Date.now()
+    console.log(`${_tag('QR', '\x1b[36m')} \x1b[36mScan QR ini untuk login (juga tersedia di http://127.0.0.1:${PORT}/qr):\x1b[0m`)
+    try { qrcode.generate(qr, { small: true }) } catch {}
+  }
   if (isNewLogin) conn.isInit = true
   const code = lastDisconnect?.error?.output?.statusCode || lastDisconnect?.error?.output?.payload?.statusCode
   const errMsg = lastDisconnect?.error?.message || ''
@@ -230,6 +358,11 @@ async function connectionUpdate(update) {
     const shouldReconnect = code !== DisconnectReason.loggedOut
 
     if (code === DisconnectReason.loggedOut) {
+      // Pairing belum selesai: jangan exit, tunggu user masukkan kode di HP.
+      if (usePairingCode && !conn.authState.creds.registered) {
+        console.log(`${_tag('PAIRING', '\x1b[33m')} \x1b[33mMenunggu kode pairing dimasukkan di WhatsApp...\x1b[0m`)
+        return
+      }
       console.log(`${_tag('SESSION', '\x1b[31m')} \x1b[31mLogged out\x1b[0m — hapus folder session lalu restart`)
       process.exit(0)
     }
@@ -242,7 +375,7 @@ async function connectionUpdate(update) {
     const botName = global.namebot || PROJECT_NAME
     console.log(`${_tag('CONN', '\x1b[32m')} \x1b[32mConnected\x1b[0m — berjalan sebagai \x1b[1m${botName}\x1b[0m`)
     try {
-      const flagFile = './elaina_session/.pairing_requested'
+      const flagFile = `./${global.authFile}/.pairing_requested`
       if (existsSync(flagFile)) unlinkSync(flagFile)
     } catch {}
     global.timestamp.connect = new Date
@@ -372,43 +505,48 @@ async function filesInit() {
 filesInit().catch(console.error)
 
 global.reload = async (_ev, filename) => {
-  if (pluginFilter(filename)) {
-    let dir = global.__filename(join(pluginFolder, filename), true)
-    if (filename in global.plugins) {
-      if (existsSync(dir)) conn.logger.info(`re - require plugin '${filename}'`)
-      else {
-        conn.logger.warn(`deleted plugin '${filename}'`)
-        return delete global.plugins[filename]
-      }
-    } else conn.logger.info(`requiring new plugin '${filename}'`)
-    let err = syntaxerror(readFileSync(dir), filename, {
+  if (!pluginFilter(filename)) return
+  // filename dari watcher recursive = path relatif terhadap pluginFolder (mis. main/menu.js)
+  const rel = String(filename).replace(/\\/g, '/')
+  if (!rel.endsWith('.js') || rel.endsWith('.disabled')) return
+  const dir = join(pluginFolder, rel)
+  // Atomic-save editor bisa bikin file sementara hilang saat event fired — cek dulu.
+  if (!existsSync(dir)) {
+    if (rel in global.plugins) {
+      conn.logger.warn(`deleted plugin '${rel}'`)
+      delete global.plugins[rel]
+    }
+    return
+  }
+  if (rel in global.plugins) conn.logger.info(`re - require plugin '${rel}'`)
+  else conn.logger.info(`requiring new plugin '${rel}'`)
+  let err
+  try {
+    err = syntaxerror(readFileSync(dir), rel, {
       sourceType: 'module',
       allowAwaitOutsideFunction: true
     })
-    if (err) conn.logger.error(`syntax error while loading '${filename}'\n${format(err)}`)
-    else try {
-      const fileUrl = pathToFileURL(path.resolve(dir)).href + '?update=' + Date.now()
-      const module = await import(fileUrl)
-      global.plugins[filename] = module.default || module
-    } catch (e) {
-      conn.logger.error(`error require plugin '${filename}\n${format(e)}'`)
-    } finally {
-      global.plugins = Object.fromEntries(Object.entries(global.plugins).sort(([a], [b]) => a.localeCompare(b)))
-    }
+  } catch (e) {
+    conn.logger.error(`error read plugin '${rel}': ${e.message}`)
+    return
+  }
+  if (err) conn.logger.error(`syntax error while loading '${rel}'\n${format(err)}`)
+  else try {
+    const fileUrl = pathToFileURL(path.resolve(dir)).href + '?update=' + Date.now()
+    const module = await import(fileUrl)
+    global.plugins[rel] = module.default || module
+    conn.logger.info(`loaded plugin '${rel}' ✓`)
+  } catch (e) {
+    conn.logger.error(`error require plugin '${rel}\n${format(e)}`)
+  } finally {
+    global.plugins = Object.fromEntries(Object.entries(global.plugins).sort(([a], [b]) => a.localeCompare(b)))
   }
 }
 Object.freeze(global.reload)
-// Watch all subfolders recursively
-;(function watchRecursive(dir) {
-  try { watch(dir, global.reload) } catch {}
-  try {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (entry.isDirectory() && entry.name !== 'node_modules' && entry.name !== '.git') {
-        watchRecursive(join(dir, entry.name))
-      }
-    }
-  } catch {}
-})(pluginFolder)
+// Recursive watcher sekali di root — Node >=20 dukung { recursive:true }.
+try { watch(pluginFolder, { recursive: true }, global.reload) } catch (e) {
+  conn.logger.error(`plugin watcher gagal start: ${e.message}`)
+}
 await global.reloadHandler()
 
 // Quick Test

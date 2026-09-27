@@ -1,109 +1,52 @@
-// © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
-// Makasih kode nya OURIN
-import yts from 'yt-search'
-import axios from 'axios'
-
-function formatViews(n) {
-    if (!n) return '0'
-    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'
-    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K'
-    return n.toString()
-}
-
-async function getAudioUrl(videoUrl) {
-    // Primary: nexray API
-    try {
-        const { data } = await axios.get(
-            `https://api.nexray.eu.cc/downloader/v1/ytmp3?url=${encodeURIComponent(videoUrl)}`,
-            { timeout: 15000 }
-        )
-        if (data?.result?.url) return { url: data.result.url, title: data.result.title }
-    } catch (e) { 
-      console.error('Audio URL fetch error:', e.message)
-    }
-
-    // Fallback 1: siputzx
-    try {
-        const { data } = await axios.get(
-            `https://api.siputzx.my.id/api/d/ytmp3?url=${encodeURIComponent(videoUrl)}`,
-            { timeout: 15000 }
-        )
-        if (data?.data?.dl) return { url: data.data.dl, title: data.data.title }
-    } catch (e) { 
-      console.error('Audio URL fetch error:', e.message)
-    }
-
-    // Fallback 2: ryzendesu
-    try {
-        const { data } = await axios.get(
-            `https://api.ryzendesu.vip/api/downloader/ytmp3?url=${encodeURIComponent(videoUrl)}`,
-            { timeout: 15000 }
-        )
-        if (data?.url) return { url: data.url, title: data.title }
-    } catch (e) { 
-      console.error('Audio URL fetch error:', e.message)
-    }
-
-    throw 'Gagal mendapatkan audio. Coba lagi nanti.'
-}
+// © Elaina-MD — YouTube search + play, gratis tanpa API key (pola delirius)
+import { ytSearch, youtubeAudio } from '../../lib/scraper/downloader.js'
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
-    const query = (text || '').trim()
-    if (!query) return m.reply(`🎵 *PLAY*\n\nContoh: *${usedPrefix}${command} nama lagu*`)
+  if (!text) throw `🌸 *Ara ara~* senpai mau cari lagu apa?\n\n> Contoh: \`${usedPrefix}${command} lathi manuk\``
+  conn.sendMessage(m.chat, { react: { text: '🕐', key: m.key } })
 
-    conn.sendMessage(m.chat, { react: { text: '🕐', key: m.key } })
+  // Kalau langsung URL YouTube, skip search
+  let v
+  if (/youtu\.be|youtube\.com/i.test(text)) {
+    v = { url: text, title: 'Video YouTube', thumbnail: null, duration: '?', author: {} }
+  } else {
+    const res = await ytSearch(text, 10)
+    if (!res.length) throw '😿 Gomen senpai... lagunya tidak ditemukan. Coba judul lain ya~'
+    v = res[0]
+  }
 
-    const search = await yts(query)
-    if (!search?.videos?.length) throw 'Video tidak ditemukan!'
-
-    const video = search.videos[0]
-
-    const info = `🎵 *NOW PLAYING*
-
-📌 *${video.title}*
-
-👤 Channel: *${video.author.name}*
-⏱️ Durasi: *${video.duration.timestamp}*
-👀 Views: *${formatViews(video.views)}*
-📅 Upload: *${video.ago}*
-
-_⏳ Mengunduh audio, harap tunggu..._`
-
-    // Send thumbnail + info
-    await conn.sendMessage(m.chat, {
-        image: { url: video.thumbnail },
-        caption: info
-    }, { quoted: m })
-
-    const audio = await getAudioUrl(video.url)
-
-    // Download audio buffer with retry
-    let audioBuffer, lastErr
-    for (let i = 0; i < 3; i++) {
-        try {
-            const res = await axios.get(audio.url, { responseType: 'arraybuffer', timeout: 60000 })
-            audioBuffer = Buffer.from(res.data)
-            break
-        } catch (e) {
-            lastErr = e
-            if (i < 2) await new Promise(r => setTimeout(r, 2000))
-        }
+  if (/play|putar|lagu/i.test(command)) {
+    const dl = await youtubeAudio(v.url)
+    if (!dl) throw '😿 Gomen senpai... lagunya tidak bisa diunduh. Coba lagi nanti~'
+    if (v.thumbnail) {
+      await conn.sendMessage(m.chat, {
+        image: { url: v.thumbnail },
+        caption: `🎵 *${dl.title || v.title}*\n⏱️ ${dl.duration || v.duration || '?'}\n📺 ${v.author?.name || v.author || '-'}\n📦 via ${dl.via}\n\n> ✨ diputarkan untuk senpai~`
+      }, { quoted: m }).catch(() => {})
     }
-    if (!audioBuffer) throw `Gagal mengunduh audio (${lastErr?.code || lastErr?.message}). Coba lagi nanti.`
-
     await conn.sendMessage(m.chat, {
-        audio: audioBuffer,
-        mimetype: 'audio/mpeg',
-        fileName: `${(audio.title || video.title).slice(0, 60)}.mp3`,
-        ptt: false
+      audio: { url: dl.url }, mimetype: 'audio/mpeg', ptt: false,
+      fileName: `${(dl.title || v.title || 'audio').replace(/[^\w -]/g, '')}.mp3`
     }, { quoted: m })
-
-    conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
+  } else {
+    const res = /youtu\.be|youtube\.com/i.test(text) ? await ytSearch('', 0).catch(() => []) : await ytSearch(text, 10)
+    if (res?.length) {
+      const list = res.slice(0, 10).map((x, i) =>
+        `${i + 1}. *${x.title}*\n   ⏱️ ${x.duration || '?'} • ${x.author || '-'}\n   🔗 ${x.url}`
+      ).join('\n\n')
+      await conn.sendMessage(m.chat, {
+        text: `🔍 *Hasil pencarian: ${text}*\n\n${list}\n\n> ✨ Elaina sudah cariin untuk senpai~`
+      }, { quoted: m })
+    } else {
+      await conn.sendMessage(m.chat, {
+        text: `🔗 ${v.url}\n\n> Download dengan: \`${usedPrefix}yta ${v.url}\``
+      }, { quoted: m })
+    }
+  }
+  conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
-
-handler.help = ['play <lagu>']
+handler.help = ['yts <judul>', 'play <judul lagu>', 'playaudio <judul>', 'putar <judul>']
 handler.tags = ['downloader']
-handler.command = /^(play|playaudio|putar)$/i
+handler.command = /^(yts|ytsearch|play|playaudio|putar)$/i
 handler.limit = true
-handler.register = true
 export default handler

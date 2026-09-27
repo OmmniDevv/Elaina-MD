@@ -1,35 +1,19 @@
-// © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
-import fetch from 'node-fetch'
+// © Elaina-MD — Pinterest via unified downloader (btch -> ytdlp)
+import { pinterest } from '../../lib/scraper/downloader.js'
 
-let handler = async (m, { conn, args, usedPrefix, command }) => {
-  if (!args[0]) throw `Contoh: ${usedPrefix}${command} https://pin.it/xxxxxx`
-  const url = args[0]
-  if (!url.includes('pinterest') && !url.includes('pin.it')) throw 'URL bukan dari Pinterest!'
-
-  m.reply(global.wait)
-
-  const pageRes = await fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-  })
-  if (!pageRes.ok) throw 'Gagal mengakses Pinterest'
-
-  const html = await pageRes.text()
-  const ogVideo = html.match(/<meta property="og:video" content="([^"]+)"/)?.[1]
-  const ogImage = html.match(/<meta property="og:image" content="([^"]+)"/)?.[1]
-  const ogTitle = html.match(/<meta property="og:title" content="([^"]+)"/)?.[1] || 'Pinterest'
-
-  const caption = `📌 *${ogTitle}*\n\n${global.wm}`
-
-  if (ogVideo) {
-    await conn.sendMessage(m.chat, { video: { url: ogVideo }, caption, mimetype: 'video/mp4' }, { quoted: m })
-  } else if (ogImage) {
-    await conn.sendMessage(m.chat, { image: { url: ogImage }, caption }, { quoted: m })
-  } else {
-    throw 'Tidak dapat mengekstrak media dari URL ini'
-  }
+let handler = async (m, { conn, text, usedPrefix, command }) => {
+  if (!text) throw `🌸 *Fufu~* kirim link Pinterest-nya ke aku, senpai!\n\n> Contoh: \`${usedPrefix}${command} https://pin.it/xxx\``
+  if (!/pinterest\.com|pin\.it/i.test(text)) throw '❌ Hmph! Ini bukan link Pinterest, senpai~'
+  conn.sendMessage(m.chat, { react: { text: '🕐', key: m.key } })
+  const res = await pinterest(text)
+  if (!res) throw '😿 Gomen senpai... gambarnya gagal diunduh. Coba lagi nanti~'
+  const isVideo = /\.mp4/i.test(res.url)
+  if (isVideo) await conn.sendMessage(m.chat, { video: { url: res.url }, caption: '✨ *ini dia senpai~*' }, { quoted: m })
+  else await conn.sendMessage(m.chat, { image: { url: res.url }, caption: '✨ *ini gambarnya senpai~*' }, { quoted: m })
+  conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
-
-handler.help = ['pinterest <url>', 'pin <url>']
+handler.help = ['pinterest <url>', 'pin <url>', 'pindl <url>']
 handler.tags = ['downloader']
-handler.command = /^(pinterest|pintdl|pin)$/i
+handler.command = /^(pinterest|pin|pindl|pinterestdl)$/i
+handler.limit = true
 export default handler

@@ -23,9 +23,8 @@ let handlerPakUstad = async (m, { conn, text }) => {
     const q = text || m.quoted?.text
     if (!q) throw `⚠️ *ᴘᴀᴋ ᴜsᴛᴀᴅ*\n\n> Contoh: \`${m.prefix}pakustad kenapa aku ganteng\``
     conn.sendMessage(m.chat, { react: { text: '🕕', key: m.key } })
-    const data = await f(`https://api.cuki.biz.id/api/canvas/ustadz?apikey=cuki-x&text=${encodeURIComponent(q)}`)
-    if (!data?.results?.url) throw '❌ Gagal generate gambar'
-    await conn.sendFile(m.chat, data.results.url, 'pakustad.jpg', q, m)
+    // ponytail: cuki ustadz (401) dibuang. Gaada maker/ustadz no-key hidup (deline/siputzx 404). Handler dihapus; tambah lagi kalau nemu sumber hidup atau bikin scraper sendiri.
+    throw '❌ Fitur pakustad sementara mati — gaada sumber no-key yang hidup.'
     conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 }
 handlerPakUstad.help = ['pakustad <pertanyaan>']

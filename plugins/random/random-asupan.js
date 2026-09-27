@@ -75,26 +75,6 @@ const USERNAMES = [
     'chrislin.chrislin', 'brocolee__', 'dxzdaa', 'toodlesprunky', 'wasawho'
 ]
 
-let handlerAsupanTT = async (m, { conn, text }) => {
-    const query = text?.trim() || randItem(USERNAMES)
-    conn.sendMessage(m.chat, { react: { text: '🕕', key: m.key } })
-    const neoxrKey = global.APIKeys?.neoxr || ''
-    const res = await axios.get(`https://api.neoxr.eu/api/asupan?username=${query}&apikey=${neoxrKey}`, { timeout: 30000 }).catch(() => null)
-    if (!res?.data?.data) throw `🚩 Username tidak ditemukan: ${query}`
-    const video = res.data.data
-    await conn.sendMessage(m.chat, {
-        video: { url: video.video?.url },
-        caption: video.caption || '',
-        contextInfo: {
-            isForwarded: true, forwardingScore: 99,
-            externalAdReply: { title: video.author?.nickname, body: video.author?.signature || 'TikTok', mediaType: 1, thumbnailUrl: video.author?.avatarThumb }
-        }
-    }, { quoted: m })
-    conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
-}
-handlerAsupanTT.help = ['asupantiktok [username]']
-handlerAsupanTT.tags = ['asupan']
-handlerAsupanTT.command = /^(asupantiktok|tiktokasupan|ttasupan)$/i
-export { handlerAsupanTT }
+// ponytail: neoxr asupan-by-username dibuang. TikTok user-feed scraping butuh signature/token, ga stabil no-key. Handler dihapus; fallback 'asupan' random masih jalan lewat lib/tiktok/*.json.
 
 export default handlerAsupan

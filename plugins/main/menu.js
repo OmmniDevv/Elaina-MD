@@ -200,23 +200,7 @@ _© ${global.namebot} | ${global.wmcredit}_`
         }, { quoted: ftroliQuoted })
     } catch (e) {
         console.error('[Menu]', e.message)
-        // Fallback variant 2
-        await conn.sendMessage(m.chat, {
-            image: thumbBuffer,
-            caption: footerText,
-            contextInfo: {
-                mentionedJid: [],
-                forwardingScore: 9,
-                isForwarded: true,
-                externalAdReply: {
-                    title: global.namebot,
-                    body: `Owner: ${global.nameown}`,
-                    mediaType: 1,
-                    renderLargerThumbnail: false,
-                    thumbnail: thumb2Buffer || thumbBuffer
-                }
-            }
-        }, { quoted: ftroliQuoted })
+        throw e
     }
 }
 

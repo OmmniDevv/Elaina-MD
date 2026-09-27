@@ -6,23 +6,15 @@ import fetch from 'node-fetch'
 
 function pickRandom(list) { return list[Math.floor(Math.random() * list.length)] }
 
-// waifu.im NSFW tags
-const WAIFUIM_NSFW = ['ero', 'ecchi', 'hentai', 'milf', 'oral', 'paizuri', 'ass', 'oppai']
-// waifu.pics NSFW tags
-const WAIFUPICS_NSFW = ['waifu', 'neko', 'trap', 'blowjob']
+// waifu.im NSFW tags (dites 2026-09-26: semua 200 OK)
+// waifu.pics mati total → trap/blowjob dipetakan ke waifu.im juga
+const WAIFUIM_NSFW = ['ero', 'ecchi', 'hentai', 'milf', 'oral', 'paizuri', 'ass', 'oppai', 'trap', 'blowjob']
 
 async function getNsfwImg(tag) {
-  // Try waifu.im first
-  if (WAIFUIM_NSFW.includes(tag)) {
-    const res = await fetch(`https://api.waifu.im/images?IncludedTags=${tag}&IsNsfw=True`)
-    const json = await res.json()
-    return json.items?.[0]?.url
-  }
-  // Fallback waifu.pics
-  const wpTag = WAIFUPICS_NSFW.includes(tag) ? tag : 'waifu'
-  const res = await fetch(`https://api.waifu.pics/nsfw/${wpTag}`)
+  const imTag = WAIFUIM_NSFW.includes(tag) ? tag : 'ecchi'
+  const res = await fetch(`https://api.waifu.im/images?IncludedTags=${imTag}&IsNsfw=True`)
   const json = await res.json()
-  return json.url
+  return json.items?.[0]?.url
 }
 
 // Map command → waifu.im/waifu.pics tag
@@ -83,6 +75,7 @@ let handler = async (m, { conn, command, args, usedPrefix }) => {
 
 handler.help = ['nsfw <kategori>']
 handler.tags = ['nsfw']
-handler.command = /^(nsfw|hentai)$/i
+handler.command = /^(nsfw)$/i
 handler.nsfw = true
+handler.premium = true
 export default handler

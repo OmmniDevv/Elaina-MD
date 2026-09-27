@@ -13,8 +13,8 @@ let handler = async (m, { conn, usedPrefix, command }) => {
   try {
     let media = await q.download()
     let audio = await toPTT(media)
-    await conn.sendFile(m.chat, audio, 'audio.opus', '', m, true, { mimetype: 'audio/ogg; codecs=opus' })
-    fs.unlinkSync(audio)
+    await conn.sendFile(m.chat, audio?.data || audio, 'audio.opus', '', m, true, { mimetype: 'audio/ogg; codecs=opus' })
+    try { if (audio?.delete) audio.delete(); else fs.unlinkSync(audio) } catch {}
   } catch (e) {
     throw `Error: ${e.message || e}`
   }

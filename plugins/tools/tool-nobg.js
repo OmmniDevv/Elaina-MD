@@ -39,7 +39,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
 
     if (!res.ok) throw 'Gagal remove background'
     const result = Buffer.from(await res.arrayBuffer())
-    await conn.sendMessage(m.chat, { image: result, caption: '✅ *Background dihapus!*' }, { quoted: m })
+    await conn.sendMessage(m.chat, { image: { url: result }, caption: '✅ *Background dihapus!*' }, { quoted: m })
   } catch (e) {
     throw `Error: ${e.message || e}`
   }

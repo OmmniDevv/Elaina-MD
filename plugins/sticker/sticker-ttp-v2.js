@@ -1,6 +1,6 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
 import { Canvas } from 'skia-canvas'
-import { Sticker, StickerTypes } from 'wa-sticker-formatter'
+import { addExifToWebp } from '../../src/lib/exif.js'
 
 function wrapText(ctx, text, maxWidth) {
   const words = text.split(' ')
@@ -60,14 +60,13 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
   const startY = size / 2 - (lines.length - 1) * lineH / 2
   lines.forEach((line, i) => ctx.fillText(line, size / 2, startY + i * lineH))
 
-  const sticker = new Sticker(await canvas.png, {
-    pack: global.stickpack || 'Elaina BOT',
-    author: global.stickauth || 'ElainaBOT',
-    type: StickerTypes.FULL,
-    quality: 80
+  const pngBuffer = await canvas.png
+  const sticker = await addExifToWebp(pngBuffer, {
+    packname: global.stickpack || 'Elaina BOT',
+    author: global.stickauth || 'ElainaBOT'
   })
 
-  await conn.sendMessage(m.chat, { sticker: await sticker.toBuffer() }, { quoted: m })
+  await conn.sendMessage(m.chat, { sticker }, { quoted: m })
 }
 
 handler.help = ['ttp2 <teks>', 'ttp2 <teks>|<warna_bg>']

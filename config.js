@@ -57,17 +57,49 @@ global.ppulsa = '08xxxxxxxxx' //Nomor SimCard Yang Kamu Pake
 global.psaweria = '-' //Link Saweriamu Kalo Nggada Ketik - aja
 
 /*============== NOMOR ==============*/
-global.nomorbot = '6285869074622' //Nomor Bot
-global.nomorown = '6285187605007' //Nomor Owner
+global.nomorbot = '6285187605007' //Nomor Bot
+global.nomorown = '6285869074622' //Nomor Owner
 global.namebot = 'Elaina BOT' //Nama Bot
 global.nameown = 'ZansLord' // Nama Owner
+
+/*============== PERSONA / VOICE (waifuable moe) ==============*/
+// Semua text reply bot pake ini. Edit sesukamu~
+global.elaina_persona = {
+  // Reaksi emosi — array, dipilih random tiap reply
+  reactions: {
+    seneng:  ['Ehehe~', 'Yay~', 'Hihi~', 'Yatta~', 'Ufufu~'],
+    malu:    ['E-Eh?!', 'H-Hentee...', 'Mouu~', 'I-Iya...', 'Hngg...'],
+    mikir:   ['Hmm~', 'Chotto~', 'Eto...', 'Nee~'],
+    marah:   ['Mouu!', 'Hmph!', 'Jangan gitu dong~', 'Yada~'],
+    ngantuk: ['Fuaa~', 'Nemui...', 'Yawn~', 'Suyaa~'],
+    gagal:   ['Ehh?!', 'Uwahh...', 'Hics...', 'Kuso~'],
+    sukses:  ['Dekita~', 'Sippu~', 'Yoshi~', 'Hehe~', 'Kantan~'],
+    selamat: ['Omedetou~', 'Yatta ne~', 'Sugoi~'],
+    sayang:  ['Daisuki~', 'Suki~', 'Kawaii~', 'Fuee~'],
+    salam:   ['Ohayou~', 'Konnichiwa~', 'Konbanwa~', 'Hisashiburi~'],
+    pamit:   ['Jaa ne~', 'Oyasumi~', 'Mata ne~', 'See you~']
+  },
+  // Emoji per emosi (dipilih random, boleh kosong [])
+  emoji: {
+    seneng:  ['(⁠≧⁠▽⁠≦⁠)', '(⁠≧⁠◡⁠≦⁠) ♡', '🎀'],
+    malu:    ['(⁠⁄⁠ ⁠⁄⁠•⁠⁄⁠ω⁠⁄⁠•⁠⁄⁠ ⁠⁄⁠)', '>///<', '🫣'],
+    gagal:   ['(⁠╥⁠﹏⁠╥⁠)', '(⁠｡⁠•́⁠︿⁠•̀⁠｡⁠)', '💧'],
+    sukses:  ['✨', '🌟', '💫'],
+    sayang:  ['♡', '💗', '💕']
+  },
+  // Footer di bawah tiap pesan panjang
+  footer: '♡ Elaina-chan',
+  // Sticker metadata
+  sticker_packname: 'Elaina-chan ♡',
+  sticker_author: 'OmmniDevv'
+}
 // ↓ TAMBAHKAN INI ↓
-global.usePairingCode = true             // Aktifkan pairing code
-global.pairingNumber = '6285869074622'   // Nomor WA bot kamu (kosongkan untuk input manual)
+global.usePairingCode = true             // false = QR (scan), true = pairing code
+global.pairingNumber = '6285187605007'   // Nomor WA bot kamu (kosongkan untuk input manual)
 
 /*============== STAFF ==============*/
 global.owner = [
-  ['6285187605007', '❦ Zans Lord? 🎐', true] //Ganti jd nomormu sama Namamu
+  ['6285869074622', '❦ Zans Lord? 🎐', true] //Ganti jd nomormu sama Namamu
   // [number, nama, dia owner?]
 ] // Put your number here
 global.mods = [] // Want some help?
@@ -80,7 +112,7 @@ global.APIs = {
   amel: 'https://melcanz.com',
   violetics: 'https://violetics.pw',
   velixs: 'https://api.velixs.com',
-  neoxr: 'https://api.neoxr.eu',
+  // neoxr dibuang — semua plugin pindah ke sumber no-key
   // API Gratis (No Key Required):
   siputzx: 'https://api.siputzx.my.id',
   vreden: 'https://api.vreden.my.id',
@@ -109,8 +141,7 @@ global.APIKeys = {
   // Covenant (GPT-4o) - Daftar: https://covenant.sbs
   covenant: 'ISI_APIKEY_COVENANT_DISINI',
 
-  // NeoXR API - Daftar: https://api.neoxr.eu
-  neoxr: 'ISI_APIKEY_NEOXR_DISINI',
+  // neoxr key dihapus — tidak dipakai lagi
 
   // RajaOngkir (Cek Ongkir) - https://rajaongkir.com/dokumentasi/starter
   rajaongkir: 'ISI_APIKEY_RAJAONGKIR_DISINI',
@@ -129,6 +160,40 @@ global.botdate = `⫹⫺ 𝗛𝗮𝗿𝗶: ${week} ${date}`
 global.bottime = `𝗪𝗮𝗸𝘁𝘂 : ${wktuwib}`
 global.titlebot = '🎋 ┊ 𝗥𝗣𝗚 ʙᴏᴛ ᴡʜᴀᴛsᴀᴘᴘ'
 global.author = global.wm
+
+/*============== PERSONA / VOICE ==============*/
+// Persona bot — biar text-nya waifuable & moe~
+// Dibaca oleh lib/elainaVoice.js — edit di sini aja, semua plugin otomatis ikut
+global.elaina_persona = {
+  // Reaksi moe per emosi
+  reactions: {
+    seneng:   ['Ehehe~', 'Yay~', 'Hihi~', 'Yatta~', 'Ufufu~'],
+    malu:     ['E-Eh?!', 'H-Hentee...', 'Mouu~', 'I-Iya...', 'Hngg...'],
+    mikir:    ['Hmm~', 'Chotto~', 'Eto...', 'Nee~'],
+    marah:    ['Mouu!', 'Hmph!', 'Jangan gitu dong~', 'Yada~'],
+    ngantuk:  ['Fuaa~', 'Nemui...', 'Yawn~', 'Suyaa~'],
+    gagal:    ['Ehh?!', 'Uwahh...', 'Hics...', 'Kuso~'],
+    sukses:   ['Dekita~', 'Sippu~', 'Yoshi~', 'Hehe~', 'Kantan~'],
+    selamat:  ['Omedetou~', 'Yatta ne~', 'Sugoi~'],
+    sayang:   ['Daisuki~', 'Suki~', 'Kawaii~', 'Fuee~'],
+    salam:    ['Ohayou~', 'Konnichiwa~', 'Konbanwa~', 'Hisashiburi~'],
+    pamit:    ['Jaa ne~', 'Oyasumi~', 'Mata ne~', 'See you~']
+  },
+  // Emoji per emosi (otomatis nempel di belakang reaksi)
+  emoji: {
+    seneng:  ['♡', '✧', '🌸'],
+    sukses:  ['♪', '✧', '☆'],
+    gagal:   ['💧', '🥺'],
+    mikir:   ['☁️', '✧'],
+    sayang:  ['♡', '💗'],
+    salam:   ['🌸', '☀️']
+  },
+  // Footer buat pesan panjang
+  footer: `꒷︶꒷꒥꒷ ‧₊˚ ${global.namebot} ‧₊˚꒷︶꒷꒥꒷ ♡`,
+  // Metadata sticker
+  sticker_packname: 'ᴇʟᴀɪɴᴀ 𝙱𝙾𝚃 ♡',
+  sticker_author: global.nameown
+}
 
 
 /*============== LOGO ==============*/

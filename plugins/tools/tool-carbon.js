@@ -10,7 +10,7 @@ let handler = async (m, { conn, usedPrefix, command, text }) => {
     const { createCanvas } = await import('@napi-rs/canvas')
     const buf = await generateCarbon(createCanvas, text)
     conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
-    await conn.sendMessage(m.chat, { image: buf, caption: '💻 *ᴄᴀʀʙᴏɴ*' }, { quoted: m })
+    await conn.sendMessage(m.chat, { image: { url: buf }, caption: '💻 *ᴄᴀʀʙᴏɴ*' }, { quoted: m })
   } catch {
     throw '❌ Gagal generate carbon image!'
   }

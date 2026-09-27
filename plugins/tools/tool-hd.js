@@ -21,7 +21,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
       { responseType: 'arraybuffer', timeout: 60000 }
     )
     conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
-    await conn.sendMessage(m.chat, { image: Buffer.from(res.data), caption: '✨ *ʜᴅ ᴇɴʜᴀɴᴄᴇ*\n\nGambar berhasil di-enhance!' }, { quoted: m })
+    await conn.sendMessage(m.chat, { image: { url: Buffer.from(res.data) }, caption: '✨ *ʜᴅ ᴇɴʜɴᴄᴇ*\n\nGambar berhasil di-enhance!' }, { quoted: m })
   } catch {
     throw '❌ Gagal enhance gambar!'
   }

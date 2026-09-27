@@ -10,7 +10,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
   try {
     const buf = m.quoted ? await m.quoted.download() : await m.download()
     if (!buf?.length) throw '❌ Gagal download video'
-    await conn.sendMessage(m.chat, { video: buf, ptv: true }, { quoted: m })
+    await conn.sendMessage(m.chat, { video: { url: buf }, ptv: true }, { quoted: m })
     conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
   } catch {
     throw '❌ Gagal convert video ke PTV!'

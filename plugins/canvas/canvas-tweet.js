@@ -47,7 +47,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
   try {
     const pp = await conn.profilePictureUrl(m.sender, 'image').catch(_ => 'https://telegra.ph/file/24fa902ead26340f3df2c.png')
     const buf = await makeTweet(pp, m.pushName || 'User', m.pushName || 'User', text)
-    await conn.sendMessage(m.chat, { image: buf, caption: `*Tweet by ${m.pushName}*` }, { quoted: m })
+    await conn.sendMessage(m.chat, { image: { url: buf }, caption: `*Tweet by ${m.pushName}*` }, { quoted: m })
   } catch (e) {
     throw `Error: ${e.message || e}`
   }

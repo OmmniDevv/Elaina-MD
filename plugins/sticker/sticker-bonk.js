@@ -10,7 +10,7 @@ let handler = async (m, { conn, text }) => {
 			opacitySource: 1,
 			opacityDest: 1
 		}).getBufferAsync('image/png')
-	conn.sendMessage(m.chat, { image: bonk }, { quoted: m })
+	conn.sendMessage(m.chat, { image: { url: bonk } }, { quoted: m })
 }
 handler.command = /^(bonk)$/i
 

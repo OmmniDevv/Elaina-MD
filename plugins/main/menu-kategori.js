@@ -76,6 +76,6 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
 
 handler.help = ['menucat [kategori]']
 handler.tags = ['main']
-handler.disabled = true
+
 handler.command = /^(menucat|mc|kategori)$/i
 export default handler

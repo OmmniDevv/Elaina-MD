@@ -1,7 +1,7 @@
-/FIXES_APPLIED.md
 node_modules/
-node_modules
 elaina_session/
 session/
 log/
+.env
 database_backup_*.json
+tmp/

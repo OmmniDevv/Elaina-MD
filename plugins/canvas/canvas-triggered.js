@@ -27,7 +27,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
   m.reply('🎨 Membuat gambar...')
   try {
     const buf = await makeTriggered(pp)
-    await conn.sendMessage(m.chat, { image: buf, caption: '*TRIGGERED* 😡' }, { quoted: m })
+    await conn.sendMessage(m.chat, { image: { url: buf }, caption: '*TRIGGERED* 😡' }, { quoted: m })
   } catch (e) {
     throw `Error: ${e.message || e}`
   }

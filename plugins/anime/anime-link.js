@@ -7,10 +7,8 @@ let handler = async m => m.reply(`
 ┃ ❖ https://anoboy.media
 ┃ ❖ https://AniFans.club
 ┃ ❖ https://oploverzz.net
-┃ ❖ https://Otakudesu.moe
 ┃ ❖ https://neonime.site
 ┃ ❖ https://gomunime.online
-┃ ❖ https://samehadaku.vip
 ┃ ❖ https://drivenime.com
 ┃ ❖ https://Anitoki.xyz
 ┃ ❖ https://Anime-indo.cc
@@ -19,7 +17,6 @@ let handler = async m => m.reply(`
 ┃ ❖ https://o.anibatch.me
 ┃ ❖ https://animeku.me
 ┃ ❖ https://anikyojin.net
-┃ ❖ https://samehadaku.vip
 ┃ ❖ https://riie.jp
 ┃ ❖ https://asta.zonawibu.cc
 ┃ ❖ https://anitoki.web.id

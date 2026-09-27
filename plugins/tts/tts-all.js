@@ -6,18 +6,7 @@ import axios from 'axios'
 import fs from 'fs'
 import path from 'path'
 
-// Helper: TTS via Groq (free) or fallback to gtts
-async function ttsGroq(text, voice = 'aura-asteria-en') {
-  const key = global.APIKeys?.groq
-  if (!key) return null
-  try {
-    const res = await axios.post('https://api.groq.com/openai/v1/audio/speech', {
-      model: 'playai-tts', input: text, voice
-    }, { headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' }, responseType: 'arraybuffer', timeout: 30000 })
-    return Buffer.from(res.data)
-  } catch { return null }
-}
-
+// ponytail: ttsGroq dibuang (butuh API key). gtts = no-key, aman VPS/Pterodactyl. Upgrade when nemu TTS no-key berkualitas > gtts.
 async function ttsGtts(text, lang = 'id') {
   const { default: gtts } = await import('gtts')
   const tmpDir = path.join(process.cwd(), 'tmp')

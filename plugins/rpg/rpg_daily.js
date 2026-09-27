@@ -22,7 +22,7 @@ cek .balance jumlah xp mu!
     global.db.data.users[m.sender].lastclaim = currentTime;
 }
 
-handler.help = handler.disabled = true
+handler.help = ['daily']
 handler.command = ['daily'];
 handler.tags = ['rpg']
 handler.rpg = true
