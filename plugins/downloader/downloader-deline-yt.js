@@ -3,6 +3,7 @@
 // Response asli: result.medias[] = { formatId, label ("mp4 (360p)"/"m4a (audio)"), ext, url }
 import fetch from 'node-fetch'
 import { elainaSay, elainaReact } from '../../lib/elainaVoice.js'
+import { sendQuickMenu } from '../../lib/menuHelper.js'
 
 const DELINE = 'https://api.deline.web.id'
 
@@ -40,17 +41,19 @@ let handler = async (m, { conn, text, args, usedPrefix }) => {
         txt += `📺 *Judul:* ${r.title}\n`
         txt += `⏱️ *Durasi:* ${fmtDuration(r.duration)}\n`
         if (r.author) txt += `📺 *Channel:* ${r.author}\n`
-        txt += `\n📥 *Pilih format:*\n`
-        txt += `• ${usedPrefix}yta ${url} — Audio 🎵\n`
-        txt += `• ${usedPrefix}ytv ${url} — Video (360p) 🎬\n`
-        txt += `• ${usedPrefix}ytvhd ${url} — Video (720p+) ✨`
+        txt += `\n📥 Pilih format lewat tombol di bawah.`
 
         conn.sendMessage(m.chat, { react: { text: elainaReact('sukses'), key: m.key } })
-        if (r.thumbnail) {
-            await conn.sendMessage(m.chat, { image: { url: r.thumbnail }, caption: txt }, { quoted: m })
-        } else {
-            await m.reply(txt)
-        }
+        await sendQuickMenu(conn, m, {
+            title: '🎬 YouTube Downloader',
+            text: txt,
+            image: r.thumbnail ? { url: r.thumbnail } : null,
+            items: [
+                { label: '🎵 Audio (MP3)', id: `${usedPrefix}yta ${url}` },
+                { label: '🎬 Video 360p', id: `${usedPrefix}ytv ${url}` },
+                { label: '✨ Video HD 720p+', id: `${usedPrefix}ytvhd ${url}` }
+            ]
+        })
     } catch (e) {
         conn.sendMessage(m.chat, { react: { text: elainaReact('gagal'), key: m.key } })
         throw elainaSay('gagal', e.message)

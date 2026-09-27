@@ -3,6 +3,7 @@ const STATES = {
   SEARCHING: 1,
   FIGHTING: 2,
 };
+import { sendQuickMenu } from '../../lib/menuHelper.js';
 
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -16,25 +17,25 @@ const handler = async (m, { conn, usedPrefix, command, args }) => {
 
   if (command === "dokter") {
     if (args.length === 0) {
-      conn.reply(m.chat, "*👨‍⚕ Cara Bermain Game Dokter Dan Pasien 👨‍⚕*\n\n" +
-        "🔍 Gunakan perintah *.dokter cari* untuk mencari pasien secara acak.\n" +
-        "🚑 Anda akan menemukan jejak pencuri dan harus melakukan tindakan tertentu untuk menangkapnya.\n" +
-        "💰 Anda akan mendapatkan imbalan jika berhasil menangkap pencuri.\n" +
-        "💉 Pilih tindakan dari: beriobat, rawat, suntik dan operasi.\n" +
-        "🔍 Gunakan perintah *.dokter <tindakan>* untuk merawat dan menyembuhkan pasien.\n" +
-        "🔎 Anda dapat membeli obat super *.dokter item obat-super* untuk meningkatkan peluang menyembuhkan pasien.\n" +
-        "🏆 Cek peringkat Anda dengan perintah *.dokter leaderboard*.\n" +
-        "ℹ️ Gunakan perintah *.dokter status* untuk melihat status Anda saat ini.", m, {
-        contextInfo: {
-isForwarded: true,
-forwardedNewsletterMessageInfo: {
-newsletterJid: '120363248530706545@newsletter', 
-newsletterName: '>>BOTCAHX RPG<<', 
-serverMessageId: -1
-}
-        }
+      return sendQuickMenu(conn, m, {
+        title: '👨‍⚕️ Game Dokter',
+        text: "*👨‍⚕️ Cara Bermain Game Dokter Dan Pasien 👨‍⚕️*\n\n" +
+          "🔍 Cari pasien secara acak dengan tombol di bawah.\n" +
+          "🚑 Kamu akan menemukan jejak dan harus melakukan tindakan tertentu.\n" +
+          "💰 Dapat imbalan jika berhasil menyembuhkan pasien.\n" +
+          "🔎 Beli obat super untuk menaikkan peluang sembuh.\n" +
+          "🏆 Cek peringkat atau statusmu kapan saja.",
+        items: [
+          { label: '🔍 Cari Pasien', id: `${usedPrefix}dokter cari` },
+          { label: '💉 Beri Obat', id: `${usedPrefix}dokter beriobat` },
+          { label: '🩺 Rawat', id: `${usedPrefix}dokter rawat` },
+          { label: '💊 Suntik', id: `${usedPrefix}dokter suntik` },
+          { label: '🔪 Operasi', id: `${usedPrefix}dokter operasi` },
+          { label: '🧪 Beli Obat Super', id: `${usedPrefix}dokter item obat-super` },
+          { label: '🏆 Leaderboard', id: `${usedPrefix}dokter leaderboard` },
+          { label: 'ℹ️ Status', id: `${usedPrefix}dokter status` }
+        ]
       });
-      return;
     }
 
     const subCommand = args[0];

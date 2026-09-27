@@ -4,6 +4,7 @@
 // Mapel: bindo, tik, pkn, bing, penjas, pai, matematika, jawa, ips, ipa
 import fetch from 'node-fetch'
 import { elainaSay, elainaReact } from '../../lib/elainaVoice.js'
+import { sendQuickMenu } from '../../lib/menuHelper.js'
 
 const MAPEL = ['bindo', 'tik', 'pkn', 'bing', 'penjas', 'pai', 'matematika', 'jawa', 'ips', 'ipa']
 
@@ -17,9 +18,13 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         throw false;
     }
 
-    let mapel = (args[0] || 'bindo').toLowerCase();
+    let mapel = (args[0] || '').toLowerCase();
     if (!MAPEL.includes(mapel)) {
-        return m.reply(elainaSay('noargs', `mapelnya apa nih? Pilih salah satu: ${MAPEL.join(', ')}\nContoh: ${usedPrefix + command} matematika`));
+        return sendQuickMenu(conn, m, {
+            title: '📚 Cerdas Cermat SD',
+            text: elainaSay('noargs', `pilih mata pelajarannya dulu ya~\n\nContoh: ${usedPrefix + command} matematika`),
+            items: MAPEL.map(mp => ({ label: `📖 ${mp}`, id: `${usedPrefix}${command} ${mp}` }))
+        });
     }
 
     try {

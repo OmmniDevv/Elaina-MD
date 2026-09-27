@@ -1,15 +1,17 @@
 const cooldown = 0;
+import { sendQuickMenu } from '../../lib/menuHelper.js';
 
 let handler = async (m, { conn, usedPrefix, args, text }) => {
     if (!text) {
-        return m.reply(`
-Here are several E-wallets that you can trade:
-• Gopay
-• Ovo
-• Dana
-
-Example: ${usedPrefix}trading 100000 gopay
-`.trim());
+        return sendQuickMenu(conn, m, {
+            title: '💱 Trading E-Wallet',
+            text: 'Pilih e-wallet yang mau ditradingkan, lalu kirim nominalnya.\n\nContoh: `.trading 100000 gopay`',
+            items: [
+                { label: '💚 Gopay', id: `${usedPrefix}trading 100000 gopay` },
+                { label: '💜 Ovo', id: `${usedPrefix}trading 100000 ovo` },
+                { label: '💙 Dana', id: `${usedPrefix}trading 100000 dana` }
+            ]
+        });
     }
 
     let user = await global.db.data.users[m.sender];

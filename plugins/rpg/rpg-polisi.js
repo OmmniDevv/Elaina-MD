@@ -1,4 +1,5 @@
 /** !! THIS CODE GENERATE BY RODOTZBOT !! **/
+import { sendQuickMenu } from '../../lib/menuHelper.js';
 
 const STATES = {
   IDLE: 0,
@@ -18,20 +19,25 @@ const handler = async (m, { conn, usedPrefix, command, args }) => {
 
   if (command === "polisi") {
     if (args.length === 0) {
-      conn.reply(m.chat, "*👮‍♂️ Cara Bermain Game Polisi dan Pencuri 👮‍♂️*\n\n" +
-        "🔍 Gunakan perintah *.polisi cari* untuk mencari pencuri secara acak.\n" +
-        "🚓 Anda akan menemukan jejak pencuri dan harus melakukan tindakan tertentu untuk menangkapnya.\n" +
-        "💰 Anda akan mendapatkan imbalan jika berhasil menangkap pencuri.\n" +
-        "🚨 Pilih tindakan dari: kejar, tembak, lempar, atau tangkap.\n" +
-        "🔍 Gunakan perintah *.polisi <tindakan>* untuk melawan dan menangkap pencuri.\n" +
-        "🔎 Anda dapat membeli kaca pembesar *.polisi item kaca-pembesar* untuk meningkatkan peluang menangkap pencuri.\n" +
-        "🏆 Cek peringkat Anda dengan perintah *.polisi leaderboard*.\n" +
-        "ℹ️ Gunakan perintah *.polisi status* untuk melihat status Anda saat ini.", m, {
-        contextInfo: {
-          
-        }
+      return sendQuickMenu(conn, m, {
+        title: '👮 Game Polisi',
+        text: "*👮‍♂️ Cara Bermain Game Polisi dan Pencuri 👮‍♂️*\n\n" +
+          "🔍 Cari pencuri secara acak dengan tombol di bawah.\n" +
+          "🚓 Kamu akan menemukan jejak dan harus melakukan tindakan tertentu.\n" +
+          "💰 Dapat imbalan jika berhasil menangkap pencuri.\n" +
+          "🔎 Beli kaca pembesar untuk menaikkan peluang menangkap.\n" +
+          "🏆 Cek peringkat atau statusmu kapan saja.",
+        items: [
+          { label: '🔍 Cari Pencuri', id: `${usedPrefix}polisi cari` },
+          { label: '🏃 Kejar', id: `${usedPrefix}polisi kejar` },
+          { label: '🔫 Tembak', id: `${usedPrefix}polisi tembak` },
+          { label: '🪨 Lempar', id: `${usedPrefix}polisi lempar` },
+          { label: '🤝 Tangkap', id: `${usedPrefix}polisi tangkap` },
+          { label: '🔍 Beli Kaca Pembesar', id: `${usedPrefix}polisi item kaca-pembesar` },
+          { label: '🏆 Leaderboard', id: `${usedPrefix}polisi leaderboard` },
+          { label: 'ℹ️ Status', id: `${usedPrefix}polisi status` }
+        ]
       });
-      return;
     }
 
     const subCommand = args[0];
