@@ -1,25 +1,41 @@
-// © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
-import cp, { exec as _exec } from 'child_process'
-import { promisify } from 'util'
-let exec = promisify(_exec).bind(cp)
+import fs from 'fs'
+import path from 'path'
 
 let handler = async (m, { conn, isROwner, usedPrefix, command, text }) => {
-await m.reply(global.wait)
-    if (!isROwner) return
-    let ar = Object.keys(plugins)
-    let ar1 = ar.map(v => v.replace('.js', ''))
-    if (!text) throw `uhm.. where the text?\n\nexample:\n${usedPrefix + command} info`
-    if (!ar1.includes(text)) return m.reply(`*🗃️ NOT FOUND!*\n==================================\n\n${ar1.map(v => ' ' + v).join`\n`}`)
-    let o
-    try {
-        o = await exec('cat plugins/' + text + '.js')
-    } catch (e) {
-        o = e
-    } finally {
-        let { stdout, stderr } = o
-        if (stdout.trim()) m.reply(stdout)
-        if (stderr.trim()) m.reply(stderr)
+    if (!text) throw `Masukkan nama plugin!\n\nContoh:\n*${usedPrefix + command} menu*`
+
+    // Search in plugins folder recursively
+    const pluginDir = path.join(process.cwd(), 'plugins')
+    function findFile(dir, target) {
+        for (const file of fs.readdirSync(dir)) {
+            const fullPath = path.join(dir, file)
+            if (fs.statSync(fullPath).isDirectory()) {
+                const res = findFile(fullPath, target)
+                if (res) return res
+            } else if (file === target || file === target + '.js') {
+                return fullPath
+            }
+        }
+        return null
     }
+
+    const found = findFile(pluginDir, text.trim())
+    if (!found) {
+        // List some available plugin names
+        let list = []
+        function collect(dir) {
+            for (const file of fs.readdirSync(dir)) {
+                const fullPath = path.join(dir, file)
+                if (fs.statSync(fullPath).isDirectory()) collect(fullPath)
+                else if (file.endsWith('.js')) list.push(file.replace('.js', ''))
+            }
+        }
+        collect(pluginDir)
+        return m.reply(`*🗃️ PLUGIN NOT FOUND!*\n\nContoh plugin yang ada:\n${list.slice(0, 30).map(v => '• ' + v).join('\n')}`)
+    }
+
+    let code = fs.readFileSync(found, 'utf-8')
+    m.reply(code)
 }
 handler.help = ['getplugin'].map(v => v + ' <text>')
 handler.tags = ['owner']

@@ -20,21 +20,19 @@ let handler = async (m, { conn, usedPrefix, command, text }) => {
   try {
 		if(text) {
 			var user = number + '@s.whatsapp.net'
-		} else if(m.quoted.sender) {
+		} else if(m.quoted && m.quoted.sender) {
 			var user = m.quoted.sender
-		} else if(m.mentionedJid) {
-  		  var user = number + '@s.whatsapp.net'
-			}  
-		} catch (e) {
+		} else if(m.mentionedJid && m.mentionedJid[0]) {
+  		  var user = m.mentionedJid[0]
+		}  
+  } catch (e) {
   } finally {
-	let groupMetadata = m.isGroup ? await conn.groupMetadata(m.chat) : {}
-        let participants = m.isGroup ? groupMetadata.participants : []
-	let users = m.isGroup ? participants.find(u => u.jid == user) : {}
-	let number = user.split('@')[0]
-	delete global.db.data.users[user]
-        let pp = await conn.profilePictureUrl(number+'@s.whatsapp.net', 'image').catch((_) => "https://telegra.ph/file/24fa902ead26340f3df2c.png")
-        let anu = `☑️ Berhasil menghapus *${conn.getName(number + '@s.whatsapp.net')}* dari *DATABASE*`
- 	conn.sendHydrated(m.chat, anu, wm, pp, null,null, number, '🌹 BYE USERS', [[null,null],[null,null],[null,null]], m, {mentions: [number+'@s.whatsapp.net']})
+		if (!user) return conn.reply(m.chat, `Gagal menentukan target user!`, m)
+		let targetNum = user.split('@')[0]
+		delete global.db.data.users[user]
+		await global.db.write().catch(() => {})
+		let anu = `✅ Berhasil menghapus *${conn.getName(user)}* (@${targetNum}) dari *DATABASE*`
+		conn.reply(m.chat, anu, m, { mentions: [user] })
   }
 }
 handler.help = ['deleteuser']

@@ -6,8 +6,10 @@ let handler = async (m, { conn, text }) => {
   let cc = text ? m : m.quoted ? await m.getQuotedObj() : false || m
   let teks = text ? text : cc.text
   conn.reply(m.chat, `_Mengirim pesan broadcast ke ${groups.length} grup_`, m)
-  for (let id of groups) await conn.copyNForward(id, conn.cMod(m.chat, cc, /bc|broadcast/i.test(teks) ? `${htki} *BROADCAST* ${htka}\n` + teks : `${htki} *BROADCAST* ${htka}\n` + teks + '\n' + readMore + '\n\n' + botdate), true).catch(_ => _)
-  m.reply('Selesai Broadcast All Group :)')
+  let header = `${global.htki || '──「'} *BROADCAST GROUP* ${global.htka || '」──'}`
+  let footer = `\n\n${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`
+  for (let id of groups) await conn.copyNForward(id, conn.cMod(m.chat, cc, /bc|broadcast/i.test(teks) ? `${header}\n\n` + teks : `${header}\n\n` + teks + '\n' + readMore + footer), true).catch(_ => _)
+  m.reply('✅ Selesai Broadcast All Group :)')
 }
 handler.help = ['broadcastgroup', 'bcgc'].map(v => v + ' <teks>')
 handler.tags = ['owner']

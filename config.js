@@ -74,8 +74,8 @@ global.pairingNumber = '6285187605007'   // Nomor WA bot kamu (kosongkan untuk i
 
 /*============== STAFF ==============*/
 global.owner = [
-  ['6285869074622', '❦ Zans Lord? 🎐', true] //Ganti jd nomormu sama Namamu
-  // [number, nama, dia owner?]
+  ['6285869074622', '❦ Zans Lord? 🎐', true],
+  ['121693670506723', '❦ Zans Lord (LID)? 🎐', true] // Owner LID WA Multi-Device
 ] // Put your number here
 global.mods = [] // Want some help?
 global.prems = [] // Premium user bukan disini nambahinnya, ketik .addprem @user 10

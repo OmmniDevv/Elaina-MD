@@ -2,8 +2,9 @@
 let linkRegex = /chat.whatsapp.com\/([0-9A-Za-z]{20,24})( [0-9]{1,3})?/i
 
 let handler = async (m, { conn, text, isOwner }) => {
+    if (!text) throw 'Masukkan link grup WhatsApp yang valid!\n\nContoh: .join https://chat.whatsapp.com/xxx'
     let [_, code, expired] = text.match(linkRegex) || []
-    if (!code) throw 'Link invalid'
+    if (!code) throw 'Link grup WhatsApp tidak valid!'
     let res = await conn.groupAcceptInvite(code)
     expired = Math.floor(Math.min(999, Math.max(1, isOwner ? isNumber(expired) ? parseInt(expired) : 0 : 3)))
     m.reply(`Berhasil join grup ${res}${expired ? ` selama ${expired} hari` : ''}`)

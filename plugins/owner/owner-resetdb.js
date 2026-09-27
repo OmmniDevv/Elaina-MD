@@ -8,8 +8,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 if (!global.resetDbPending) global.resetDbPending = {}
 
-let handler = async (m, { conn, usedPrefix, command }) => {
-    const confirm = (m.text || '').trim().toLowerCase()
+let handler = async (m, { conn, usedPrefix, command, args }) => {
+    const confirm = (args[0] || '').trim().toLowerCase()
 
     if (confirm !== 'confirm') {
         global.resetDbPending[m.sender] = Date.now()

@@ -1,15 +1,14 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
 let handler = async (m, { conn, text, usedPrefix, command }) => {
-    if (!text) throw `kalo kamu nemu pesan eror, lapor pake perintah ini\n\ncontoh:\n${usedPrefix + command} selamat siang owner, sy menemukan eror seperti berikut <copy/tag pesan erornya>`
-    if (text.length < 1 ) throw `Laporan terlalu pendek, minimal 10 karakter!`
-    if (text.length > 1000) throw `Laporan terlalu panjang, maksimal 1000 karakter!`
-    let teks = `*${htki} ${command.toUpperCase()} ${htka}*\n📮 : ${text}\n*- @${m.sender.split`@`[0]}*`
-    conn.reply(global.nomorown + '@s.whatsapp.net', m.quoted ? teks + m.quoted.text : teks, null, {
-        contextInfo: {
-            mentionedJid: [m.sender]
-        }
+    if (!text) throw `Kalau kamu menemukan pesan eror atau mau order, lapor pakai perintah ini yaa~\n\nContoh:\n*${usedPrefix + command} Halo owner, mau tanya...*`
+    if (text.length < 5) throw `Pesan terlalu pendek, minimal 5 karakter!`
+    if (text.length > 1000) throw `Pesan terlalu panjang, maksimal 1000 karakter!`
+    let teks = `*${global.htki || '──「'} ${command.toUpperCase()} ${global.htka || '」──'}*\n📮 *Pesan:* ${text}\n👤 *Pengirim:* @${m.sender.split('@')[0]}`
+    let target = (global.nomorown || '6285869074622').replace(/[^0-9]/g, '') + '@s.whatsapp.net'
+    await conn.reply(target, m.quoted ? teks + '\n\n' + (m.quoted.text || '') : teks, null, {
+        mentions: [m.sender]
     })
-    m.reply('☑️ Pesan Telah terkirim ke Owner!\n_*Menunggu confirmasi Dari Owner...*_')
+    m.reply('✅ Pesan telah terkirim ke Owner!\n_Mohon ditunggu responnya yaa~ (≧ω≦)ゞ_')
 }
 handler.command = /^(order)$/i
 export default handler

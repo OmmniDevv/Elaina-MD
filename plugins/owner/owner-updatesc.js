@@ -15,10 +15,11 @@ let handler = async (m, { conn }) => {
         return m.reply(`❌ Gagal fetch dari GitHub:\n${e.message}`)
     }
 
-    let localHead, remoteHead
+    let localHead, remoteHead, branch = 'main'
     try {
+        branch = (await exec('git branch --show-current', { cwd })).stdout.trim() || 'main'
         localHead = (await exec('git rev-parse HEAD', { cwd })).stdout.trim()
-        remoteHead = (await exec('git rev-parse origin/master', { cwd })).stdout.trim()
+        remoteHead = (await exec(`git rev-parse origin/${branch}`, { cwd })).stdout.trim()
     } catch (e) {
         return m.reply(`❌ Gagal membaca commit:\n${e.message}`)
     }
@@ -30,7 +31,7 @@ let handler = async (m, { conn }) => {
 
     let changedFiles
     try {
-        const { stdout } = await exec('git diff --name-only HEAD origin/master', { cwd })
+        const { stdout } = await exec(`git diff --name-only HEAD origin/${branch}`, { cwd })
         changedFiles = stdout.trim().split('\n').filter(f =>
             f && !PROTECTED.some(p => f === p || f.startsWith(p))
         )

@@ -2,10 +2,12 @@
 import { spawn } from 'child_process'
 let handler = async (m, { conn, isROwner, text }) => {
     if (!process.send) throw 'Dont: node main.js\nDo: node index.js'
-    if (global.conn.user.id == conn.user.id) {
-    await m.reply('```R E S T A R T . . .```')
-    process.send('reset')
-  } else throw '_eeeeeiiittsssss..._'
+    await m.reply('```R E S T A R T I N G . . .```')
+    if (process.send) {
+        process.send('reset')
+    } else {
+        process.exit(0)
+    }
 }
 
 handler.help = ['restart']

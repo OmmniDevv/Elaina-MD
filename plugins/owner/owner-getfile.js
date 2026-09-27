@@ -1,20 +1,21 @@
-// © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
-import cp from 'child_process'
-import { promisify } from 'util'
-let exec = promisify(cp.exec).bind(cp)
+import fs from 'fs'
+import path from 'path'
+
 let handler = async (m, { conn, isROwner, usedPrefix, command, text }) => {
-    if (!text) throw `uhm.. teksnya mana?\n\ncontoh\n${usedPrefix + command} main`
-    m.reply('Executing...')
-    let o
-    try {
-        o = await exec('type ' + text)
-    } catch (e) {
-        o = e
-    } finally {
-        let { stdout, stderr } = o
-        if (stdout.trim()) m.reply(stdout)
-        if (stderr.trim()) m.reply(stderr)
+    if (!text) throw `Masukkan path file yang ingin dibaca!\n\nContoh:\n*${usedPrefix + command} main.js*`
+    let targetPath = path.resolve(process.cwd(), text.trim())
+    if (!fs.existsSync(targetPath)) throw `File "${text}" tidak ditemukan!`
+    let stat = fs.statSync(targetPath)
+    if (stat.isDirectory()) throw `"${text}" adalah direktori, bukan file!`
+    if (stat.size > 500000) {
+        return await conn.sendMessage(m.chat, {
+            document: fs.readFileSync(targetPath),
+            mimetype: 'text/plain',
+            fileName: path.basename(targetPath)
+        }, { quoted: m })
     }
+    let content = fs.readFileSync(targetPath, 'utf-8')
+    m.reply(content)
 }
 
 handler.help = ['getfile'].map(v => v + ' <text>')

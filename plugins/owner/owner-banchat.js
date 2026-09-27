@@ -1,9 +1,10 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
-let handler = async (m, { participants }) => {
-    // if (participants.map(v=>v.jid).includes(global.conn.user.id)) {
+let handler = async (m) => {
+    global.db.data.chats = global.db.data.chats || {}
+    global.db.data.chats[m.chat] = global.db.data.chats[m.chat] || {}
     global.db.data.chats[m.chat].isBanned = true
-    m.reply('Done!')
-    // } else m.reply('Ada nomor host disini...')
+    await global.db.write().catch(() => {})
+    m.reply('✅ Chat berhasil di-ban! Bot tidak akan merespon perintah di chat ini kecuali unbanchat.')
 }
 handler.help = ['banchat']
 handler.tags = ['owner']

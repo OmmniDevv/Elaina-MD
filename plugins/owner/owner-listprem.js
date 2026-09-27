@@ -5,23 +5,22 @@ let handler = async (m, { conn, args }) => {
   })
   let name = '🌟 Premium'
   let fkon = { key: { fromMe: false, participant: `${m.sender.split`@`[0]}@s.whatsapp.net`, ...(m.chat ? { remoteJid: '16504228206@s.whatsapp.net' } : {}) }, message: { contactMessage: { displayName: `${name}`, vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;a,;;;\nFN:${name}\nitem1.TEL;waid=${m.sender.split('@')[0]}:${m.sender.split('@')[0]}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`}}}
-  let premTime = global.db.data.users[m.sender].premiumTime
-  let prem = global.db.data.users[m.sender].premium
-  let waktu = clockString(`${premTime - new Date() * 1} `)
+  let premTime = global.db.data.users[m.sender]?.premiumTime || 0
+  let prem = global.db.data.users[m.sender]?.premium || false
+  let waktu = clockString(Math.max(0, premTime - Date.now()))
   let sortedP = user.map(toNumber('premiumTime')).sort(sort('premiumTime'))
   let len = args[0] && args[0].length > 0 ? Math.min(100, Math.max(parseInt(args[0]), 10)) : Math.min(10, sortedP.length)
-  await conn.sendButton(m.chat, `${htki} *PREMIUM* ${htka}
-┌✦ *My Premium Time:*
+  let text = `${global.htki || '──「'} *PREMIUM LIST* ${global.htka || '」──'}\n` +
+`┌✦ *My Premium Status:*
 ┊• *Name:* ${conn.getName(m.sender)}
-${prem ? `${clockString (premiumTime - new Date() * 1)}` : '┊• *PremiumTime:* Expired 🚫'}
+${prem && premTime > Date.now() ? `┊• *Sisa Waktu:*\n${clockString(premTime - Date.now())}` : '┊• *Premium:* Expired / Non-Aktif 🚫'}
 ┗━═┅═━––––––๑
 
 •·–––––––––––––––––––––·•
-${sortedP.slice(0, len).map(({ jid, name, premiumTime, registered }, i) => `\n\n┌✦ ${registered ? name : conn.getName(jid)}\n┊• wa.me/${jid.split`@`[0]}\n${premiumTime > 0 ? `${clockString (premiumTime - new Date() * 1)}` : '┊ *EXPIRED 🚫*'}`).join`\n┗━═┅═━––––––๑`}
-┗━═┅═━––––––๑`.trim(), wm, null, [[`${prem ? '✦ Owner ✦': '✦ Buy Premium ✦'}`, `${prem ? '.owner nomor': '.premium'}`]], fkon)
-setTimeout(() => {
-    if (db.data.chats[m.chat].deletemedia) conn.deleteMessage(m.chat, key)
-  }, db.data.chats[m.chat].deletemediaTime)
+${sortedP.slice(0, len).map(({ jid, name, premiumTime, registered }, i) => `\n\n┌✦ ${registered ? name : conn.getName(jid)}\n┊• wa.me/${jid.split`@`[0]}\n${premiumTime > Date.now() ? `${clockString(premiumTime - Date.now())}` : '┊ *EXPIRED 🚫*'}`).join`\n┗━═┅═━––––––๑`}
+┗━═┅═━––––––๑`.trim()
+
+  await conn.sendButton(m.chat, text, global.wm || '', null, [[`${prem ? '✦ Owner ✦': '✦ Buy Premium ✦'}`, `${prem ? '.owner': '.premium'}`]], fkon)
 }
 handler.help = ['premlist [angka]']
 handler.tags = ['info']

@@ -5,7 +5,7 @@
  * ║  https://github.com/OmmniDevv/Elaina-MD ║
  * ╚══════════════════════════════════════════╝
  */
-import { smsg } from './lib/simple.js'
+import { smsg, resolveLidToPn } from './lib/simple.js'
 import { logError } from './lib/errorLogger.js'
 import { format } from 'util'
 import { fileURLToPath } from 'url'
@@ -46,14 +46,29 @@ export async function handler(chatUpdate) {
     if (global.db.data == null)
         await global.loadDatabase()
     try {
-        // @rexxhayanasi/elaina-baileys: @lid messages have extra fields (remoteJidAlt, addressingMode) in key
-        if (m.key?.addressingMode === 'lid' || m.key?.remoteJidAlt) {
-            const { remoteJidAlt, addressingMode, ...cleanKey } = m.key
-            m = { ...m, key: { ...cleanKey, remoteJid: remoteJidAlt || cleanKey.remoteJid } }
+        // Baileys v7 / elaina-baileys LID handling:
+        if (m.key?.participantAlt && (!m.key.participant || m.key.participant.endsWith('@lid'))) {
+            m.key.participant = m.key.participantAlt
+        }
+        if (m.key?.remoteJidAlt && m.key.remoteJid?.endsWith('@lid')) {
+            m.key.remoteJid = m.key.remoteJidAlt
+        }
+        if (m.key?.addressingMode === 'lid') {
+            const { addressingMode, ...cleanKey } = m.key
+            m = { ...m, key: cleanKey }
         }
         m = smsg(this, m) || m
         if (!m)
             return
+
+        // Ensure m.sender is normalized to real phone number if it is an LID
+        if (m.sender && (m.sender.endsWith('@lid') || (!m.sender.startsWith('62') && m.sender.split('@')[0].length > 13))) {
+            const userNum = m.sender.split('@')[0].split(':')[0]
+            const resolvedPn = resolveLidToPn(userNum, this)
+            if (resolvedPn) {
+                m.sender = `${resolvedPn}@s.whatsapp.net`
+            }
+        }
 
         // Skip messages older than 5 minutes (prevents responding to history)
         const _msgTs = m.messageTimestamp
@@ -557,10 +572,32 @@ export async function handler(chatUpdate) {
             m.text = ''
 
         const _senderNorm = m.sender.replace(/[^0-9]/g, '') + '@s.whatsapp.net'
-        const isROwner = [conn.decodeJid(global.conn.user.id), ...global.owner.map(([number]) => number)].map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(_senderNorm)
+        const _senderNum = m.sender.replace(/[^0-9]/g, '')
+
+        // Build list of all owner numbers, bot JID, and known owner LIDs
+        const ownerNumbers = [
+            conn.decodeJid(global.conn?.user?.id || ''),
+            global.nomorown,
+            ...global.owner.map(([number]) => number)
+        ].filter(Boolean).map(v => v.replace(/[^0-9]/g, ''))
+
+        // Read owner LIDs from session if available
+        const ownerLids = []
+        try {
+            const authFolder = global.authFile || 'elaina_session'
+            for (const num of ownerNumbers) {
+                const ownerLidPath = join(process.cwd(), authFolder, `lid-mapping-${num}.json`)
+                if (fs.existsSync(ownerLidPath)) {
+                    const lidVal = JSON.parse(fs.readFileSync(ownerLidPath, 'utf-8')).replace(/[^0-9]/g, '')
+                    if (lidVal) ownerLids.push(lidVal)
+                }
+            }
+        } catch {}
+
+        const isROwner = ownerNumbers.includes(_senderNum) || ownerLids.includes(_senderNum) || ownerNumbers.map(v => v + '@s.whatsapp.net').includes(_senderNorm)
         const isOwner = isROwner || m.fromMe
         const isMods = isOwner || global.mods.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(_senderNorm)
-        const isPrems = isROwner || (db.data.users && db.data.users[m.sender] && db.data.users[m.sender].premiumTime > 0)
+        const isPrems = isROwner || isOwner || (global.db.data?.users && global.db.data.users[m.sender] && global.db.data.users[m.sender].premiumTime > 0)
 
         if (opts['queque'] && m.text && !(isMods || isPrems)) {
             let queque = this.msgqueque, time = 1000 * 5

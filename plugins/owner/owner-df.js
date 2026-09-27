@@ -1,29 +1,35 @@
-// © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
-import { tmpdir } from 'os'
-import path, { join } from 'path'
-import {
-  readdirSync,
-  statSync,
-  unlinkSync,
-  existsSync,
-  readFileSync,
-  watch
-} from 'fs'
-let handler = async (m, { conn, usedPrefix: _p, __dirname, args, text }) => {
+import fs from 'fs'
+import path from 'path'
 
-let ar = Object.keys(plugins)
-    let ar1 = ar.map(v => v.replace('.js', ''))
-    if (!text) throw `uhm.. where the text?\n\nexample:\n${usedPrefix + command} info`
-    if (!ar1.includes(args[0])) return m.reply(`*🗃️ NOT FOUND!*\n==================================\n\n${ar1.map(v => ' ' + v).join`\n`}`)
-const file = join(__dirname, '../plugins/' + args[0] + '.js')
-unlinkSync(file)
-conn.reply(m.chat, `Succes deleted "plugins/${args[0]}.js"`, m)
-    
+let handler = async (m, { conn, usedPrefix, command, text }) => {
+    if (!text) throw `Masukkan nama file plugin yang ingin dihapus!\n\nContoh:\n*${usedPrefix + command} menu*`
+
+    const pluginDir = path.join(process.cwd(), 'plugins')
+    function findFile(dir, target) {
+        for (const file of fs.readdirSync(dir)) {
+            const fullPath = path.join(dir, file)
+            if (fs.statSync(fullPath).isDirectory()) {
+                const res = findFile(fullPath, target)
+                if (res) return res
+            } else if (file === target || file === target + '.js') {
+                return fullPath
+            }
+        }
+        return null
+    }
+
+    const found = findFile(pluginDir, text.trim())
+    if (!found) return m.reply(`*🗃️ PLUGIN NOT FOUND!* File "${text}" tidak ditemukan.`)
+
+    // Rename to .disabled instead of unlinking to preserve safety
+    const disabledPath = found + '.disabled'
+    fs.renameSync(found, disabledPath)
+    conn.reply(m.chat, `✅ Berhasil menonaktifkan plugin: *${path.basename(found)}* (di-rename menjadi .disabled)`, m)
 }
-handler.help = ['df']
+handler.help = ['df <plugin>']
 handler.tags = ['owner']
-handler.command = /^(df)$/i
+handler.command = /^(df|delplugin)$/i
 
-handler.mods = true
+handler.rowner = true
 
 export default handler
