@@ -491,7 +491,7 @@ updateUI()
 
                   sections: [
                     {
-                      view_model: {
+                      __typename: 'GenAIUnifiedResponseSection', view_model: {
                         primitive: {
                           __typename:
                             'GenAIaeacdsnwHtmlPrimitive',
