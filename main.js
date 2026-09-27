@@ -87,8 +87,16 @@ const pairingNumber = (global.pairingNumber || '').replace(/[^0-9]/g, '')
 let baileysVersion
 try {
   baileysVersion = await fetchLatestWaWebVersion()
+  if (baileysVersion?.version) log.ok(`Versi WA Web: [${baileysVersion.version.join(', ')}]`)
 } catch (e) {
-  try { baileysVersion = await fetchLatestBaileysVersion() } catch { baileysVersion = undefined }
+  log.warn('Gagal ambil versi WaWeb: ' + (e?.message || e))
+  try {
+    baileysVersion = await fetchLatestBaileysVersion()
+    if (baileysVersion?.version) log.warn(`Pakai versi Baileys fallback: [${baileysVersion.version.join(', ')}]`)
+  } catch {
+    baileysVersion = { version: [2, 3000, 1037641644] }
+    log.warn('Pakai versi hardcode fallback: [2, 3000, 1037641644]')
+  }
 }
 
 const connectionOptions = {
@@ -139,8 +147,22 @@ async function clearSessionAndRestart() {
   setTimeout(() => process.exit(1), 2000)
 }
 
+function isFreshSession() {
+  try {
+    return !existsSync(`./${global.authFile}/creds.json`)
+  } catch { return true }
+}
+
+function isRegistered() {
+  try {
+    return state.creds?.registered === true || global.conn?.user != null
+  } catch { return false }
+}
+
 async function requestPairing() {
-  if (!usePairingCode || conn.authState.creds.registered) return
+  if (!usePairingCode || isRegistered()) return
+  const fresh = isFreshSession()
+  if (!fresh) log.warn('Session setengah jadi terdeteksi — retry di atas creds lama (hapus folder untuk noiseKey baru)')
   let phone = pairingNumber
   if (!phone) {
     const { createInterface } = await import('readline')
@@ -157,8 +179,11 @@ async function requestPairing() {
 
   log.auth(`Batas waktu pairing: ${PAIRING_TIMEOUT_DURATION / 1000} detik`)
 
-  // Delay 5s — kasih WS cukup waktu handshake penuh (pola Luna)
+  // Settle ala Luna: 5s di luar + 2s di dalam sebelum request pertama,
+  // lalu tunggu WS beneran open tiap percobaan biar tidak Connection Closed.
   await new Promise(r => setTimeout(r, 5000))
+  log.auth('Menyiapkan permintaan kode pairing ...')
+  await new Promise(r => setTimeout(r, 2000))
 
   let codigo = null
   let intentos = 0
@@ -167,8 +192,12 @@ async function requestPairing() {
   while (intentos < maxIntentos && !global.conn?.user) {
     try {
       intentos++
+      try { await global.conn.waitForSocketOpen?.() } catch (e) {
+        log.error(`Pairing percobaan ${intentos} gagal: WS belum open (${e.message})`)
+        if (intentos < maxIntentos) await new Promise(r => setTimeout(r, 3000))
+        continue
+      }
       log.auth(`Meminta kode pairing ... (${intentos}/${maxIntentos})`)
-      try { global.conn.cancelPairingCode?.() } catch {}
       codigo = await global.conn.requestPairingCode(phone, 'ELAINAMD')
       if (codigo) {
         codigo = codigo.match(/.{1,4}/g)?.join('-') || codigo
@@ -176,6 +205,13 @@ async function requestPairing() {
         break
       }
     } catch (error) {
+      if (error?.output?.statusCode === 409 || /already pending/i.test(error.message || '')) {
+        log.warn('Kode lama masih pending — batalkan dulu lalu coba lagi ...')
+        try { global.conn.cancelPairingCode?.() } catch {}
+        await new Promise(r => setTimeout(r, 3000))
+        intentos--
+        continue
+      }
       log.error(`Pairing percobaan ${intentos} gagal: ${error.message}`)
       if (error.message.includes('rate limit') || error.message.includes('too many')) {
         log.warn('Rate limit — tunggu 10 detik ...')
@@ -193,7 +229,8 @@ async function requestPairing() {
     return
   }
 
-  // Renewal check — tiap 15s cek apakah sudah login atau perlu refresh kode
+  // Renewal check — tiap 15s cek apakah sudah login atau perlu refresh kode.
+  // Refresh juga nunggu WS open + cancel pending 409 dulu biar tidak dobel-request.
   let codigoRenovado = false
   const intervaloCodigo = setInterval(async () => {
     if (global.conn?.user) {
@@ -208,6 +245,8 @@ async function requestPairing() {
     if (!codigoRenovado && tiempoRestante < 90) {
       try {
         log.auth(`Memperbarui kode ... (${tiempoRestante}dts tersisa)`)
+        try { await global.conn.waitForSocketOpen?.() } catch {}
+        try { global.conn.cancelPairingCode?.() } catch {}
         const nuevoCodigo = await global.conn.requestPairingCode(phone, 'ELAINAMD')
         const formatted = nuevoCodigo?.match(/.{1,4}/g)?.join('-') || nuevoCodigo
         printPairingBox(formatted, tiempoRestante)
@@ -215,6 +254,8 @@ async function requestPairing() {
       } catch (e) {
         if (e.message.includes('rate limit') || e.message.includes('too many')) {
           log.warn('Rate limit saat perbarui — pakai kode lama')
+        } else {
+          log.warn('Gagal perbarui kode — pakai kode lama (' + e.message + ')')
         }
       }
     }
@@ -334,7 +375,7 @@ async function connectionUpdate(update) {
 
     if (code === DisconnectReason.loggedOut) {
       // Pairing belum selesai: jangan exit, tunggu user masukkan kode di HP.
-      if (usePairingCode && !conn.authState.creds.registered) {
+      if (usePairingCode && !isRegistered()) {
         log.auth('Menunggu kode pairing dimasukkan di WhatsApp ...')
         return
       }
@@ -649,7 +690,7 @@ try { watch(pluginFolder, { recursive: true }, global.reload) } catch (e) {
 }
 await global.reloadHandler()
 
-if (usePairingCode && !conn.authState.creds.registered) {
+if (usePairingCode && !isRegistered()) {
   requestPairing().catch(e => log.error('Pairing: ' + e.message))
 }
 

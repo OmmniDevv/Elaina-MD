@@ -8,8 +8,12 @@
 
 import fs from "fs";
 import path from "path";
-import config from "../../config.js";
 import { logger } from "./elaina-logger.js";
+// config.js import file ini (getDatabase), jadi DILARANG import config.js balik
+// di top-level — itu circular dan bikin boot mati sebelum pairing jalan.
+// Config dimuat malas di init() via dynamic import, sync method pakai cache.
+let cachedConfig = null;
+function cfg() { return cachedConfig ?? {}; }
 const FLUSH_INTERVAL_MS = 5000;
 
 const defaultUsers = {};
@@ -82,6 +86,10 @@ class Database {
 
   async init() {
     try {
+      try {
+        const mod = await import("../../config.js");
+        cachedConfig = mod.default ?? mod.config ?? null;
+      } catch {}
       const { LowSync } = await import("lowdb");
       const { JSONFileSync } = await import("lowdb/node");
 
@@ -132,8 +140,8 @@ class Database {
       this.startFlushTimer();
       this.registerShutdownHooks();
 
-      const currentDefault = config.energi?.default ?? 25;
-      const currentPremium = config.energi?.premium ?? 100;
+      const currentDefault = cfg().energi?.default ?? 25;
+      const currentPremium = cfg().energi?.premium ?? 100;
       const lastDefault = this.db.data.settings._lastEnergiDefault;
       const lastPremium = this.db.data.settings._lastEnergiPremium;
 
@@ -355,7 +363,7 @@ class Database {
     const existingLimit =
       existing.limit !== undefined
         ? existing.limit
-        : config.energi?.default || 25;
+        : cfg().energi?.default || 25;
     if (existing.limit !== undefined) delete existing.limit;
 
     this.db.data.users[cleanJid] = {
@@ -424,10 +432,11 @@ class Database {
     if (user.energi === -1) return -1;
 
     try {
-      const ownerEnergi = config.energi?.owner ?? -1;
-      const premiumEnergi = config.energi?.premium ?? -1;
-      const isOwnerUser = config.isOwner(jid);
-      const isPremiumUser = config.isPremium(jid);
+      const c = cfg();
+      const ownerEnergi = c.energi?.owner ?? -1;
+      const premiumEnergi = c.energi?.premium ?? -1;
+      const isOwnerUser = typeof c.isOwner === 'function' ? c.isOwner(jid) : false;
+      const isPremiumUser = typeof c.isPremium === 'function' ? c.isPremium(jid) : false;
       if (isOwnerUser && ownerEnergi === -1) return -1;
       if (isPremiumUser && premiumEnergi === -1) return -1;
     } catch { }
@@ -511,10 +520,10 @@ class Database {
     if (!jid) return null;
     const existing = this.db.data.groups[jid] || {};
 
-    let cfg;
-    cfg = config;
-    const welcomeDefault = cfg.welcome?.defaultEnabled ?? false;
-    const goodbyeDefault = cfg.goodbye?.defaultEnabled ?? false;
+    let cfgObj;
+    cfgObj = cfg();
+    const welcomeDefault = cfgObj.welcome?.defaultEnabled ?? false;
+    const goodbyeDefault = cfgObj.goodbye?.defaultEnabled ?? false;
 
     this.db.data.groups[jid] = {
       ...existing,
