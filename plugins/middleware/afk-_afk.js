@@ -1,11 +1,13 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
-export function before(m) {
+export function before(m, { conn }) {
+    if (!global.db?.data) return false
     let user = global.db.data.users[m.sender]
+    if (!user) return false
     if (user.afk > -1) {
         conn.sendButtonDoc(m.chat,`
   Kamu berhenti AFK${user.afkReason ? ' setelah ' + user.afkReason : ''}
   Selama ${(new Date - user.afk).toTimeString()}
-  `,wm,'Hai Kak','Ya',m,fakeig)
+  `,global.wm,'Hai Kak','Ya',m)
         user.afk = -1
         user.afkReason = ''
     }
@@ -22,7 +24,7 @@ export function before(m) {
   Jangan tag dia!
   Dia sedang AFK ${reason ? 'dengan alasan ' + reason : 'tanpa alasan'}
   Selama ${(new Date - afkTime).toTimeString()}
-  `,wm,'Maaf Kak','Ya',m,fakeig)
+  `,global.wm,'Maaf Kak','Ya',m)
     }
     return true
 }

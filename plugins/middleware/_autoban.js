@@ -1,22 +1,14 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
 let handler = m => m
 
+const BAN_PREFIXES = ['212', '265', '91', '90']
+
 handler.before = async function (m) {
-   if (m.sender.startsWith('212' || '212')) {
-   	global.db.data.users[m.sender].banned = true
-   }
-   
-   if (m.sender.startsWith('265' || '265')) {
-   	global.db.data.users[m.sender].banned = true
-   }
-   
-   if (m.sender.startsWith('91' || '91')) {
-   	global.db.data.users[m.sender].banned = true
-   }
-   
-   if (m.sender.startsWith('90' || '90')) {
-   	global.db.data.users[m.sender].banned = true
-   }
-    }
+   if (!global.db?.data?.users) return
+   const num = (m.sender || '').split('@')[0]
+   if (!BAN_PREFIXES.some(p => num.startsWith(p))) return
+   const user = global.db.data.users[m.sender]
+   if (user) user.banned = true
+}
 
 export default handler

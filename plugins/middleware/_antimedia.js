@@ -4,6 +4,7 @@
 export async function before(m, { isAdmin, isBotAdmin }) {
     if (m.isBaileys && m.fromMe) return false
     if (!m.isGroup) return false
+    if (!global.db?.data) return false
 
     let chat = global.db.data.chats[m.chat]
     if (!chat) return false

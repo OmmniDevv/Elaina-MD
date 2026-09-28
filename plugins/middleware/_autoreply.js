@@ -8,7 +8,8 @@
 let handler = m => m
 handler.all = async function (m) {
   if (!m.text || m.isBaileys) return
-  const chat = global.db.data.chats?.[m.chat] || {}
+  if (!global.db?.data?.chats) return
+  const chat = global.db.data.chats[m.chat] || {}
   const replies = chat.autoReplies || {}
   if (!Object.keys(replies).length) return
 
