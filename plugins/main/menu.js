@@ -1,8 +1,8 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
-// Button Menu ala CANTARELLA MD (Native Flow Multi-Button: single_select dropdown + CTA + quick reply + GIF/Image header)
+// Button Menu ala CANTARELLA MD (Native Flow Multi-Button via MB.Button)
 import fs from 'fs'
 import axios from 'axios'
-import { prepareWAMessageMedia, generateWAMessageFromContent } from '@rexxhayanasi/elaina-baileys'
+import { MB } from '@rexxhayanasi/elaina-baileys'
 import { CATEGORY_ORDER, CATEGORY_EMOJIS, buildUnifiedCommandMap } from '../../lib/categoryHelper.js'
 
 const NEWSLETTER_JID = '120363420914057249@newsletter'
@@ -77,7 +77,7 @@ let handler = async (m, { conn, usedPrefix, isOwner, isPrems }) => {
     let _mIsGif = false
     if (global.menuGif) {
         try {
-            const res = await axios.get(global.menuGif, { responseType: 'arraybuffer', timeout: 10000 })
+            const res = await axios.get(global.menuGif, { responseType: 'arraybuffer', timeout: 8000 })
             _mThumbBuf = Buffer.from(res.data)
             _mIsGif = true
         } catch {}
@@ -86,6 +86,15 @@ let handler = async (m, { conn, usedPrefix, isOwner, isPrems }) => {
         try {
             _mThumbBuf = fs.readFileSync(global.thumb)
             _mIsGif = false
+        } catch {}
+    }
+
+    // Small thumbnail buffer (< 30KB) untuk contextInfo agar tidak melanggar batas payload WA
+    let smallThumb = null
+    if (_mThumbBuf && !_mIsGif) {
+        try {
+            const sharp = (await import('sharp')).default
+            smallThumb = await sharp(_mThumbBuf).resize(200, 200, { fit: 'cover' }).jpeg({ quality: 60 }).toBuffer()
         } catch {}
     }
 
@@ -147,158 +156,78 @@ ${_mSaluran}
             newsletterName: _mNewsName,
             serverMessageId: 127
         },
-        externalAdReply: {
-            title: _mBot,
-            body: `v6.3.0 • ${(conn.public ? 'Public' : 'Self').toUpperCase()}`,
-            mediaType: 1,
-            showAdAttribution: false,
-            renderLargerThumbnail: true,
-            ...((_mThumbBuf && !_mIsGif) ? { thumbnail: _mThumbBuf } : {}),
-            sourceUrl: _mSaluran
-        },
-        limited_time_offer: {
-            text: `Gunakan bot ini dengan bijak yak`,
-            url: _mSaluran,
-            copy_code: _mBot,
-            expiration_time: Date.now() * 999
-        }
+        ...(smallThumb ? {
+            externalAdReply: {
+                title: _mBot,
+                body: `v6.3.0 • ${(conn.public ? 'Public' : 'Self').toUpperCase()}`,
+                mediaType: 1,
+                showAdAttribution: false,
+                renderLargerThumbnail: true,
+                thumbnail: smallThumb,
+                sourceUrl: _mSaluran
+            }
+        } : {})
     }
 
-    const _mButtons = [
-        {
-            name: 'single_select',
-            buttonParamsJson: JSON.stringify({ has_multiple_buttons: true })
-        },
-        {
-            name: 'call_permission_request',
-            buttonParamsJson: JSON.stringify({ has_multiple_buttons: true })
-        },
-        {
-            name: 'single_select',
-            buttonParamsJson: JSON.stringify({
-                title: '⌗ ᴅᴀꜰᴛᴀʀ ᴋᴀᴛᴇɢᴏʀɪ ᴍᴇɴᴜ',
-                sections: [{
-                    title: '𓍢ִ໋ ᴘɪʟɪʜ ᴋᴀᴛᴇɢᴏʀɪ ʏᴀɴɢ ᴋᴀᴍᴜ ɪɴɢɪɴᴋᴀɴ',
-                    highlight_label: _mBot,
-                    rows: _mCategories
-                }],
-                has_multiple_buttons: true
-            })
-        },
-        {
-            name: 'cta_url',
-            buttonParamsJson: JSON.stringify({
-                display_text: 'ꜱᴀʟᴜʀᴀɴ ᴏꜰꜰɪᴄɪᴀʟ',
-                url: _mSaluran,
-                merchant_url: _mSaluran
-            })
-        },
-        {
-            name: 'cta_copy',
-            buttonParamsJson: JSON.stringify({
-                display_text: `⎙ ᴅᴇᴠ: ${_mOwner}`,
-                copy_code: `${_mBot} ✨`
-            })
-        },
-        {
-            name: 'quick_reply',
-            buttonParamsJson: JSON.stringify({ display_text: '</> ꜱᴇᴍᴜᴀ ᴄᴏᴍᴍᴀɴᴅ', id: `${_mPrefix}allmenu` })
-        },
-        {
-            name: 'quick_reply',
-            buttonParamsJson: JSON.stringify({ display_text: '⛁ ɪɴꜰᴏ ꜱᴇᴡᴀ ʙᴏᴛ', id: `${_mPrefix}sewa` })
-        },
-        {
-            name: 'quick_reply',
-            buttonParamsJson: JSON.stringify({ display_text: 'ⓘ ꜱᴛᴀᴛᴜꜱ ʙᴏᴛ', id: `${_mPrefix}ping` })
-        },
-        ...(isOwner ? [{
-            name: 'quick_reply',
-            buttonParamsJson: JSON.stringify({ display_text: '♔ ᴘᴀɴᴇʟ ᴏᴡɴᴇʀ', id: `${_mPrefix}menucat owner` })
-        }] : [])
-    ]
-
-    const _mFlowParams = JSON.stringify({
-        limited_time_offer: {
-            text: `ꜱᴇʟᴀᴍᴀᴛ ᴅᴀᴛᴀɴɢ ᴅɪ ${_mBot} !`,
-            url: _mSaluran,
-            copy_code: `${_mBot} ✨`,
-            expiration_time: Date.now() * 999
-        },
-        bottom_sheet: {
-            in_thread_buttons_limit: 2,
-            divider_indices: [2, 3, 4, 5, 6, 999],
-            list_title: 'ᴘɪʟɪʜ ᴋᴀᴛᴇɢᴏʀɪ ᴍᴇɴᴜ',
-            button_title: 'ᴊᴇʟᴀᴊᴀʜɪ ᴍᴇɴᴜ ꜱᴇᴋᴀʀᴀɴɢ'
-        }
-    })
-
+    // ── Kirim via MB.Button (bawaan paket Baileys, mendukung native flow mixed biz) ──
     try {
-        let _mHeader = { hasMediaAttachment: false }
-        if (_mThumbBuf && conn.waUploadToServer) {
-            try {
-                const _mMediaPrep = await prepareWAMessageMedia(
-                    _mIsGif ? { video: _mThumbBuf, gifPlayback: true } : { image: _mThumbBuf },
-                    { upload: conn.waUploadToServer }
-                )
-                _mHeader = _mIsGif
-                    ? { hasMediaAttachment: true, videoMessage: _mMediaPrep.videoMessage }
-                    : { hasMediaAttachment: true, imageMessage: _mMediaPrep.imageMessage }
-            } catch (upErr) {
-                console.error('[menu] prepareWAMessageMedia error:', upErr.message)
-            }
+        const b = new MB.Button(conn)
+        b.setTitle(_mBot)
+        b.setBody(_mText)
+        b.setFooter(`✦ ${_mBot}  •  ${global.wmcredit || _mOwner}`)
+        if (_mThumbBuf) {
+            if (_mIsGif) b.setVideo(_mThumbBuf, { gifPlayback: true })
+            else b.setImage(_mThumbBuf)
         }
-
-        const _mProto = {
-            viewOnceMessage: {
-                message: {
-                    messageContextInfo: { deviceListMetadata: {}, deviceListMetadataVersion: 2 },
-                    interactiveMessage: {
-                        header: _mHeader,
-                        body: { text: _mText },
-                        footer: { text: global.Foah || `✦ ${_mBot}  •  ${global.wmcredit || _mOwner}` },
-                        contextInfo: _mCtx,
-                        nativeFlowMessage: {
-                            messageParamsJson: _mFlowParams,
-                            buttons: _mButtons
-                        }
-                    }
-                }
+        b.setContextInfo(_mCtx)
+        b.setParams({
+            limited_time_offer: {
+                text: `ꜱᴇʟᴀᴍᴀᴛ ᴅᴀᴛᴀɴɢ ᴅɪ ${_mBot} !`,
+                url: _mSaluran,
+                copy_code: `${_mBot} ✨`,
+                expiration_time: Date.now() * 999
+            },
+            bottom_sheet: {
+                in_thread_buttons_limit: 2,
+                divider_indices: [2, 3, 4, 5, 6, 999],
+                list_title: 'ᴘɪʟɪʜ ᴋᴀᴛᴇɢᴏʀɪ ᴍᴇɴᴜ',
+                button_title: 'ᴊᴇʟᴀᴊᴀʜɪ ᴍᴇɴᴜ ꜱᴇᴋᴀʀᴀɴɢ'
             }
+        })
+
+        // Cantarella button stack
+        b.addButton('single_select', { has_multiple_buttons: true })
+        b.addButton('call_permission_request', { has_multiple_buttons: true })
+        b.addSelection('⌗ ᴅᴀꜰᴛᴀʀ ᴋᴀᴛᴇɢᴏʀɪ ᴍᴇɴᴜ', { has_multiple_buttons: true })
+        b.makeSection('𓍢ִ໋ ᴘɪʟɪʜ ᴋᴀᴛᴇɢᴏʀɪ ʏᴀɴɢ ᴋᴀᴍᴜ ɪɴɢɪɴᴋᴀɴ', _mBot)
+        for (const row of _mCategories) {
+            b.makeRow(row.header, row.title, row.description, row.id)
         }
+        b.addUrl('ꜱᴀʟᴜʀᴀɴ ᴏꜰꜰɪᴄɪᴀʟ', _mSaluran)
+        b.addCopy(`⎙ ᴅᴇᴠ: ${_mOwner}`, `${_mBot} ✨`)
+        b.addReply('</> ꜱᴇᴍᴜᴀ ᴄᴏᴍᴍᴀɴᴅ', `${_mPrefix}allmenu`)
+        b.addReply('⛁ ɪɴꜰᴏ ꜱᴇᴡᴀ ʙᴏᴛ', `${_mPrefix}sewa`)
+        b.addReply('ⓘ ꜱᴛᴀᴛᴜꜱ ʙᴏᴛ', `${_mPrefix}ping`)
+        if (isOwner) b.addReply('♔ ᴘᴀɴᴇʟ ᴏᴡɴᴇʀ', `${_mPrefix}menucat owner`)
 
-        const _mGenMsg = generateWAMessageFromContent(m.chat, _mProto, { quoted: _mQuoted })
-        return await conn.relayMessage(m.chat, _mGenMsg.message, { messageId: _mGenMsg.key.id })
-    } catch (_mErr) {
-        console.error('[menu] relayMessage error, mencoba fallback 1:', _mErr.message)
-        // Fallback 1: interactiveMessage biasa
-        try {
-            return await conn.sendMessage(m.chat, {
-                interactiveMessage: {
-                    title: _mText,
-                    footer: global.Foah || `✦ ${_mBot}  •  ${global.wmcredit || _mOwner}`,
-                    contextInfo: _mCtx,
-                    nativeFlowMessage: {
-                        messageParamsJson: _mFlowParams,
-                        buttons: _mButtons
-                    }
-                }
-            }, { quoted: _mQuoted })
-        } catch (_mErr2) {
-            console.error('[menu] fallback 1 error, mencoba fallback 2:', _mErr2.message)
-            // Fallback 2: gambar / teks biasa
-            if (_mThumbBuf) {
-                return conn.sendMessage(m.chat, {
-                    image: _mThumbBuf,
-                    caption: _mText,
-                    mentions: [m.sender]
-                }, { quoted: _mQuoted })
-            }
+        return await b.send(m.chat, { quoted: _mQuoted })
+    } catch (btnErr) {
+        console.error('[menu] MB.Button gagal, mencoba fallback gambar/teks:', btnErr.message)
+        // Fallback jika klien WhatsApp tidak mendukung native flow
+        const catListText = sortedCats.map(cat => `• *${_mPrefix}menucat ${cat}*`).join('\n')
+        const fallbackCaption = `${_mText}\n\n*📂 ᴅᴀꜰᴛᴀʀ ᴋᴀᴛᴇɢᴏʀɪ:*\n${catListText}\n\n_Ketik salah satu perintah di atas atau *${_mPrefix}allmenu*_`
+
+        if (_mThumbBuf) {
             return conn.sendMessage(m.chat, {
-                text: _mText,
-                mentions: [m.sender]
+                image: _mThumbBuf,
+                caption: fallbackCaption,
+                contextInfo: _mCtx
             }, { quoted: _mQuoted })
         }
+        return conn.sendMessage(m.chat, {
+            text: fallbackCaption,
+            contextInfo: _mCtx
+        }, { quoted: _mQuoted })
     }
 }
 
