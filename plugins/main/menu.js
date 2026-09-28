@@ -192,7 +192,7 @@ ${_mSaluran}
 
         return await b.send(m.chat, { quoted: _mQuoted })
     } catch (btnErr) {
-        console.error('[menu] MB.Button gagal, mencoba fallback gambar/teks:', btnErr.message)
+        console.error('[menu] MB.Button gagal, mencoba fallback teks:', btnErr?.message)
         // Fallback jika klien WhatsApp tidak mendukung native flow
         const catListText = sortedCats.map(cat => `• *${_mPrefix}menucat ${cat}*`).join('\n')
         const fallbackCaption = `${_mText}\n\n*📂 ᴅᴀꜰᴛᴀʀ ᴋᴀᴛᴇɢᴏʀɪ:*\n${catListText}\n\n_Ketik salah satu perintah di atas atau *${_mPrefix}allmenu*_`
