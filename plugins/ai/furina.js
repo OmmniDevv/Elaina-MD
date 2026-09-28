@@ -70,17 +70,7 @@ Selalu balas sebagai Furina. Jangan keluar karakter.
 
     sessions[user].chat.push(`Furina: ${result}`)
     await conn.sendMessage(m.chat, {
-      text: result,
-      contextInfo: {
-        externalAdReplyOff: {
-          title: "Furina AI",
-          body: "Rimuru - MD",
-          thumbnailUrl: "https://cdn.nekohime.site/file/TIIBSUZH.jpeg", // Ganti URL foto Furina
-          sourceUrl: "https://github.com/himanackerman",
-          mediaType: 1,
-          renderLargerThumbnail: true
-        }
-      }
+      text: result
     }, { quoted: m })
   } catch (e) {
     m.reply(`Aiya! Ada kesalahan panggung. Hilman harus memperbaikinya!`)

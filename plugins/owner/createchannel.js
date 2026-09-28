@@ -73,17 +73,7 @@ async function handler(m, { sock }) {
     const link = invite ? `https://whatsapp.com/channel/${invite}` : 'Tidak tersedia';
 
     await sock.sendMessage(m.chat, {
-      text: `✅ *Channel Berhasil Dibuat!*\n\n📡 *Nama:* ${name}\n📝 *Deskripsi:* ${desc}\n🆔 *ID:* ${id}\n🔗 *Link:* ${link}`,
-      contextInfo: {
-        externalAdReply: {
-          title: name,
-          body: 'WhatsApp Channel',
-          sourceUrl: invite ? link : 'https://whatsapp.com/channel',
-          thumbnailUrl: imageUrl,
-          mediaType: 1,
-          renderLargerThumbnail: true,
-        },
-      },
+      text: `✅ *Channel Berhasil Dibuat!*\n\n📡 *Nama:* ${name}\n📝 *Deskripsi:* ${desc}\n🆔 *ID:* ${id}\n🔗 *Link:* ${link}`
     }, { quoted: m });
   } catch (err) {
     console.error('[CREATECHANNEL]', err);

@@ -189,16 +189,7 @@ async function handler(m, { sock, text }) {
                     jpegThumbnail: await sharp(await axios.get(result.thumbnail, { responseType: 'arraybuffer' }).then(res => res.data)).resize(300, 300).toBuffer(),
                      contextInfo: {
                         isForwarded: true,
-                        forwardingScore: 999,
-                        externalAdReply: {
-                            title: result.title,
-                            body: `Selamat menikmati lagu ini yak 🍀`,
-                            thumbnailUrl: result.thumbnail,
-                            sourceUrl: query,
-                            mediaUrl: query,
-                            mediaType: 2,
-                            renderLargerThumbnail: true
-                        },
+                        forwardingScore: 999
                     }
                 }, { quoted: {
                     key: {

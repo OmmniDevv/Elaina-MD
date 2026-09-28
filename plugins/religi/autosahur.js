@@ -48,15 +48,7 @@ function initSahurCron(sock) {
                             ptt: true,
                             contextInfo: {
                                 isForwarded: true,
-                                forwardingScore: 777,
-                                externalAdReply: {
-                                    title: '🌙 WAKTU SAHUR!',
-                                    body: 'Sahur dulu kawan-kawan! 🥘',
-                                    thumbnailUrl: 'https://cdn.gimita.id/download/sahur-ilustrasi-qazwa_1771141170617_2377330d.jpg',
-                                    sourceUrl: RIMURU_CORE_CONFIG.saluran?.link || '',
-                                    mediaType: 1,
-                                    renderLargerThumbnail: true
-                                }
+                                forwardingScore: 777
                             }
                         });
                         await new Promise(res => setTimeout(res, 2000));

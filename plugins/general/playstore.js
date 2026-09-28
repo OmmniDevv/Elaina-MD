@@ -82,17 +82,7 @@ const handler = async (m, { conn, text }) => {
         }
         
         await conn.sendMessage(m.chat, { 
-            text: txt,
-            contextInfo: {
-                externalAdReplyOffOffOff: {
-                    title: results[0].nama,
-                    body: `Play Store Search Result - ${search}`,
-                    thumbnailUrl: 'https://files.catbox.moe/dklg5y.jpg',
-                    sourceUrl: results[0].link,
-                    mediaType: 1,
-                    renderLargerThumbnail: true
-                }
-            }
+            text: txt
         })
     } catch (e) {
         m.reply('Terjadi kesalahan saat melakukan pencarian')

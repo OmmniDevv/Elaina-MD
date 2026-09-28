@@ -69,17 +69,7 @@ Gunakan kata-kata dramatis seperti "Waga na wa Megumin!", "Explosion!", atau "Ke
     if (!result) throw Error("Gagal mendapatkan respon dari Megumin.")
 
     await conn.sendMessage(m.chat, {
-      text: result,
-      contextInfo: {
-        externalAdReplyOff: {
-          title: 'Megumin AI',
-          body: 'Crimson Demon Clan',
-          thumbnailUrl: 'https://files.catbox.moe/6v7y8y.jpg', // Ganti dengan link gambar Megumin pilihanmu
-          sourceUrl: 'https://cdn.nekohime.site/file/qD6ee9Uz.jpeg',
-          mediaType: 1,
-          renderLargerThumbnail: false
-        }
-      }
+      text: result
     }, { quoted: m })
 
   } catch (e) {

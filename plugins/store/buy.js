@@ -102,19 +102,8 @@ async function handler(m, { sock }) {
             }
         ]
         
-        let thumbnail = storeImage || null
-        
         return sock.sendMessage(m.chat, {
             text: txt,
-            contextInfo: thumbnail ? {
-                externalAdReply: {
-                    title: '💳 Beli dengan Saldo',
-                    body: `Saldo: Rp ${userKoin.toLocaleString('id-ID')}`,
-                    thumbnail,
-                    mediaType: 1,
-                    renderLargerThumbnail: true
-                }
-            } : undefined,
             interactiveButtons
         }, { quoted: m })
     }

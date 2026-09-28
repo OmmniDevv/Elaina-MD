@@ -127,17 +127,7 @@ User adalah seseorang yang membuat Rimuru nyaman untuk ngobrol panjang. Kalau us
     }
 
     await conn.sendMessage(m.chat, {
-      text: result.text,
-      contextInfo: {
-        externalAdReplyOff: {
-          title: "Rimuru AI",
-          body: "Rimuru sedang mendengarkanmu… jadi jangan bikin Rimuru cemburu ya 💙",
-          thumbnailUrl: "https://files.cloudkuimages.guru/images/zdpX9nJZ.jpg",
-          sourceUrl: "https://t.me/HlmnXD",
-          mediaType: 1,
-          renderLargerThumbnail: true
-        }
-      }
+      text: result.text
     }, { quoted: m })
 
   } catch (err) {

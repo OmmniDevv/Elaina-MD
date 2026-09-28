@@ -100,17 +100,7 @@ Selalu balas sebagai Oguri Cap. Jangan keluar karakter.
     sessions[user].chat = sessions[user].chat.slice(-10)
 
     await conn.sendMessage(m.chat, {
-      text: result,
-      contextInfo: {
-        externalAdReplyOff: {
-          title: "Oguri Cap AI",
-          body: "The Gray Phantom is here for you, Trainer!",
-          thumbnailUrl: "https://cdn.nekohime.site/file/qygILH9m.jpeg", // Ganti dengan URL foto Oguri Cap
-          sourceUrl: "https://github.com/himanackerman",
-          mediaType: 1,
-          renderLargerThumbnail: true
-        }
-      }
+      text: result
     }, { quoted: m })
 
   } catch (err) {

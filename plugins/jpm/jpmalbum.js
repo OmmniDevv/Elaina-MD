@@ -49,17 +49,6 @@ function getContextInfo(title = '📢 ᴊᴘᴍ ᴀʟʙᴜᴍ', body = 'Album Br
         }
     }
 
-    if (cachedThumb) {
-        contextInfo.externalAdReply = {
-            title,
-            body,
-            thumbnail: cachedThumb,
-            sourceUrl: config.saluran?.link || '',
-            mediaType: 1,
-            renderLargerThumbnail: false
-        }
-    }
-
     return contextInfo
 }
 

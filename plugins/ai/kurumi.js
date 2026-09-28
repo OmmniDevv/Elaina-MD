@@ -49,15 +49,7 @@ async function handler(m, { sock, text }) {
     }
 
     await conn.sendMessage(m.chat, {
-      text: data.result,
-      contextInfo: {
-        externalAdReplyOff: {
-          title: "Kurumi Tokisaki AI",
-          thumbnailUrl: "https://raw.githubusercontent.com/himanackerman/Image/main/1767877404043-832.jpeg",
-          mediaType: 1,
-          renderLargerThumbnail: true
-        }
-      }
+      text: data.result
     }, { quoted: m })
 
   } catch (err) {

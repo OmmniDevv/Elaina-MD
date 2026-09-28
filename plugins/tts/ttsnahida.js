@@ -76,13 +76,7 @@ async function handler(m, { sock }) {
             ptt: true,
             contextInfo: {
                 isForwarded: true,
-                forwardingScore: 999,
-                externalAdReply: {
-                    title: '🌿 Nahida TTS',
-                    body: text.substring(0, 50),
-                    thumbnailUrl: 'https://i.ibb.co/5xK7QnW/tts.png',
-                    mediaType: 2
-                }
+                forwardingScore: 999
             }
         }, { quoted: m })
         

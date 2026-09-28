@@ -48,17 +48,7 @@ async function handler(m, { sock, args }) {
   await conn.sendMessage(m.chat, {
     audio: audioBuffer,
     mimetype: 'audio/mpeg',
-    ptt: false,
-    contextInfo: {
-      externalAdReplyOffOffOff: {
-        title: "🎧 Sad Music",
-        body: "Powered by Ryo Yamada MD",
-        thumbnail: thumb,
-        sourceUrl: "https://github.com/Rangelofficial/Sad-Music",
-        mediaType: 2,
-        renderLargerThumbnail: false
-      }
-    }
+    ptt: false
   }, { quoted: m })
 }
 

@@ -96,17 +96,7 @@ User adalah orang yang dekat denganmu.
     sessions[user].chat = sessions[user].chat.slice(-10)
 
     await conn.sendMessage(m.chat, {
-      text: result,
-      contextInfo: {
-        externalAdReplyOff: {
-          title: "Mahiru AI",
-          body: "Shiina Mahiru sedang menemanimu 🤍",
-          thumbnailUrl: "https://cdn.nekohime.site/file/CzoG-UNW.jpeg",
-          sourceUrl: "https://github.com/himanackerman",
-          mediaType: 1,
-          renderLargerThumbnail: true
-        }
-      }
+      text: result
     }, { quoted: m })
 
   } catch (err) {

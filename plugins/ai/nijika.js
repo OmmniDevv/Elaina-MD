@@ -73,17 +73,7 @@ User adalah cowok yang kamu ajak ngobrol dengan ramah.
     if (!result) throw Error("Gagal mendapatkan respon dari Nijika.")
 
     await conn.sendMessage(m.chat, {
-      text: result,
-      contextInfo: {
-        externalAdReplyOff: {
-          title: 'Nijika Ijichi AI',
-          body: 'Bocchi the Rock',
-          thumbnailUrl: 'https://files.catbox.moe/g6twz1.jpg',
-          sourceUrl: 'https://github.com/himanackerman',
-          mediaType: 1,
-          renderLargerThumbnail: true
-        }
-      }
+      text: result
     }, { quoted: m })
 
   } catch (e) {

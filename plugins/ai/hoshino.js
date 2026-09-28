@@ -77,17 +77,7 @@ User adalah cowok yang bikin Hoshino nyaman ngobrol.
     if (!result) throw Error("Gagal mendapatkan respon dari Hoshino.")
 
     await conn.sendMessage(m.chat, {
-      text: result,
-      contextInfo: {
-        externalAdReplyOff: {
-          title: 'Hoshino AI',
-          body: 'Blue Archive',
-          thumbnailUrl: 'https://files.catbox.moe/spq2io.jpg',
-          sourceUrl: 'https://github.com/himanackerman',
-          mediaType: 1,
-          renderLargerThumbnail: true
-        }
-      }
+      text: result
     }, { quoted: m })
 
   } catch (e) {

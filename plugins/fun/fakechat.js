@@ -145,16 +145,6 @@ async function handler(m, { sock }) {
         }
     }
     
-    if (ppUrl) {
-        contextInfo.externalAdReply = {
-            title: `Chat dengan ${targetName}`,
-            body: messages[0].slice(0, 50),
-            thumbnailUrl: ppUrl,
-            mediaType: 1,
-            renderLargerThumbnail: true
-        }
-    }
-    
     await sock.sendMessage(m.chat, {
         text: chatText,
         contextInfo

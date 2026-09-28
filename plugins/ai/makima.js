@@ -84,17 +84,7 @@ Gunakan panggilan seperti "Anak baik" atau "Peliharaan" jika merasa perlu member
     sessions[user].chat = sessions[user].chat.slice(-10)
 
     await conn.sendMessage(m.chat, {
-      text: result,
-      contextInfo: {
-        externalAdReplyOff: {
-          title: "Makima AI",
-          body: "Rimuru - MD",
-          thumbnailUrl: "https://cdn.nekohime.site/file/xWIEgMEO.jpeg", // Ganti dengan URL foto Makima
-          sourceUrl: "https://github.com/himanackerman",
-          mediaType: 1,
-          renderLargerThumbnail: true
-        }
-      }
+      text: result
     }, { quoted: m })
 
   } catch (err) {

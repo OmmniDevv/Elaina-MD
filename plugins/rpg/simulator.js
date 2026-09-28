@@ -125,19 +125,7 @@ minuman: 200
 			};
 
 			conn.sendMessage(m.chat, {
-				text: `Horee🎉.. kamu sudah login ke dunia simulator 😉, perjalanan ini tidak pendek lho..\nkamu akan menikmati simulator yang menakjubkan dan fantastis banget😃\n\n*Biodata kamu di simulator*:\n╭ [ *INFORMATION* ]\n┃ Nama: ${t1}\n┃ Gender: ${t2}\n┃ Umur: ${t3}\n┃ Login: true\n╰❲ *S I M U L A T O R  V1.0* (beta) ❳`,
-				contextInfo: {
-					externalAdReplyOffOffOff: {
-						showAdAttribution: true,
-						title: 'WELCOME TO WORD',
-						body: 'SIMULATOR V1.0 (beta)',
-						mediaType: 1,
-						mediaUrl: '',
-						thumbnailUrl: pp,
-						sourceUrl: '',
-						renderLargerThumbnail: true
-					}
-				}
+				text: `Horee🎉.. kamu sudah login ke dunia simulator 😉, perjalanan ini tidak pendek lho..\nkamu akan menikmati simulator yang menakjubkan dan fantastis banget😃\n\n*Biodata kamu di simulator*:\n╭ [ *INFORMATION* ]\n┃ Nama: ${t1}\n┃ Gender: ${t2}\n┃ Umur: ${t3}\n┃ Login: true\n╰❲ *S I M U L A T O R  V1.0* (beta) ❳`
 			}, {
 				quoted: m
 			});
@@ -373,19 +361,7 @@ Tanggal nikah: ${hari}, ${tanggal}
 mas kawin: emas
 
 *Note*: untuk melihat status kalian berdua bisa ketik\n*/simulator status*
-`, 
-    contextInfo: {
-					externalAdReplyOffOffOff: {
-						showAdAttribution: true,
-						title: 'PERNIKAHAN',
-						body: 'SIMULATOR V1.0 (beta)',
-						mediaType: 1,
-						mediaUrl: '',
-						thumbnailUrl: 'https://telegra.ph/file/4e844402dcacd2706c2ae.jpg',
-						sourceUrl: '',
-						renderLargerThumbnail: true
-					}
-				}}, {quoted: m, mentions: m.sender, psgn})
+`}, {quoted: m, mentions: m.sender, psgn})
 
 break 
 case 'status':

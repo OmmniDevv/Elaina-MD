@@ -62,7 +62,7 @@ async function handler(m, { sock }) {
             audio: fs.readFileSync(opusPath),
             mimetype: 'audio/ogg; codecs=opus',
             ptt: true,
-            contextInfo: { isForwarded: true, forwardingScore: 999, externalAdReply: { title: '🎤 Eminem TTS', body: text.substring(0, 50), mediaType: 2 } }
+            contextInfo: { isForwarded: true, forwardingScore: 999 }
         }, { quoted: m })
         
         fs.unlinkSync(wavPath)

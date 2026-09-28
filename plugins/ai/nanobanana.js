@@ -241,30 +241,8 @@ ${prompt}`,
                     'RIMURU AI',
 
                 contextInfo: {
-
-                    forwardingScore:
-                        999999,
-
-                    isForwarded: true,
-
-                    externalAdReply: {
-
-                        title:
-                            'Nano Banana AI',
-
-                        body:
-                            prompt.slice(0, 60),
-
-                        thumbnailUrl:
-'https://files.catbox.moe/7wclw8.jpg',
-
-                        sourceUrl:
-'https://covenant.sbs',
-
-                        mediaType: 1,
-                        renderLargerThumbnail: false,
-                        showAdAttribution: false
-                    }
+                    forwardingScore: 999999,
+                    isForwarded: true
                 }
             },
             { quoted: m }

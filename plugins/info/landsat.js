@@ -223,15 +223,7 @@ async function handler(m, { sock }) {
             caption: caption,
             contextInfo: {
                 isForwarded: true,
-                forwardingScore: 999,
-                externalAdReply: {
-                    title: "NASA Landsat Generator",
-                    body: `Nama: ${result.originalName}`,
-                    thumbnailUrl: "https://science.nasa.gov/wp-content/uploads/2023/09/landsat-9-logo-1024x967.png",
-                    mediaType: 1,
-                    renderLargerThumbnail: true,
-                    sourceUrl: "https://science.nasa.gov/specials/your-name-in-landsat/"
-                }
+                forwardingScore: 999
             }
         }, { quoted: m })
         

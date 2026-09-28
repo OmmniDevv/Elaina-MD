@@ -73,17 +73,7 @@ User adalah cowok yang kamu ajak ngobrol, meski kamu sangat grogi.
     if (!result) throw Error("Gagal mendapatkan respon dari Bocchi.")
 
     await conn.sendMessage(m.chat, {
-      text: result,
-      contextInfo: {
-        externalAdReplyOff: {
-          title: 'Bocchi AI',
-          body: 'Bocchi the Rock',
-          thumbnailUrl: 'https://files.catbox.moe/8o5zc7.jpg',
-          sourceUrl: 'https://github.com/himanackerman',
-          mediaType: 1,
-          renderLargerThumbnail: true
-        }
-      }
+      text: result
     }, { quoted: m })
 
   } catch (e) {

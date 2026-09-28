@@ -122,19 +122,8 @@ async function handler(m, { sock }) {
         })
     }
     
-    let thumbnail = storeImage || null
-    
     return sock.sendMessage(m.chat, {
         text: txt.trim(),
-        contextInfo: thumbnail ? {
-            externalAdReply: {
-                title: '📋 Order Saya',
-                body: 'Riwayat pesanan kamu',
-                thumbnail,
-                mediaType: 1,
-                renderLargerThumbnail: true
-            }
-        } : undefined,
         interactiveButtons
     }, { quoted: m })
 }

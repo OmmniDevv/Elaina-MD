@@ -52,15 +52,7 @@ async function handler(m, { sock }) {
         m.react('✅')
         
         await sock.sendMessage(m.chat, {
-            text: `🔗 *ʙɪᴛʟʏ sʜᴏʀᴛʟɪɴᴋ*\n\n> *Original:* ${url.substring(0, 50)}${url.length > 50 ? '...' : ''}\n> *Short:* ${shortUrl}`,
-            contextInfo: {
-                externalAdReply: {
-                    title: 'Bitly Shortlink',
-                    body: shortUrl,
-                    sourceUrl: shortUrl,
-                    mediaType: 1
-                }
-            }
+            text: `🔗 *ʙɪᴛʟʏ sʜᴏʀᴛʟɪɴᴋ*\n\n> *Original:* ${url.substring(0, 50)}${url.length > 50 ? '...' : ''}\n> *Short:* ${shortUrl}`
         }, { quoted: m })
         
         await sock.sendMessage(m.chat, {

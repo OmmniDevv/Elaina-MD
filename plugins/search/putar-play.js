@@ -88,21 +88,17 @@ async function handler(m, { sock }) {
 ⏳ *Mengirim audio dalam 5 detik...*
         `.trim()
 
-        // Kirim pesan dengan thumbnail preview
-        await sock.sendMessage(m.chat, {
-            text: caption,
-            contextInfo: {
-                externalAdReply: {
-                    title: "🖤 Rimuru Dark Stage",
-                    body: res.title,
-                    mediaType: 1,
-                    mediaUrl: res.url,
-                    sourceUrl: res.url,
-                    thumbnailUrl: res.thumbnail,
-                    renderLargerThumbnail: true
-                }
-            }
-        }, { quoted: m })
+        // Kirim pesan preview info lagu
+        if (res.thumbnail) {
+            await sock.sendMessage(m.chat, {
+                image: { url: res.thumbnail },
+                caption: caption
+            }, { quoted: m })
+        } else {
+            await sock.sendMessage(m.chat, {
+                text: caption
+            }, { quoted: m })
+        }
 
         // ========== STEP 2: DELAY 5 DETIK ==========
         await m.reply(`🎵 *Darling...* Audio akan dikirim sebentar lagi~`)

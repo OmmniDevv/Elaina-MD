@@ -58,19 +58,7 @@ const handler = async (m, { conn }) => {
 `.trim()
 
   await conn.sendMessage(m.chat, {
-    text: caption,
-    contextInfo: {
-      externalAdReplyOffOffOff: {
-        title: 'B A N K  I N F O',
-        body: '',
-        mediaType: 1,
-        previewType: 'PHOTO',
-        renderLargerThumbnail: true,
-        thumbnailUrl: 'https://files.catbox.moe/c67nx0.jpg',
-        sourceUrl: global.config?.website || '',
-        mediaUrl: flaImg.getRandom() + 'BANK INFO'
-      }
-    }
+    text: caption
   }, { quoted: m })
 }
 

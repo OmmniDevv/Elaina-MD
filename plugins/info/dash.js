@@ -43,16 +43,6 @@ async function handler(m, { sock }) {
   await conn.relayMessage(m.chat, {
     extendedTextMessage: {
       text: handlers,
-      contextInfo: {
-        externalAdReplyOffOffOff: {
-          title: '',
-          mediaType: 1,
-          previewType: 0,
-          renderLargerThumbnail: true,
-          thumbnailUrl: 'https://telegra.ph/file/c43ee155efc11b774bee3.jpg',
-          sourceUrl: ''
-        }
-      },
       mentions: [m.sender]
     }
   }, {})

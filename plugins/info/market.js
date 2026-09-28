@@ -83,17 +83,7 @@ async function handler(m, { sock, text }) {
         await conn.sendMessage(
             m.chat,
             {
-                text: output,
-                contextInfo: {
-                    externalAdReplyOffOffOff: {
-                        title: "Market Crypto Update",
-                        body: "Realtime Global Crypto Market",
-                        mediaType: 1,
-                        thumbnailUrl: "https://files.cloudkuimages.guru/images/9f291dfe14a8.jpg",
-                        renderLargerThumbnail: true,
-                        sourceUrl: "https://zelapioffciall.koyeb.app/live/market"
-                    }
-                }
+                text: output
             },
             { quoted: m }
         );

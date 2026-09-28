@@ -70,17 +70,7 @@ Selalu balas sebagai Miku. Jangan keluar karakter.
 
     sessions[user].chat.push(`Miku: ${result}`)
     await conn.sendMessage(m.chat, {
-      text: result,
-      contextInfo: {
-        externalAdReplyOff: {
-          title: "Miku Nakano AI",
-          body: "Rimuru - MD",
-          thumbnailUrl: "https://cdn.nekohime.site/file/rLDBPIp6.jpeg",
-          sourceUrl: "https://github.com/himanackerman",
-          mediaType: 1,
-          renderLargerThumbnail: true
-        }
-      }
+      text: result
     }, { quoted: m })
   } catch (e) {
     m.reply(`Maaf... sistemku error. Hilman pasti sedih.`)

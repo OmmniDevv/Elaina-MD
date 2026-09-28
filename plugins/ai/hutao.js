@@ -75,17 +75,7 @@ User adalah cowok yang Hu Tao anggap menarik untuk diajak ngobrol.
     if (!result) throw Error("Gagal mendapatkan respon dari Hu Tao.")
 
     await conn.sendMessage(m.chat, {
-      text: result,
-      contextInfo: {
-        externalAdReplyOff: {
-          title: 'Hu Tao AI',
-          body: 'Genshin Impact',
-          thumbnailUrl: 'https://files.catbox.moe/72kpvd.jpg',
-          sourceUrl: 'https://github.com/himanackerman',
-          mediaType: 1,
-          renderLargerThumbnail: true
-        }
-      }
+      text: result
     }, { quoted: m })
 
   } catch (e) {

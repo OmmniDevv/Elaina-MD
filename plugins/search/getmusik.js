@@ -50,18 +50,6 @@ async function getContextInfo(title, body, thumbnail) {
         }
     }
 
-    const thumb = thumbnail || await getThumbMusic()
-    if (thumb) {
-        ctx.externalAdReply = {
-            title,
-            body,
-            thumbnail: thumb,
-            mediaType: 1,
-            renderLargerThumbnail: true,
-            sourceUrl: config.saluran?.link || ''
-        }
-    }
-
     return ctx
 }
 

@@ -70,15 +70,7 @@ const handler = async (m, { sock, text, command }) => {
             newsletterJid: chidList[0], 
             serverMessageId: null,
             newsletterName: "Ryo Yamada",
-          },
-          externalAdReplyOffOffOff: {
-            title: "Cihuyy",
-            body: text || "Pesan audio",
-            thumbnailUrl: "https://files.catbox.moe/liodxn.jpg", // Ubah sama thumbnail bot kalian
-            sourceUrl: null,
-            mediaType: 1,
-            renderLargerThumbnail: false,
-          },
+          }
         }
       };
     } else if (/sticker/.test(mime)) {

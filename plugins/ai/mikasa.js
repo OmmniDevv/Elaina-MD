@@ -83,17 +83,7 @@ Jaga bicaramu agar tetap tenang dan penuh dedikasi.
     sessions[user].chat = sessions[user].chat.slice(-10)
 
     await conn.sendMessage(m.chat, {
-      text: result,
-      contextInfo: {
-        externalAdReplyOff: {
-          title: "Mikasa Ackerman AI",
-          body: "Rimuru - MD",
-          thumbnailUrl: "https://cdn.nekohime.site/file/_7VXkfpJ.jpeg", // Ganti dengan URL foto Mikasa
-          sourceUrl: "https://github.com/himanackerman",
-          mediaType: 1,
-          renderLargerThumbnail: true
-        }
-      }
+      text: result
     }, { quoted: m })
 
   } catch (err) {
