@@ -373,8 +373,7 @@ function startGiveawayChecker(sock, db) {
       try {
         const { getDatabase } = await import("../../src/lib/elaina-database.js");
         const currentDb = getDatabase();
-        const { getSocket } = await import("../../src/connection.js");
-        const currentSock = getSocket();
+        const currentSock = global.conn;
         if (!currentSock) return;
 
         const giveaways = currentDb.setting("giveaways") || {};

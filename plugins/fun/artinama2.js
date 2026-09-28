@@ -10,25 +10,27 @@ export const FEATURE_CREDIT = "Fitur By: Anita Putri Azzahra\nFitur SC Bot Rimur
 
 
 import fetch from 'node-fetch'
-import request from 'request'
 import * as cheerio from 'cheerio'
 
 let handler = async (m, { text }) => {
   if (!text) throw 'Namanya siapa?'
   let nama = text
-request.get({
-        headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url:     'http://www.primbon.com/arti_nama.php?nama1='+ nama +'&proses=+Submit%21+',
-      },function(error, response, body){
-          let $ = cheerio.load(body);
-          var y = $.html().split('arti:')[1];
-          var t = y.split('method="get">')[1];
-          var f = y.replace(t ," ");
-          var x = f.replace(/<br\s*[\/]?>/gi, "\n");
-          var h  = x.replace(/<[^>]*>?/gm, '');
-      console.log(""+ h);
-      m.reply(`Arti Dari Nama ${nama} Adalah ${nama}\n\n${h}`)
-  });
+  try {
+    const res = await fetch('http://www.primbon.com/arti_nama.php?nama1=' + encodeURIComponent(nama) + '&proses=+Submit%21+', {
+      headers: { 'content-type': 'application/x-www-form-urlencoded' }
+    })
+    const body = await res.text()
+    let $ = cheerio.load(body)
+    var y = $.html().split('arti:')[1]
+    if (!y) throw 'Arti nama tidak ditemukan.'
+    var t = y.split('method="get">')[1]
+    var f = y.replace(t, " ")
+    var x = f.replace(/<br\s*[\/]?>/gi, "\n")
+    var h = x.replace(/<[^>]*>?/gm, '').trim()
+    m.reply(`Arti Dari Nama ${nama} Adalah:\n\n${h}`)
+  } catch (e) {
+    throw e.message || 'Gagal mengambil arti nama.'
+  }
 }
 const pluginConfig = {
   name: 'artinama2',
