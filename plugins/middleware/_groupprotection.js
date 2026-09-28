@@ -35,6 +35,8 @@ handler.before = async function (m) {
   if (m.isBaileys) return false
 
   const db = getDatabase()
+  // Jika database belum selesai inisialisasi, skip proteksi grup dan jangan crash handler
+  if (!db?.ready) return false
   const sock = this
 
   // Cache dulu untuk antiremove — tidak perlu return

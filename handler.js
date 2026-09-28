@@ -687,24 +687,28 @@ export async function handler(chatUpdate) {
                         [[[], new RegExp]]
             ).find(p => p[1])
             if (typeof plugin.before === 'function') {
-                if (await plugin.before.call(this, m, {
-                    match,
-                    conn: this,
-                    participants,
-                    groupMetadata,
-                    user,
-                    bot,
-                    isROwner,
-                    isOwner,
-                    isRAdmin,
-                    isAdmin,
-                    isBotAdmin,
-                    isPrems,
-                    chatUpdate,
-                    __dirname: ___dirname,
-                    __filename
-                }))
-                    continue
+                try {
+                    if (await plugin.before.call(this, m, {
+                        match,
+                        conn: this,
+                        participants,
+                        groupMetadata,
+                        user,
+                        bot,
+                        isROwner,
+                        isOwner,
+                        isRAdmin,
+                        isAdmin,
+                        isBotAdmin,
+                        isPrems,
+                        chatUpdate,
+                        __dirname: ___dirname,
+                        __filename
+                    }))
+                        continue
+                } catch (e) {
+                    console.error(`[before:${name}]`, e)
+                }
             }
             if (typeof plugin !== 'function')
                 continue
@@ -734,9 +738,9 @@ export async function handler(chatUpdate) {
                     let chat = global.db.data.chats[m.chat]
                     if (!m.sender) return
             let user = global.db.data.users[m.sender]
-                    if (name != 'owner-unbanchat.js' && name != 'owner-exec.js' && name != 'owner-exec2.js' && name != 'tool-delete.js' && chat?.isBanned)
+                    if (!name.endsWith('owner-unbanchat.js') && !name.endsWith('owner-exec.js') && !name.endsWith('owner-exec2.js') && !name.endsWith('tool-delete.js') && !isOwner && chat?.isBanned)
                         return // Except this
-                    if (name != 'owner-unbanuser.js' && user?.banned)
+                    if (!name.endsWith('owner-unbanuser.js') && user?.banned)
                         return
                 }
                 if (plugin.rowner && plugin.owner && !(isROwner || isOwner)) { // Both Owner
