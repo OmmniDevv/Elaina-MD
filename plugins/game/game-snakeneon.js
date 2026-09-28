@@ -1,4 +1,4 @@
-import { AIRich, MB } from '../../messagebuilder.js'; 
+import { randomUUID } from 'crypto'; 
 
 const htmlPayload = String.raw`<style>
 * { -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; box-sizing: border-box; }
@@ -46,29 +46,65 @@ document.getElementById('start').addEventListener('pointerdown',e=>{e.preventDef
 
 let handler = async (m, { conn, args, text }) => {
     try {
-        const rich = new AIRich(conn, {
-            dynamic: true,
-            unsupportedTypeAlert: false
-        });
-
-        rich.addSection(MB.htmlSection(htmlPayload, { trustedSources: ['lumnztyz.dev'] }))
-
-        await rich.send(m.chat, {
-            quoted: m,
-            includesUnifiedResponse: true,
-            includesSubmessages: false,
-            forwarded: true,
-            notification: false
-        });
-
+        const responseId = randomUUID();
+        await conn.relayMessage(
+            m.chat,
+            {
+                botForwardedMessage: {
+                    message: {
+                        richResponseMessage: {
+                            messageType: 1,
+                            submessages: [
+                                {
+                                    messageType: 2,
+                                    messageText: "Neon Snake"
+                                }
+                            ],
+                            unifiedResponse: {
+                                data: Buffer.from(JSON.stringify({
+                                    "response_id": responseId,
+                                    "sections": [
+                                        {
+                                            "view_model": {
+                                                "primitive": {
+                                                    "__typename": "GenAIaeacdsnwHtmlPrimitive",
+                                                    "payload": htmlPayload,
+                                                    "trusted_sources": [
+                                                        "lumnztyz.dev"
+                                                    ]
+                                                },
+                                                "__typename": "GenAISingleLayoutViewModel"
+                                            }
+                                        }
+                                    ]
+                                })).toString('base64')
+                            },
+                            contextInfo: {
+                                forwardingScore: 1,
+                                isForwarded: true,
+                                forwardedAiBotMessageInfo: {
+                                    botJid: "867051314767696@bot"
+                                },
+                                forwardOrigin: 4
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                messageId: responseId
+            }
+        );
     } catch (error) {
-        console.error('Gagal mengirim pesan snake:', error);
+        console.error('Gagal mengirim pesan neon snake:', error);
         m.reply('Eror!');
     }
 };
 
-handler.help = ['snake'];
+handler.help = ['snakeneon', 'neonsnake'];
 handler.tags = ['game'];
-handler.command = /^(snake)$/i;
+handler.category = 'game';
+handler.description = 'Main game Neon Snake HTML interaktif via Rich Message';
+handler.command = /^(snakeneon|neonsnake)$/i;
 
 export default handler;

@@ -1,4 +1,4 @@
-import { AIRich, MB } from '../../messagebuilder.js'; 
+import { randomUUID } from 'crypto'; 
 
 const html = String.raw`<style>
 * { -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; box-sizing: border-box; }
@@ -783,29 +783,65 @@ canvas#game { width: 100%; height: auto; background: #080b12; border: 1px solid 
 
 let handler = async (m, { conn, args, text }) => {
     try {
-        const rich = new AIRich(conn, {
-            dynamic: true,
-            unsupportedTypeAlert: false
-        });
-
-        rich.addSection(MB.htmlSection(html, { trustedSources: ['lumnztyz.dev'] }))
-
-        await rich.send(m.chat, {
-            quoted: m,
-            includesUnifiedResponse: true,
-            includesSubmessages: false,
-            forwarded: true,
-            notification: false
-        });
-
+        const responseId = randomUUID();
+        await conn.relayMessage(
+            m.chat,
+            {
+                botForwardedMessage: {
+                    message: {
+                        richResponseMessage: {
+                            messageType: 1,
+                            submessages: [
+                                {
+                                    messageType: 2,
+                                    messageText: "Block Blast Mini"
+                                }
+                            ],
+                            unifiedResponse: {
+                                data: Buffer.from(JSON.stringify({
+                                    "response_id": responseId,
+                                    "sections": [
+                                        {
+                                            "view_model": {
+                                                "primitive": {
+                                                    "__typename": "GenAIaeacdsnwHtmlPrimitive",
+                                                    "payload": html,
+                                                    "trusted_sources": [
+                                                        "lumnztyz.dev"
+                                                    ]
+                                                },
+                                                "__typename": "GenAISingleLayoutViewModel"
+                                            }
+                                        }
+                                    ]
+                                })).toString('base64')
+                            },
+                            contextInfo: {
+                                forwardingScore: 1,
+                                isForwarded: true,
+                                forwardedAiBotMessageInfo: {
+                                    botJid: "867051314767696@bot"
+                                },
+                                forwardOrigin: 4
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                messageId: responseId
+            }
+        );
     } catch (err) {
         console.error('Gagal menjalankan Block Blast:', err);
         m.reply('❌ Gagal memuat game Block Blast.');
     }
 };
 
-handler.help = ['blockblast'];
+handler.help = ['blockblast', 'bb'];
 handler.tags = ['game'];
+handler.category = 'game';
+handler.description = 'Main game Block Blast Mini HTML interaktif via Rich Message';
 handler.command = /^(blockblast|bb)$/i;
 
 export default handler;
