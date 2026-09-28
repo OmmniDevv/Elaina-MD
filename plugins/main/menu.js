@@ -1,27 +1,36 @@
 // © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
-// Menu kartu + tombol kategori (dropdown) + tombol cepat.
-// Transport: MB.Button bawaan paket (relayMessage + node biz/interactive/native_flow).
-// TANPA externalAdReply — sudah tidak didukung WA dan bikin pesan gagal terkirim.
-// Fallback berlapis supaya menu tetap sampai walau klien tidak dukung native flow.
-import fetch from 'node-fetch'
-import { MB } from '@rexxhayanasi/elaina-baileys'
+// Button Menu ala CANTARELLA MD (Native Flow Multi-Button: single_select dropdown + CTA + quick reply + GIF/Image header)
+import fs from 'fs'
+import axios from 'axios'
+import { prepareWAMessageMedia, generateWAMessageFromContent } from '@rexxhayanasi/elaina-baileys'
 import { CATEGORY_ORDER, CATEGORY_EMOJIS, buildUnifiedCommandMap } from '../../lib/categoryHelper.js'
 
 const NEWSLETTER_JID = '120363420914057249@newsletter'
 
-function clockString(ms) {
-    const h = Math.floor(ms / 3600000)
-    const m = Math.floor((ms % 3600000) / 60000)
-    const s = Math.floor((ms % 60000) / 1000)
-    return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':')
-}
-
-function getTimeGreeting() {
-    const hour = new Date(Date.now() + 7 * 3600000).getUTCHours()
-    if (hour >= 4 && hour < 11) return 'Selamat Pagi 🌅'
-    if (hour >= 11 && hour < 15) return 'Selamat Siang ☀️'
-    if (hour >= 15 && hour < 19) return 'Selamat Sore 🌆'
-    return 'Selamat Malam 🌙'
+const CATEGORY_META = {
+    main: { bold: '𝗠𝗔𝗜𝗡', title: 'Command utama bot', desc: 'menu, help, ping, info bot' },
+    downloader: { bold: '𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗', title: 'Downloader media sosial', desc: 'tiktok, youtube, ig, fb, terabox dll' },
+    ai: { bold: '𝗔𝗜 𝗖𝗛𝗔𝗧', title: 'Kecerdasan buatan & AI', desc: 'chatgpt, gemini, groq, deepseek dll' },
+    game: { bold: '𝗚𝗔𝗠𝗘', title: 'Game interaktif di grup', desc: 'tebakkata, susunkata, tebakgambar dll' },
+    rpg: { bold: '⚔️ 𝗥𝗣𝗚', title: 'Game RPG & adventure', desc: 'dungeon, berburu, craft, inventory dll' },
+    group: { bold: '𝗚𝗥𝗨𝗣', title: 'Panel manajemen grup', desc: 'promote, kick, tagall, slowmode dll' },
+    sticker: { bold: '𝗦𝗧𝗜𝗖𝗞𝗘𝗥', title: 'Buat & edit sticker', desc: 'brat, attp, sticker, emojimix dll' },
+    tools: { bold: '𝗧𝗢𝗢𝗟𝗦', title: 'Tools & utilitas bot', desc: 'ocr, translate, convert, shorten dll' },
+    audio: { bold: '𝗔𝗨𝗗𝗜𝗢', title: 'Audio player, tts & musik', desc: 'tts, vn, sound effect, musik dll' },
+    anime: { bold: '𝗔𝗡𝗜𝗠𝗘', title: 'Info & asupan anime', desc: 'waifu, animeinfo, manga, wallpaper dll' },
+    canvas: { bold: '𝗖𝗔𝗡𝗩𝗔𝗦', title: 'Efek gambar & fake generator', desc: 'wanted, card, meme, ektp dll' },
+    maker: { bold: '𝗘𝗣𝗛𝗢𝗧𝗢', title: 'Generator logo & teks efek', desc: 'glitch, neon, text effect, banner dll' },
+    internet: { bold: '𝗜𝗡𝗧𝗘𝗥𝗡𝗘𝗧', title: 'Pencarian & stalking web', desc: 'google, wikipedia, igstalk, ttstalk dll' },
+    islamic: { bold: '𝗥𝗘𝗟𝗜𝗚𝗜', title: 'Jadwal sholat & doa islami', desc: 'jadwalsholat, quran, asmaulhusna dll' },
+    fun: { bold: '𝗛𝗜𝗕𝗨𝗥𝗔𝗡', title: 'Fun, game & hiburan', desc: 'jokes, tebak, rate, ship, dare dll' },
+    cek: { bold: '𝗖𝗘𝗞', title: 'Cek sifat & karakter', desc: 'cekcantik, cekganteng, cekbucin dll' },
+    quotes: { bold: '𝗣𝗥𝗜𝗠𝗕𝗢𝗡', title: 'Zodiak, mimpi & kata bijak', desc: 'quotes, zodiak, mimpi, primbon dll' },
+    random: { bold: '𝗥𝗔𝗡𝗗𝗢𝗠', title: 'Konten acak & asupan', desc: 'random image, cecan, cogan dll' },
+    xp: { bold: '𝗨𝗦𝗘𝗥', title: 'Profil, level & koin user', desc: 'profile, daily, exp, koin, top dll' },
+    store: { bold: '𝗦𝗧𝗢𝗥𝗘', title: 'Manajemen toko & produk', desc: 'list, order, buy, tambahstok dll' },
+    info: { bold: '𝗜𝗡𝗙𝗢', title: 'Informasi bot & server', desc: 'speed, runtime, health, dashboard dll' },
+    owner: { bold: '𝗢𝗪𝗡𝗘𝗥', title: 'Panel kontrol khusus owner', desc: 'eval, restart, backup, ban dll' },
+    nsfw: { bold: '𝗡𝗦𝗙𝗪', title: 'Konten khusus 18+', desc: 'hentai, nsfw art dll' }
 }
 
 function getSortedCats(cmdMap, isOwner) {
@@ -34,194 +43,267 @@ function getSortedCats(cmdMap, isOwner) {
         .filter(cat => cmdMap[cat]?.length > 0 && !(cat === 'owner' && !isOwner) && !exclude.includes(cat))
 }
 
-// Thumbnail: pakai gambar bawaan Elaina (global.thumb), bukan file baru.
-// Dibiarkan skala & rasio asli — WA yang motong pas render, bukan kita.
-async function loadThumb() {
-    try {
-        const { readFileSync } = await import('fs')
-        return readFileSync(global.thumb)
-    } catch {
-        return null
-    }
-}
+let handler = async (m, { conn, usedPrefix, isOwner, isPrems }) => {
+    try { await conn.sendMessage(m.chat, { react: { text: '⏳', key: m.key } }) } catch {}
 
-function orderQuoted(buffer, itemCount, title, token) {
-    return {
-        key: { fromMe: false, participant: '0@s.whatsapp.net', remoteJid: 'status@broadcast' },
+    const _mBot = global.namebot || 'Elaina MD'
+    const _mOwner = global.nameown || 'OmniDevv'
+    const _mPrefix = usedPrefix || '.'
+    const _mSaluran = global.saluran?.link || 'https://whatsapp.com/channel/0029VbBVsX60lwgz8fPNha18'
+    const _mNewsJid = NEWSLETTER_JID
+    const _mNewsName = _mBot
+
+    // ── Runtime & memory ──
+    const _mUp = Math.floor(process.uptime())
+    const _mUpD = Math.floor(_mUp / 86400)
+    const _mUpH = Math.floor((_mUp % 86400) / 3600)
+    const _mUpM = Math.floor((_mUp % 3600) / 60)
+    const _mRam = (process.memoryUsage().rss / 1048576).toFixed(1)
+    const _mUpStr = `${_mUpD}h ${_mUpH}j ${_mUpM}m`
+
+    // ── Commands ──
+    const cmdMap = buildUnifiedCommandMap()
+    let _mTotalCmd = 0
+    for (const cmds of Object.values(cmdMap)) _mTotalCmd += cmds.length
+    const sortedCats = getSortedCats(cmdMap, isOwner)
+
+    // ── Jam & tanggal (Asia/Jakarta) ──
+    const _mNow = new Date()
+    const _mJam = _mNow.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' })
+    const _mTgl = _mNow.toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' })
+
+    // ── Thumbnail / GIF Buffer ──
+    let _mThumbBuf = null
+    let _mIsGif = false
+    if (global.menuGif) {
+        try {
+            const res = await axios.get(global.menuGif, { responseType: 'arraybuffer', timeout: 10000 })
+            _mThumbBuf = Buffer.from(res.data)
+            _mIsGif = true
+        } catch {}
+    }
+    if (!_mThumbBuf && global.thumb && fs.existsSync(global.thumb)) {
+        try {
+            _mThumbBuf = fs.readFileSync(global.thumb)
+            _mIsGif = false
+        } catch {}
+    }
+
+    const _mText =
+`ʜᴀʟᴏ, @${m.sender.split('@')[0]} 👋
+sᴇɴᴀɴɢ ʙᴇʀᴛᴇᴍᴜ ᴅᴇɴɢᴀɴᴍᴜ.
+
+┌ ʙᴏᴛ ɪɴғᴏ
+│ ɴᴀᴍᴇ     : ${_mBot}
+│ ᴏᴡɴᴇʀ    : ${_mOwner}
+│ ᴜᴘᴛɪᴍᴇ   : ${_mUpStr}
+│ ᴍᴇᴍᴏʀʏ   : ${_mRam} ᴍʙ
+│ ᴄᴏᴍᴍᴀɴᴅ : ${_mTotalCmd} commands
+│ ᴊᴇɴɪs sᴄ  : ɢʀᴀᴛɪsᴀɴ
+└
+┌
+│ᴛɪᴍᴇ       ${_mJam} ᴡɪʙ
+│ᴅᴀᴛᴇ       ${_mTgl}
+└
+
+ɴᴇᴇᴅ ʙᴏᴛ ᴏʀ ɪɴғᴏ?
+${_mSaluran}
+ɢᴜɴᴀᴋᴀɴ ᴅᴇɴɢᴀɴ ʙɪᴊᴀᴋ`
+
+    // ── Category rows untuk single_select popup ──
+    const _mCategories = sortedCats.map(cat => {
+        const meta = CATEGORY_META[cat] || { bold: cat.toUpperCase(), title: `Kategori ${cat}`, desc: `${cmdMap[cat].length} commands` }
+        const emoji = CATEGORY_EMOJIS[cat] || '📁'
+        return {
+            header: `${emoji} ${meta.bold}`,
+            title: meta.title,
+            description: `${cmdMap[cat].length} cmds • ${meta.desc}`,
+            id: `${_mPrefix}menucat ${cat}`
+        }
+    })
+
+    // ── fakeQuoted Cantarella style ──
+    const _mQuoted = {
+        key: {
+            participant: `0@s.whatsapp.net`,
+            remoteJid: `status@broadcast`
+        },
         message: {
-            orderMessage: {
-                orderId: '1337',
-                thumbnail: buffer || null,
-                itemCount,
-                status: 'INQUIRY',
-                surface: 'CATALOG',
-                message: `★ Terima kasih\n✦ Ada Error? Lapor owner`,
-                orderTitle: title,
-                sellerJid: `${global.nomorbot}@s.whatsapp.net`,
-                token,
-                totalAmount1000: 0,
-                totalCurrencyCode: 'IDR',
-                contextInfo: {
-                    isForwarded: true,
-                    forwardingScore: 9,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: NEWSLETTER_JID,
-                        newsletterName: global.namebot,
-                        serverMessageId: 127
+            contactMessage: {
+                displayName: `🪸 ${_mBot}`,
+                vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:${_mBot}\nitem1.TEL;waid=0:+0\nEND:VCARD`,
+                sendEphemeral: true
+            }
+        }
+    }
+
+    // ── contextInfo ──
+    const _mCtx = {
+        mentionedJid: [m.sender],
+        forwardingScore: 9999,
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+            newsletterJid: _mNewsJid,
+            newsletterName: _mNewsName,
+            serverMessageId: 127
+        },
+        externalAdReply: {
+            title: _mBot,
+            body: `v6.3.0 • ${(conn.public ? 'Public' : 'Self').toUpperCase()}`,
+            mediaType: 1,
+            showAdAttribution: false,
+            renderLargerThumbnail: true,
+            ...((_mThumbBuf && !_mIsGif) ? { thumbnail: _mThumbBuf } : {}),
+            sourceUrl: _mSaluran
+        },
+        limited_time_offer: {
+            text: `Gunakan bot ini dengan bijak yak`,
+            url: _mSaluran,
+            copy_code: _mBot,
+            expiration_time: Date.now() * 999
+        }
+    }
+
+    const _mButtons = [
+        {
+            name: 'single_select',
+            buttonParamsJson: JSON.stringify({ has_multiple_buttons: true })
+        },
+        {
+            name: 'call_permission_request',
+            buttonParamsJson: JSON.stringify({ has_multiple_buttons: true })
+        },
+        {
+            name: 'single_select',
+            buttonParamsJson: JSON.stringify({
+                title: '⌗ ᴅᴀꜰᴛᴀʀ ᴋᴀᴛᴇɢᴏʀɪ ᴍᴇɴᴜ',
+                sections: [{
+                    title: '𓍢ִ໋ ᴘɪʟɪʜ ᴋᴀᴛᴇɢᴏʀɪ ʏᴀɴɢ ᴋᴀᴍᴜ ɪɴɢɪɴᴋᴀɴ',
+                    highlight_label: _mBot,
+                    rows: _mCategories
+                }],
+                has_multiple_buttons: true
+            })
+        },
+        {
+            name: 'cta_url',
+            buttonParamsJson: JSON.stringify({
+                display_text: 'ꜱᴀʟᴜʀᴀɴ ᴏꜰꜰɪᴄɪᴀʟ',
+                url: _mSaluran,
+                merchant_url: _mSaluran
+            })
+        },
+        {
+            name: 'cta_copy',
+            buttonParamsJson: JSON.stringify({
+                display_text: `⎙ ᴅᴇᴠ: ${_mOwner}`,
+                copy_code: `${_mBot} ✨`
+            })
+        },
+        {
+            name: 'quick_reply',
+            buttonParamsJson: JSON.stringify({ display_text: '</> ꜱᴇᴍᴜᴀ ᴄᴏᴍᴍᴀɴᴅ', id: `${_mPrefix}allmenu` })
+        },
+        {
+            name: 'quick_reply',
+            buttonParamsJson: JSON.stringify({ display_text: '⛁ ɪɴꜰᴏ ꜱᴇᴡᴀ ʙᴏᴛ', id: `${_mPrefix}sewa` })
+        },
+        {
+            name: 'quick_reply',
+            buttonParamsJson: JSON.stringify({ display_text: 'ⓘ ꜱᴛᴀᴛᴜꜱ ʙᴏᴛ', id: `${_mPrefix}ping` })
+        },
+        ...(isOwner ? [{
+            name: 'quick_reply',
+            buttonParamsJson: JSON.stringify({ display_text: '♔ ᴘᴀɴᴇʟ ᴏᴡɴᴇʀ', id: `${_mPrefix}menucat owner` })
+        }] : [])
+    ]
+
+    const _mFlowParams = JSON.stringify({
+        limited_time_offer: {
+            text: `ꜱᴇʟᴀᴍᴀᴛ ᴅᴀᴛᴀɴɢ ᴅɪ ${_mBot} !`,
+            url: _mSaluran,
+            copy_code: `${_mBot} ✨`,
+            expiration_time: Date.now() * 999
+        },
+        bottom_sheet: {
+            in_thread_buttons_limit: 2,
+            divider_indices: [2, 3, 4, 5, 6, 999],
+            list_title: 'ᴘɪʟɪʜ ᴋᴀᴛᴇɢᴏʀɪ ᴍᴇɴᴜ',
+            button_title: 'ᴊᴇʟᴀᴊᴀʜɪ ᴍᴇɴᴜ ꜱᴇᴋᴀʀᴀɴɢ'
+        }
+    })
+
+    try {
+        let _mHeader = { hasMediaAttachment: false }
+        if (_mThumbBuf && conn.waUploadToServer) {
+            try {
+                const _mMediaPrep = await prepareWAMessageMedia(
+                    _mIsGif ? { video: _mThumbBuf, gifPlayback: true } : { image: _mThumbBuf },
+                    { upload: conn.waUploadToServer }
+                )
+                _mHeader = _mIsGif
+                    ? { hasMediaAttachment: true, videoMessage: _mMediaPrep.videoMessage }
+                    : { hasMediaAttachment: true, imageMessage: _mMediaPrep.imageMessage }
+            } catch (upErr) {
+                console.error('[menu] prepareWAMessageMedia error:', upErr.message)
+            }
+        }
+
+        const _mProto = {
+            viewOnceMessage: {
+                message: {
+                    messageContextInfo: { deviceListMetadata: {}, deviceListMetadataVersion: 2 },
+                    interactiveMessage: {
+                        header: _mHeader,
+                        body: { text: _mText },
+                        footer: { text: global.Foah || `✦ ${_mBot}  •  ${global.wmcredit || _mOwner}` },
+                        contextInfo: _mCtx,
+                        nativeFlowMessage: {
+                            messageParamsJson: _mFlowParams,
+                            buttons: _mButtons
+                        }
                     }
                 }
             }
         }
-    }
-}
 
-let handler = async (m, { conn, usedPrefix, isOwner, isPrems }) => {
-    const user = global.db?.data?.users?.[m.sender] || {}
-    const pushName = m.pushName || m.name || 'Kamu'
-    const uptime = clockString(process.uptime() * 1000)
-    const greeting = getTimeGreeting()
-    const now = new Date(Date.now() + 7 * 3600000)
-    const timeStr = now.toLocaleTimeString('id', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    const role = isOwner ? '👑 Owner' : isPrems ? '💎 Premium' : '👤 User'
-
-    const cmdMap = buildUnifiedCommandMap()
-    let totalCmds = 0
-    for (const cmds of Object.values(cmdMap)) totalCmds += cmds.length
-    const sortedCats = getSortedCats(cmdMap, isOwner)
-
-    const thumb = await loadThumb()
-
-    // Baris kategori → dropdown. Tap satu baris menjalankan .menucat <kategori>,
-    // dan plugin menucat menampilkan seluruh command di kategori itu.
-    const catRows = sortedCats.map(cat => ({
-        header: '',
-        title: `${CATEGORY_EMOJIS[cat] || '📁'} ${cat.toUpperCase()}`,
-        description: `${cmdMap[cat].length} commands`,
-        id: `${usedPrefix}menucat ${cat}`
-    }))
-
-    const bodyText =
-`ʜᴀʟᴏ, ${pushName} 👋
-${greeting}! ꜱᴇʟᴀᴍᴀᴛ ᴅᴀᴛᴀɴɢ ᴅɪ *${global.namebot}* ✨
-
-┌─〔 🤖 \`ʙᴏᴛ ɪɴꜰᴏ\` 〕─⬣
-│ ✦ *ɴᴀᴍᴀ :* ${global.namebot}
-│ ✦ *ᴏᴡɴᴇʀ :* ${global.nameown}
-│ ✦ *ᴘʀᴇꜰɪx :* [ ${usedPrefix} ]
-│ ✦ *ᴜᴘᴛɪᴍᴇ :* ${uptime}
-│ ✦ *ᴛᴏᴛᴀʟ ᴄᴍᴅ :* ${totalCmds} commands
-╰─⬣
-
-┌─〔 👤 \`ᴜsᴇʀ ɪɴꜰᴏ\` 〕─⬣
-│ ✦ *ɴᴀᴍᴀ :* ${pushName}
-│ ✦ *ʀᴏʟᴇ :* ${role}
-│ ✦ *ʟᴇᴠᴇʟ :* ${user.level || 1}
-│ ✦ *ᴇxᴘ :* ${user.exp || 0}
-│ ✦ *ʟɪᴍɪᴛ :* ${user.limit || 0}
-│ ✦ *ᴡᴀᴋᴛᴜ :* ${timeStr} WIB
-╰─⬣
-
-ᴛᴇᴋᴀɴ *ᴘɪʟɪʜ ᴋᴀᴛᴇɢᴏʀɪ* ᴜɴᴛᴜᴋ ᴍᴇʟɪʜᴀᴛ ꜱᴇᴍᴜᴀ ᴍᴇɴᴜ
-ᴘᴇʀ ᴋᴀᴛᴇɢᴏʀɪ, ᴀᴛᴀᴜ ᴛᴇᴋᴀɴ ᴛᴏᴍʙᴏʟ ᴄᴇᴘᴀᴛ ᴅɪ ʙᴀᴡᴀʜ.`
-
-    const footerText = `✦ ${global.namebot}  •  ${global.wmcredit}`
-
-    const ctxInfo = {
-        mentionedJid: [m.sender],
-        forwardingScore: 999,
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-            newsletterJid: NEWSLETTER_JID,
-            newsletterName: global.namebot,
-            serverMessageId: 127
+        const _mGenMsg = generateWAMessageFromContent(m.chat, _mProto, { quoted: _mQuoted })
+        return await conn.relayMessage(m.chat, _mGenMsg.message, { messageId: _mGenMsg.key.id })
+    } catch (_mErr) {
+        console.error('[menu] relayMessage error, mencoba fallback 1:', _mErr.message)
+        // Fallback 1: interactiveMessage biasa
+        try {
+            return await conn.sendMessage(m.chat, {
+                interactiveMessage: {
+                    title: _mText,
+                    footer: global.Foah || `✦ ${_mBot}  •  ${global.wmcredit || _mOwner}`,
+                    contextInfo: _mCtx,
+                    nativeFlowMessage: {
+                        messageParamsJson: _mFlowParams,
+                        buttons: _mButtons
+                    }
+                }
+            }, { quoted: _mQuoted })
+        } catch (_mErr2) {
+            console.error('[menu] fallback 1 error, mencoba fallback 2:', _mErr2.message)
+            // Fallback 2: gambar / teks biasa
+            if (_mThumbBuf) {
+                return conn.sendMessage(m.chat, {
+                    image: _mThumbBuf,
+                    caption: _mText,
+                    mentions: [m.sender]
+                }, { quoted: _mQuoted })
+            }
+            return conn.sendMessage(m.chat, {
+                text: _mText,
+                mentions: [m.sender]
+            }, { quoted: _mQuoted })
         }
     }
-
-    const troli = orderQuoted(thumb, totalCmds, `📋 ${totalCmds} Commands`, 'elaina-menu')
-
-    const githubUrl = 'https://github.com/OmmniDevv/Elaina-MD'
-    const ownerWa = `https://wa.me/${global.nomorbot}`
-
-    // Tombol kategori: WAJIB quick_reply (single_select dibuang WA → pesan
-    // "tidak didukung"). Maks 10 tombol; sisanya tetap terbaca di body teks.
-    const btnCats = sortedCats.slice(0, 9)
-    const quickItems = btnCats.map(cat => ({
-        label: `${CATEGORY_EMOJIS[cat] || '📁'} ${cat.toUpperCase()}`,
-        id: `${usedPrefix}menucat ${cat}`
-    }))
-    quickItems.push({ label: '🌸 ꜱᴇᴍᴜᴀ ᴍᴇɴᴜ', id: `${usedPrefix}allmenu` })
-
-    const bodyWithCats =
-`${bodyText}
-
-┌─〔 📁 \`ᴋᴀᴛᴇɢᴏʀɪ\` 〕─⬣
-${sortedCats.map(cat => ` │ ${CATEGORY_EMOJIS[cat] || '📁'} *${cat.toUpperCase()}* — \`${cmdMap[cat].length}\` cmds · ${usedPrefix}menucat ${cat}`).join('\n')}
-╰─⬣`
-
-    // ── Lapis 1: kartu + tombol quick_reply via builder paket ──
-    try {
-        const b = new MB.Button(conn)
-        b.setTitle(global.namebot)
-        b.setSubtitle(`Owner: ${global.nameown}`)
-        b.setBody(bodyWithCats)
-        b.setFooter(footerText)
-        if (thumb) b.setImage(thumb)
-        b.setContextInfo(ctxInfo)
-        for (const it of quickItems) b.addReply(it.label, it.id)
-        return await b.send(m.chat, { quoted: troli })
-    } catch (e1) {
-        console.error('[menu] builder gagal:', e1.message)
-    }
-
-    // ── Lapis 2: interactiveMessage mentah (proto benar) → shim lib/simple.js ──
-    try {
-        await conn.sendMessage(m.chat, {
-            interactiveMessage: {
-                header: { title: global.namebot, subtitle: `Owner: ${global.nameown}`, hasMediaAttachment: false },
-                body: { text: bodyWithCats },
-                footer: { text: footerText },
-                contextInfo: ctxInfo,
-                nativeFlowMessage: {
-                    messageParamsJson: JSON.stringify({
-                        bottom_sheet: {
-                            in_thread_buttons_limit: 2,
-                            divider_indices: [999],
-                            list_title: 'ᴘɪʟɪʜ ᴋᴀᴛᴇɢᴏʀɪ ᴍᴇɴᴜ',
-                            button_title: 'ᴊᴇʟᴀᴊᴀʜɪ ᴍᴇɴᴜ sᴇᴋᴀʀᴀɴɢ'
-                        }
-                    }),
-                    buttons: quickItems.map(it => ({
-                        name: 'quick_reply',
-                        buttonParamsJson: JSON.stringify({ display_text: it.label, id: it.id })
-                    }))
-                }
-            }
-        }, { quoted: troli })
-        return
-    } catch (e2) {
-        console.error('[menu] shim gagal:', e2.message)
-    }
-
-    // ── Lapis 3: gambar bawaan + caption teks (dijamin tampil di klien apa pun) ──
-    const fallbackText = `${bodyWithCats}\n\n_© ${global.namebot} | ${global.wmcredit}_`
-
-    if (thumb) {
-        return conn.sendMessage(m.chat, {
-            image: thumb,
-            caption: fallbackText,
-            mentions: [m.sender]
-        }, { quoted: troli })
-    }
-    return conn.sendMessage(m.chat, {
-        text: fallbackText,
-        mentions: [m.sender]
-    }, { quoted: troli })
 }
 
-handler.help = ['menu', 'help', 'm']
+handler.help = ['menu', 'help', 'allmenu']
 handler.tags = ['main']
-handler.command = /^(menu|help|m|bantuan)$/i
-handler.owner = false
-handler.premium = false
+handler.command = /^(menu|help|m|bantuan|menunya)$/i
 
 export default handler

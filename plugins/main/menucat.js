@@ -100,7 +100,7 @@ let handler = async (m, { conn, usedPrefix, args, isOwner }) => {
 
 handler.help = ['menucat']
 handler.tags = ['main']
-handler.command = /^(menucat|mc|category|cat)$/i
+handler.command = /^(menucat|mc|category|cat|mcat)$/i
 handler.owner = false
 handler.premium = false
 
