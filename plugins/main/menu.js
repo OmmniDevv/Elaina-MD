@@ -89,15 +89,6 @@ let handler = async (m, { conn, usedPrefix, isOwner, isPrems }) => {
         } catch {}
     }
 
-    // Small thumbnail buffer (< 30KB) untuk contextInfo agar tidak melanggar batas payload WA
-    let smallThumb = null
-    if (_mThumbBuf && !_mIsGif) {
-        try {
-            const sharp = (await import('sharp')).default
-            smallThumb = await sharp(_mThumbBuf).resize(200, 200, { fit: 'cover' }).jpeg({ quality: 60 }).toBuffer()
-        } catch {}
-    }
-
     const _mText =
 `ʜᴀʟᴏ, @${m.sender.split('@')[0]} 👋
 sᴇɴᴀɴɢ ʙᴇʀᴛᴇᴍᴜ ᴅᴇɴɢᴀɴᴍᴜ.
@@ -146,27 +137,16 @@ ${_mSaluran}
         }
     }
 
-    // ── contextInfo ──
+    // ── contextInfo (tanpa externalAdReply demi kompatibilitas WA versi terbaru) ──
     const _mCtx = {
         mentionedJid: [m.sender],
-        forwardingScore: 9999,
+        forwardingScore: 999,
         isForwarded: true,
         forwardedNewsletterMessageInfo: {
             newsletterJid: _mNewsJid,
             newsletterName: _mNewsName,
             serverMessageId: 127
-        },
-        ...(smallThumb ? {
-            externalAdReply: {
-                title: _mBot,
-                body: `v6.3.0 • ${(conn.public ? 'Public' : 'Self').toUpperCase()}`,
-                mediaType: 1,
-                showAdAttribution: false,
-                renderLargerThumbnail: true,
-                thumbnail: smallThumb,
-                sourceUrl: _mSaluran
-            }
-        } : {})
+        }
     }
 
     // ── Kirim via MB.Button (bawaan paket Baileys, mendukung native flow mixed biz) ──
