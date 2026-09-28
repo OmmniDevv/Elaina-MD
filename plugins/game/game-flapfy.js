@@ -691,7 +691,7 @@ const handler = async (m, { conn }) => {
                     response_id: responseId,
                     sections: [
                       {
-                        __typename: 'GenAIUnifiedResponseSection', view_model: {
+                        view_model: {
                           primitive: {
                             __typename: "GenAIaeacdsnwHtmlPrimitive",
                             payload: html,

@@ -971,7 +971,6 @@ async function kirimForwardSigned(conn, chatId, html, judul) {
         __typename: 'GenAIUnifiedResponse',
         response_id: randomUUID(),
         sections: [{
-            __typename: 'GenAIUnifiedResponseSection',
             view_model: {
                 __typename: 'GenAISingleLayoutViewModel',
                 primitive: {

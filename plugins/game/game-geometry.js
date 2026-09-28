@@ -705,7 +705,7 @@ const handler = async (m, { conn, sock }) => {
 								"response_id": "4db57b2c-8393-484d-8b9a-8e6d1a14b349",
 								"sections": [
 									{
-										"__typename": "GenAIUnifiedResponseSection", "view_model": {
+										"view_model": {
 											"primitive": {
 												"__typename": "GenAIaeacdsnwHtmlPrimitive",
 												"payload": htmlPayload,
