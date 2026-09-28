@@ -26,6 +26,7 @@ import qrcode from 'qrcode-terminal'
 import './lib/errorLogger.js'
 import { startTempCleaner } from './src/lib/elaina-temp-cleaner.js'
 import { initDatabase, getDatabase } from './src/lib/elaina-database.js'
+import { normalizeCategory } from './lib/categoryHelper.js'
 
 const { CONNECTING } = ws
 const { chain } = lodash
@@ -651,7 +652,9 @@ function normalizePluginModule(module) {
       ...(Array.isArray(cfg.alias) ? cfg.alias : cfg.alias ? [cfg.alias] : [])
     ].filter(v => v && typeof v === 'string')
     fn.help = names
-    fn.tags = [cfg.category || 'tools']
+    const rawCategory = cfg.category || 'tools'
+    const cats = String(rawCategory).split('|').map(c => normalizeCategory(c)).filter(Boolean)
+    fn.tags = cats.length > 0 ? cats : ['tools']
     if (names.length > 0) {
       fn.command = new RegExp(`^(${names.map(v => v.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&')).join('|')})$`, 'i')
     }
@@ -663,6 +666,14 @@ function normalizePluginModule(module) {
     fn.botAdmin = cfg.isBotAdmin || false
     fn.limit = cfg.limit || false
     return fn
+  }
+
+  if (mod && mod.tags) {
+    if (Array.isArray(mod.tags)) {
+      mod.tags = mod.tags.map(t => normalizeCategory(t)).filter(Boolean)
+    } else {
+      mod.tags = [normalizeCategory(mod.tags)]
+    }
   }
 
   return mod

@@ -5,20 +5,7 @@
 // Fallback berlapis supaya menu tetap sampai walau klien tidak dukung native flow.
 import fetch from 'node-fetch'
 import { MB } from '@rexxhayanasi/elaina-baileys'
-
-const CATEGORY_EMOJIS = {
-    owner: '👑', main: '🏠', downloader: '📥', sticker: '🖼️',
-    tools: '🔧', group: '👥', ai: '🤖', game: '🎮', rpg: '⚔️',
-    fun: '🎉', xp: '📊', info: 'ℹ️', internet: '🌐', islamic: '☪️',
-    quotes: '💬', random: '🎲', audio: '🎵', anime: '🌸', canvas: '🎨',
-    nsfw: '🔞'
-}
-
-const CATEGORY_ORDER = [
-    'owner', 'main', 'downloader', 'sticker', 'tools', 'group',
-    'ai', 'game', 'rpg', 'fun', 'xp', 'info', 'internet',
-    'islamic', 'quotes', 'random', 'audio', 'anime', 'canvas', 'nsfw'
-]
+import { CATEGORY_ORDER, CATEGORY_EMOJIS, buildUnifiedCommandMap } from '../../lib/categoryHelper.js'
 
 const NEWSLETTER_JID = '120363420914057249@newsletter'
 
@@ -35,23 +22,6 @@ function getTimeGreeting() {
     if (hour >= 11 && hour < 15) return 'Selamat Siang ☀️'
     if (hour >= 15 && hour < 19) return 'Selamat Sore 🌆'
     return 'Selamat Malam 🌙'
-}
-
-function buildCommandMap() {
-    const map = {}
-    for (const [, plugin] of Object.entries(global.plugins || {})) {
-        if (!plugin || plugin.disabled) continue
-        const tags = Array.isArray(plugin.tags) ? plugin.tags : [plugin.tags || 'main']
-        const helps = Array.isArray(plugin.help) ? plugin.help : (plugin.help ? [plugin.help] : null)
-        if (!helps) continue
-        for (const tag of tags) {
-            if (!map[tag]) map[tag] = []
-            for (const help of helps) {
-                if (help) map[tag].push({ name: help, owner: !!plugin.owner, premium: !!plugin.premium, limit: !!plugin.limit })
-            }
-        }
-    }
-    return map
 }
 
 function getSortedCats(cmdMap, isOwner) {
@@ -114,7 +84,7 @@ let handler = async (m, { conn, usedPrefix, isOwner, isPrems }) => {
     const timeStr = now.toLocaleTimeString('id', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     const role = isOwner ? '👑 Owner' : isPrems ? '💎 Premium' : '👤 User'
 
-    const cmdMap = buildCommandMap()
+    const cmdMap = buildUnifiedCommandMap()
     let totalCmds = 0
     for (const cmds of Object.values(cmdMap)) totalCmds += cmds.length
     const sortedCats = getSortedCats(cmdMap, isOwner)

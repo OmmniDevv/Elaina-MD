@@ -1,38 +1,8 @@
-// © Elaina-MD | https://github.com/OmmniDevv/Elaina-MD — Jangan Dijual!
 import fetch from 'node-fetch'
-
-const CATEGORY_ORDER = [
-    'owner', 'main', 'downloader', 'sticker', 'tools', 'group',
-    'ai', 'game', 'rpg', 'fun', 'xp', 'info', 'internet',
-    'islamic', 'quotes', 'random', 'audio', 'anime', 'canvas', 'nsfw'
-]
-const CATEGORY_EMOJIS = {
-    owner: '👑', main: '🏠', downloader: '📥', sticker: '🖼️',
-    tools: '🔧', group: '👥', ai: '🤖', game: '🎮', rpg: '⚔️',
-    fun: '🎉', xp: '📊', info: 'ℹ️', internet: '🌐', islamic: '☪️',
-    quotes: '💬', random: '🎲', audio: '🎵', anime: '🌸', canvas: '🎨',
-    nsfw: '🔞'
-}
-
-function buildCommandMap() {
-    const map = {}
-    for (const [, plugin] of Object.entries(global.plugins || {})) {
-        if (!plugin || plugin.disabled) continue
-        const tags = Array.isArray(plugin.tags) ? plugin.tags : [plugin.tags || 'main']
-        const helps = Array.isArray(plugin.help) ? plugin.help : (plugin.help ? [plugin.help] : null)
-        if (!helps) continue
-        for (const tag of tags) {
-            if (!map[tag]) map[tag] = []
-            for (const help of helps) {
-                if (help) map[tag].push({ name: help, owner: !!plugin.owner, premium: !!plugin.premium, limit: !!plugin.limit })
-            }
-        }
-    }
-    return map
-}
+import { CATEGORY_ORDER, CATEGORY_EMOJIS, buildUnifiedCommandMap } from '../../lib/categoryHelper.js'
 
 let handler = async (m, { conn, usedPrefix, isOwner }) => {
-    const cmdMap = buildCommandMap()
+    const cmdMap = buildUnifiedCommandMap()
     let totalCmds = 0
     for (const cmds of Object.values(cmdMap)) totalCmds += cmds.length
 
@@ -89,7 +59,7 @@ let handler = async (m, { conn, usedPrefix, isOwner }) => {
                     isForwarded: true,
                     forwardingScore: 9999,
                     forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363208449943317@newsletter',
+                        newsletterJid: '120363420914057249@newsletter',
                         newsletterName: global.namebot,
                         serverMessageId: 127
                     }
