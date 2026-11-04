@@ -1,3 +1,15 @@
+> [!IMPORTANT]
+> ## 📦 Repo Ini Sudah Diarsipkan
+>
+> Pengembangan **Elaina-MD** sudah dihentikan dan repo ini resmi diarsipkan.
+> Proyek ini sekarang **digantikan oleh KANA**, dan semua fitur Elaina-MD sudah diport ke sana:
+>
+> 👉 **KANA (kana-md): https://github.com/OmmniDevv/kana-md**
+>
+> Terima kasih buat semua yang pernah memakai dan mendukung Elaina-MD~
+
+---
+
 <div align="center">
 
 <img src="https://i.ibb.co.com/ZZx3z8F/elaina-thumbnail.jpg" width="100%" />
